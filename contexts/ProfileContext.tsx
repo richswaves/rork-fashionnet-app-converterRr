@@ -3,6 +3,15 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { sbSelect, sbUpsert, getSupabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
+interface ProfileCustomization {
+  backgroundType?: string;
+  backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundImageAdjustments?: { positionX?: number; positionY?: number };
+  theme?: string;
+  typographyColor?: string;
+}
+
 interface Profile {
   user_id: string;
   full_name?: string;
@@ -16,6 +25,7 @@ interface Profile {
   created_at?: string;
   model_photos?: string[];
   portfolio_photos?: string[];
+  profile_customization?: ProfileCustomization | null;
 }
 
 export type ResolvedProfile = {
@@ -116,6 +126,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates.account_status !== undefined ? { account_status: updates.account_status } : {}),
         ...(updates.model_photos !== undefined ? { model_photos: updates.model_photos } : {}),
         ...(updates.portfolio_photos !== undefined ? { portfolio_photos: updates.portfolio_photos } : {}),
+        ...(updates as any).profile_customization !== undefined ? { profile_customization: (updates as any).profile_customization as ProfileCustomization | null } : {},
       };
 
       await sbUpsert("profiles", payload, "user_id");

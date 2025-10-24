@@ -18,6 +18,14 @@ interface ProfileRow {
   bio?: string | null;
   model_photos?: string[] | null;
   portfolio_photos?: string[] | null;
+  profile_customization?: {
+    backgroundType?: string;
+    backgroundColor?: string;
+    backgroundImage?: string;
+    backgroundImageAdjustments?: { positionX?: number; positionY?: number };
+    theme?: string;
+    typographyColor?: string;
+  } | null;
 }
 
 export default function UserProfileScreen() {
@@ -44,6 +52,7 @@ export default function UserProfileScreen() {
   const display = useMemo(() => getDisplayForProfile(data ?? undefined), [data, getDisplayForProfile]);
 
   const coverCandidates: (string | undefined)[] = [
+    data?.profile_customization?.backgroundImage,
     Array.isArray(data?.model_photos) ? data?.model_photos[0] : undefined,
     Array.isArray(data?.portfolio_photos) ? data?.portfolio_photos[0] : undefined,
   ];
