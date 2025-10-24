@@ -4,6 +4,8 @@ import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
+import { getSupabase } from "@/integrations/supabase/client";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -64,6 +66,82 @@ export default function EditProfileScreen() {
     }
   }
 
+  async function ensureMediaPermission(): Promise<boolean> {
+    try {
+      const isWeb = Platform.select({ web: true, default: false }) as boolean;
+      if (isWeb) return true;
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission required", "Permission to access photos is required");
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn("Permission error", e);
+      return false;
+    }
+  }
+
+  async function pickFromLibrary(): Promise<ImagePicker.ImagePickerAsset | null> {
+    const ok = await ensureMediaPermission();
+    if (!ok) return null;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.9,
+      selectionLimit: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (res.canceled || !res.assets || res.assets.length === 0) return null;
+    return res.assets[0] ?? null;
+  }
+
+  async function uploadToSupabase(file: { uri: string; fileName?: string | null; mimeType?: string | null }, folder: "avatars" | "banners") {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase is not configured");
+    const { uri, fileName, mimeType } = file;
+    const namePart = fileName && fileName.trim().length > 0 ? fileName : `${Date.now()}.jpg`;
+    const path = `${folder}/${namePart}`;
+
+    const res = await fetch(uri);
+    const blob = await res.blob();
+
+    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: mimeType ?? blob.type ?? "image/jpeg",
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from("model-photos").getPublicUrl(path);
+    return data.publicUrl as string;
+  }
+
+  async function onPickAvatar() {
+    try {
+      console.log("pick avatar start");
+      const asset = await pickFromLibrary();
+      if (!asset) return;
+      const url = await uploadToSupabase({ uri: asset.uri, fileName: asset.fileName ?? null, mimeType: (asset as any).mimeType ?? null }, "avatars");
+      setAvatarUrl(url);
+    } catch (e: any) {
+      const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
+      Alert.alert("Error", msg);
+    }
+  }
+
+  async function onPickBanner() {
+    try {
+      console.log("pick banner start");
+      const asset = await pickFromLibrary();
+      if (!asset) return;
+      const url = await uploadToSupabase({ uri: asset.uri, fileName: asset.fileName ?? null, mimeType: (asset as any).mimeType ?? null }, "banners");
+      setBannerUrl(url);
+    } catch (e: any) {
+      const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
+      Alert.alert("Error", msg);
+    }
+  }
+
   function applyEdit() {
     if (!editing) return;
     const val = temp.trim();
@@ -93,12 +171,7 @@ export default function EditProfileScreen() {
       router.back();
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to update profile";
-      if (Platform.OS === "web") {
-        // eslint-disable-next-line no-alert
-        alert(msg);
-      } else {
-        Alert.alert("Error", msg);
-      }
+      Alert.alert("Error", msg);
     }
   }
 
@@ -112,7 +185,7 @@ export default function EditProfileScreen() {
           <View style={styles.coverOverlay} />
           <Pressable
             testID="edit-banner"
-            onPress={() => openEditor("banner")}
+            onPress={onPickBanner}
             style={[styles.coverEditFab, { top: 12 + insets.top }]}
             accessibilityLabel="Edit background"
           >
@@ -121,7 +194,7 @@ export default function EditProfileScreen() {
           <View style={styles.avatarFloating}>
             <View style={styles.avatarWrap}>
               <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-              <Pressable testID="edit-avatar" onPress={() => openEditor("avatar")} style={styles.editFab}>
+              <Pressable testID="edit-avatar" onPress={onPickAvatar} style={styles.editFab}>
                 <Pencil color="#0B0B0F" size={16} />
               </Pressable>
             </View>
