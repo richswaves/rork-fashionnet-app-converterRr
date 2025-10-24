@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
@@ -126,6 +127,7 @@ export default function OpportunitiesScreen() {
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
+  const router = useRouter();
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
@@ -260,13 +262,13 @@ export default function OpportunitiesScreen() {
           const upvotes = 0;
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
-              <View style={styles.postHeader}>
+              <Pressable style={styles.postHeader} onPress={() => { const uid = item.profiles?.user_id ?? item.user_id; if (uid) { router.push({ pathname: "/profile/[userId]", params: { userId: uid } }); } }} testID={`opp-user-${item.profiles?.user_id ?? item.user_id}`}>
                 <Image source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
                   <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
                   <Text numberOfLines={1} style={styles.postTime}>Just now</Text>
                 </View>
-              </View>
+              </Pressable>
 
               <View style={styles.mediaWrap}>
                 <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />

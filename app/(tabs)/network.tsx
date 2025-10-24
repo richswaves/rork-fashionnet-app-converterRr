@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -33,6 +34,7 @@ export default function NetworkScreen() {
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
 
   const { resolvedProfile, getDisplayForProfile } = useProfile();
+  const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
@@ -140,7 +142,7 @@ export default function NetworkScreen() {
         )}
         <View style={styles.grid}>
           {(topProfiles ?? []).map((m) => (
-            <View key={m.id} style={styles.card} testID={`top-${m.id}`}>
+            <Pressable key={m.id} style={styles.card} testID={`top-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
               <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle}>{m.name}</Text>
@@ -160,7 +162,7 @@ export default function NetworkScreen() {
                   </Text>
                 </Pressable>
               </View>
-            </View>
+            </Pressable>
           ))}
         </View>
 
@@ -175,7 +177,7 @@ export default function NetworkScreen() {
         )}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
           {(newProfiles ?? []).map((m) => (
-            <View key={m.id} style={styles.hCard} testID={`new-${m.id}`}>
+            <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
               <View style={styles.cardBody}>
                 <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>
@@ -195,7 +197,7 @@ export default function NetworkScreen() {
                   </Text>
                 </Pressable>
               </View>
-            </View>
+            </Pressable>
           ))}
         </ScrollView>
       </ScrollView>
