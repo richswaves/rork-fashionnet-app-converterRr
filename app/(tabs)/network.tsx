@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,6 +38,14 @@ export default function NetworkScreen() {
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { width: windowWidth } = useWindowDimensions();
+
+  const [topEnabled, setTopEnabled] = useState<boolean>(true);
+  const [newEnabled, setNewEnabled] = useState<boolean>(true);
+
+  const enableBoth = useCallback(() => {
+    setTopEnabled(true);
+    setNewEnabled(true);
+  }, []);
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
     queryKey: ["profiles", "top"],
@@ -156,11 +164,13 @@ export default function NetworkScreen() {
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               directionalLockEnabled
-              nestedScrollEnabled
               decelerationRate="fast"
               bounces={false}
               scrollEventThrottle={16}
-              onStartShouldSetResponderCapture={() => true}
+              scrollEnabled={topEnabled}
+              onScrollBeginDrag={() => setNewEnabled(false)}
+              onMomentumScrollEnd={enableBoth}
+              onScrollEndDrag={enableBoth}
               contentContainerStyle={styles.topPager}
               style={styles.hScrollWebContain}
               testID="top-pager"
@@ -216,11 +226,13 @@ export default function NetworkScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           directionalLockEnabled
-          nestedScrollEnabled
           decelerationRate="fast"
           bounces={false}
           scrollEventThrottle={16}
-          onStartShouldSetResponderCapture={() => true}
+          scrollEnabled={newEnabled}
+          onScrollBeginDrag={() => setTopEnabled(false)}
+          onMomentumScrollEnd={enableBoth}
+          onScrollEndDrag={enableBoth}
           contentContainerStyle={styles.horizontalList}
           style={styles.hScrollWebContain}
           testID="new-list"
