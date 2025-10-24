@@ -101,34 +101,45 @@ export default function EditProfileScreen() {
   async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset, folder: "avatars" | "banners") {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured");
-    const uri = asset.uri;
-    const fileName = (asset.fileName ?? `${Date.now()}`).replace(/\s+/g, "_");
-    const extFromType = (asset as any).mimeType?.split("/")?.[1] ?? uri.split(".").pop() ?? "jpg";
-    const namePart = /\.[a-zA-Z0-9]+$/.test(fileName) ? fileName : `${fileName}.${extFromType}`;
-    const path = `${folder}/${namePart}`;
 
-    let blob: Blob;
+    const uri = asset.uri;
+    const rawName = (asset.fileName ?? `img_${Date.now()}`).replace(/\s+/g, "_");
+    const extFromType = (asset as any).mimeType?.split("/")?.[1] ?? uri.split(".").pop() ?? "jpg";
+    const fileName = /\.[a-zA-Z0-9]+$/.test(rawName) ? rawName : `${rawName}.${extFromType}`;
+    const path = `${folder}/${fileName}`;
+
+    let blob: Blob | null = null;
+
     try {
       if (Platform.OS === "web") {
-        console.log("Creating blob from web uri", uri);
+        console.log("[upload] Web: fetching blob from uri", uri);
         blob = await (await fetch(uri)).blob();
-      } else if (asset.base64) {
+      } else if (asset.base64 && asset.base64.length > 0) {
         const mime = (asset as any).mimeType ?? "image/jpeg";
         const dataUrl = `data:${mime};base64,${asset.base64}`;
-        console.log("Creating blob from base64 data URL");
+        console.log("[upload] Native: creating blob from base64 data URL");
         blob = await (await fetch(dataUrl)).blob();
       } else {
-        console.log("Creating blob from file uri on native", uri);
+        console.log("[upload] Native: fetching blob from file uri", uri);
         blob = await (await fetch(uri)).blob();
       }
     } catch (err) {
-      console.error("Blob creation failed", err);
-      throw new Error("Could not read selected image on this device");
+      console.warn("[upload] Primary blob creation failed, attempting FileSystem fallback", err);
+      try {
+        const FileSystem = await import("expo-file-system");
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const mime = (asset as any).mimeType ?? "image/jpeg";
+        const dataUrl = `data:${mime};base64,${base64}`;
+        blob = await (await fetch(dataUrl)).blob();
+      } catch (e) {
+        console.error("[upload] Fallback blob creation failed", e);
+        throw new Error("Could not read selected image. Please try a different photo.");
+      }
     }
 
-    const contentType = (asset as any).mimeType ?? (blob.type || "image/jpeg");
-    console.log("Uploading to Supabase Storage", { bucket: "model-photos", path, contentType, size: (blob as any)?.size });
-    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
+    const contentType = (asset as any).mimeType ?? (blob as any)?.type ?? "image/jpeg";
+    console.log("[upload] Uploading to Supabase Storage", { bucket: "model-photos", path, contentType, size: (blob as any)?.size });
+    const { error } = await supabase.storage.from("model-photos").upload(path, blob as any, {
       cacheControl: "3600",
       upsert: true,
       contentType,
