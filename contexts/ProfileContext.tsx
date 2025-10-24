@@ -190,8 +190,10 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     };
 
     const baseName = !isGeneric(p.full_name) ? p.full_name : undefined;
-    const derivedUsername = p.username || (baseName ? baseName.replace(/\s+/g, "").toLowerCase() : undefined) || "user";
-    const derivedDisplay = baseName || p.username || derivedUsername;
+    const baseUsername = !isGeneric(p.username) ? p.username : undefined;
+    
+    const derivedUsername = baseUsername || (baseName ? baseName.replace(/\s+/g, "").toLowerCase() : undefined) || "user";
+    const derivedDisplay = baseName || baseUsername || derivedUsername;
     const derivedAvatar = p.profile_picture || initialsAvatar(derivedDisplay || derivedUsername || "User");
 
     const displayName = String(derivedDisplay || "User");
