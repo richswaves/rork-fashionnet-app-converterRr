@@ -100,6 +100,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
       const safeUsername = (updates.username ?? profileQuery.data?.username ?? resolved.username ?? "user") as string;
       const safeFullName = (updates.full_name ?? profileQuery.data?.full_name ?? resolved.displayName ?? safeUsername) as string;
       const safeLocation = (updates.location ?? profileQuery.data?.location ?? "") as string;
+      const safeBio = (updates.bio ?? profileQuery.data?.bio ?? "") as string;
 
       const payload: Partial<Profile> = {
         user_id: currentUserId,
@@ -107,8 +108,8 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         username: safeUsername,
         profession: safeProfession,
         location: safeLocation,
+        bio: safeBio,
         ...(updates.profile_picture !== undefined ? { profile_picture: updates.profile_picture } : {}),
-        ...(updates.bio !== undefined ? { bio: updates.bio } : {}),
         ...(updates.professions !== undefined ? { professions: updates.professions } : {}),
         ...(updates.account_status !== undefined ? { account_status: updates.account_status } : {}),
       };
