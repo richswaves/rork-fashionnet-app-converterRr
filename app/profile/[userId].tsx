@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MapPin, ArrowLeft } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { sbSelect } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -55,6 +56,13 @@ export default function UserProfileScreen() {
 
       <View style={styles.coverWrap}>
         <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
+        <LinearGradient
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.25)", "#0B0B0F"]}
+          locations={[0, 0.6, 1]}
+          start={{ x: 0.5, y: 0.2 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.coverFade}
+        />
         <Pressable testID="back" onPress={() => router.back()} style={[styles.backBtn, { top: 12 + insets.top }]}>
           <ArrowLeft color="#E5E7EB" size={22} />
         </Pressable>
@@ -104,10 +112,11 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  coverWrap: { width: "100%", height: 220, backgroundColor: "#111318" },
-  cover: { width: "100%", height: 220 },
+  coverWrap: { width: "100%", height: 320, backgroundColor: "#111318" },
+  cover: { width: "100%", height: 320 },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 200 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -48 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -72 },
   headerRow: { flexDirection: "row", alignItems: "flex-end" },
   avatarWrap: { width: 96, height: 96, borderRadius: 48, overflow: "hidden", borderWidth: 3, borderColor: "#0B0B0F", marginRight: 12 },
   avatar: { width: 96, height: 96 },

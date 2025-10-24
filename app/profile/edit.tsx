@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase } from "@/integrations/supabase/client";
 
 export default function EditProfileScreen() {
@@ -183,6 +184,13 @@ export default function EditProfileScreen() {
         <View style={styles.coverWrap}>
           <Image source={{ uri: bannerUrl || "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" }} style={styles.cover} resizeMode="cover" />
           <View style={styles.coverOverlay} />
+          <LinearGradient
+            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.25)", "#0B0B0F"]}
+            locations={[0, 0.6, 1]}
+            start={{ x: 0.5, y: 0.2 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.coverFade}
+          />
           <Pressable
             testID="edit-banner"
             onPress={onPickBanner}
@@ -316,12 +324,13 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  coverWrap: { width: "100%", height: 200, backgroundColor: "#111318" },
-  cover: { width: "100%", height: 200 },
-  coverOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#00000055" },
+  coverWrap: { width: "100%", height: 320, backgroundColor: "#111318" },
+  cover: { width: "100%", height: 320 },
+  coverOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#00000040" },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 220 },
   coverEditFab: { position: "absolute", right: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center" },
-  avatarFloating: { position: "absolute", bottom: -48, left: 0, right: 0, alignItems: "center" },
-  hero: { width: "100%", paddingTop: 64, paddingBottom: 24 },
+  avatarFloating: { position: "absolute", bottom: -56, left: 0, right: 0, alignItems: "center" },
+  hero: { width: "100%", paddingTop: 80, paddingBottom: 24 },
   heroGradient: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#0B0B0F" },
   heroContent: { alignItems: "center", paddingHorizontal: 16 },
   avatarWrap: { width: 96, height: 96, borderRadius: 48, overflow: "hidden", borderWidth: 3, borderColor: "#0B0B0F", backgroundColor: "#111318" },
