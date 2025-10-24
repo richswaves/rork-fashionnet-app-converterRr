@@ -157,8 +157,7 @@ export default function EditProfileScreen() {
       const asset = await pickFromLibrary();
       if (!asset) return;
       setPendingAvatar(asset);
-      const mime = (asset as any).mimeType ?? "image/jpeg";
-      const localPreview = asset.base64 && asset.base64.length > 0 ? `data:${mime};base64,${asset.base64}` : asset.uri;
+      const localPreview = asset.uri;
       setAvatarUrl(localPreview);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
@@ -172,8 +171,7 @@ export default function EditProfileScreen() {
       const asset = await pickFromLibrary();
       if (!asset) return;
       setPendingBanner(asset);
-      const mime = (asset as any).mimeType ?? "image/jpeg";
-      const localPreview = asset.base64 && asset.base64.length > 0 ? `data:${mime};base64,${asset.base64}` : asset.uri;
+      const localPreview = asset.uri;
       setBannerUrl(localPreview);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
@@ -264,7 +262,7 @@ export default function EditProfileScreen() {
           </Pressable>
           <View style={styles.avatarFloating}>
             <Pressable accessibilityRole="button" accessibilityLabel="Change profile picture" onPress={onPickAvatar} style={styles.avatarWrap} testID="avatar-press">
-              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              <Image source={{ uri: avatarUrl || resolvedProfile.avatarUrl }} style={styles.avatar} />
               <Pressable testID="edit-avatar" onPress={onPickAvatar} style={styles.editFab}>
                 <Pencil color="#0B0B0F" size={16} />
               </Pressable>
