@@ -19,6 +19,8 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "");
   const [bannerUrl, setBannerUrl] = useState<string>((profile as any)?.profile_customization?.backgroundImage ?? (Array.isArray((profile as any)?.model_photos) && (profile as any)?.model_photos?.length ? ((profile as any)?.model_photos?.[0] as string) : (Array.isArray((profile as any)?.portfolio_photos) && (profile as any)?.portfolio_photos?.length ? ((profile as any)?.portfolio_photos?.[0] as string) : "")));
+  const [pendingAvatar, setPendingAvatar] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [pendingBanner, setPendingBanner] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const [editing, setEditing] = useState<
     | null
@@ -154,9 +156,8 @@ export default function EditProfileScreen() {
       console.log("pick avatar start");
       const asset = await pickFromLibrary();
       if (!asset) return;
+      setPendingAvatar(asset);
       setAvatarUrl(asset.uri);
-      const url = await uploadToSupabase(asset, "avatars");
-      setAvatarUrl(url);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
       Alert.alert("Error", msg);
@@ -168,9 +169,8 @@ export default function EditProfileScreen() {
       console.log("pick banner start");
       const asset = await pickFromLibrary();
       if (!asset) return;
+      setPendingBanner(asset);
       setBannerUrl(asset.uri);
-      const url = await uploadToSupabase(asset, "banners");
-      setBannerUrl(url);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
       Alert.alert("Error", msg);
@@ -191,18 +191,35 @@ export default function EditProfileScreen() {
   async function onSave() {
     try {
       const updates: Record<string, any> = {};
+      let finalAvatarUrl = avatarUrl?.trim() ?? "";
+      let finalBannerUrl = bannerUrl?.trim() ?? "";
+
+      if (pendingAvatar) {
+        console.log("[save] uploading pending avatar");
+        finalAvatarUrl = await uploadToSupabase(pendingAvatar, "avatars");
+        setPendingAvatar(null);
+      }
+      if (pendingBanner) {
+        console.log("[save] uploading pending banner");
+        finalBannerUrl = await uploadToSupabase(pendingBanner, "banners");
+        setPendingBanner(null);
+      }
+
       if (fullName !== (profile?.full_name ?? "")) updates.full_name = fullName.trim();
       if (username !== (profile?.username ?? resolvedProfile.username ?? "")) updates.username = username.trim();
       if (location !== (profile?.location ?? "")) updates.location = location.trim();
       if (bio !== (profile?.bio ?? "")) updates.bio = bio.trim();
-      if (avatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) updates.profile_picture = avatarUrl.trim();
-      
-      if ((bannerUrl ?? "").trim().length > 0) {
+
+      if (finalAvatarUrl && finalAvatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) {
+        updates.profile_picture = finalAvatarUrl;
+      }
+
+      if ((finalBannerUrl ?? "").length > 0) {
         const prev = (profile as any)?.profile_customization ?? {};
         updates.profile_customization = {
           ...prev,
           backgroundType: "image",
-          backgroundImage: bannerUrl.trim(),
+          backgroundImage: finalBannerUrl,
         };
       }
 
