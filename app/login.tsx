@@ -14,29 +14,51 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "expo-router";
 import { LogIn } from "lucide-react-native";
+import { sbSelect } from "@/integrations/supabase/client";
+
+interface ProfileRow { username?: string; user_id: string; email?: string | null }
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [identifier, setIdentifier] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { login } = useProfile();
   const router = useRouter();
 
+  const resolveEmailFromIdentifier = async (value: string): Promise<string> => {
+    const trimmed = value.trim();
+    if (trimmed.includes("@")) return trimmed;
+    try {
+      const rows = await sbSelect<ProfileRow>("profiles", {
+        select: "user_id,username,email",
+        query: { username: `eq.${trimmed}` },
+        limit: 1,
+      });
+      const email = rows[0]?.email ?? null;
+      if (!email) throw new Error("No email linked to that username");
+      return email;
+    } catch (e) {
+      console.error("resolveEmailFromIdentifier error", e);
+      throw new Error("Username login requires the profile to store an email. Please use your email.");
+    }
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
+    if (!identifier || !password) {
+      Alert.alert("Error", "Enter username or email and password");
       return;
     }
 
     setIsLoading(true);
     try {
-      await login(email.trim(), password);
+      const email = await resolveEmailFromIdentifier(identifier);
+      await login(email, password);
       router.replace("/opportunities");
     } catch (error: any) {
       console.error("Login error:", error);
       Alert.alert(
         "Login Failed",
-        error.message || "Invalid email or password. Please try again."
+        error?.message ?? "Invalid credentials. If you typed a username, try your email."
       );
     } finally {
       setIsLoading(false);
@@ -60,16 +82,17 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Username or Email</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder="yourname or your@email.com"
                 placeholderTextColor="#6B7280"
-                value={email}
-                onChangeText={setEmail}
+                value={identifier}
+                onChangeText={setIdentifier}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 editable={!isLoading}
+                testID="login-identifier"
               />
             </View>
 
@@ -83,6 +106,7 @@ export default function LoginScreen() {
                 onChangeText={setPassword}
                 secureTextEntry
                 editable={!isLoading}
+                testID="login-password"
               />
             </View>
 
@@ -90,6 +114,7 @@ export default function LoginScreen() {
               style={[styles.button, isLoading && styles.buttonDisabled]}
               onPress={handleLogin}
               disabled={isLoading}
+              testID="login-submit"
             >
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
