@@ -9,6 +9,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.light.tint,
         tabBarInactiveTintColor: Colors.light.tabIconDefault,
         tabBarStyle: {
@@ -16,7 +17,6 @@ export default function TabLayout() {
           borderTopColor: Colors.light.border,
           borderTopWidth: 1,
         },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "800" },
       }}
     >
       <Tabs.Screen
