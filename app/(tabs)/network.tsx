@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,14 +38,6 @@ export default function NetworkScreen() {
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { width: windowWidth } = useWindowDimensions();
-
-  const [topEnabled, setTopEnabled] = useState<boolean>(true);
-  const [newEnabled, setNewEnabled] = useState<boolean>(true);
-
-  const enableBoth = useCallback(() => {
-    setTopEnabled(true);
-    setNewEnabled(true);
-  }, []);
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
     queryKey: ["profiles", "top"],
@@ -163,16 +155,7 @@ export default function NetworkScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              directionalLockEnabled
-              decelerationRate="fast"
-              bounces={false}
-              scrollEventThrottle={16}
-              scrollEnabled={topEnabled}
-              onScrollBeginDrag={() => setNewEnabled(false)}
-              onMomentumScrollEnd={enableBoth}
-              onScrollEndDrag={enableBoth}
               contentContainerStyle={styles.topPager}
-              style={styles.hScrollWebContain}
               testID="top-pager"
             >
               {pages.map((page, pIdx) => (
@@ -222,21 +205,7 @@ export default function NetworkScreen() {
         {!!newErr && (
           <Text style={styles.errorText} testID="new-error">Failed to load new members</Text>
         )}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          directionalLockEnabled
-          decelerationRate="fast"
-          bounces={false}
-          scrollEventThrottle={16}
-          scrollEnabled={newEnabled}
-          onScrollBeginDrag={() => setTopEnabled(false)}
-          onMomentumScrollEnd={enableBoth}
-          onScrollEndDrag={enableBoth}
-          contentContainerStyle={styles.horizontalList}
-          style={styles.hScrollWebContain}
-          testID="new-list"
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
           {(newProfiles ?? []).map((m) => (
             <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
@@ -307,7 +276,6 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start" },
   page: { marginRight: 12 },
   topPager: { paddingRight: 12 },
-  hScrollWebContain: { overscrollBehavior: "contain" as any },
   card: { backgroundColor: "#121218", borderRadius: 16, overflow: "hidden", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
   cardImage: { width: "100%", height: 140 },
   cardBody: { padding: 12 },
