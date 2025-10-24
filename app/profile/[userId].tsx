@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MapPin, ArrowLeft } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { sbSelect } from "@/integrations/supabase/client";
+import * as ImagePicker from "expo-image-picker";
+import { sbSelect, getSupabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
@@ -24,7 +25,7 @@ export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getDisplayForProfile } = useProfile();
+  const { getDisplayForProfile, currentUserId, updateProfile } = useProfile();
   const [following, setFollowing] = useState<boolean>(false);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
@@ -50,6 +51,69 @@ export default function UserProfileScreen() {
   ];
   const cover = (coverCandidates.find((c) => typeof c === "string" && !!c) ?? "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60") as string;
 
+  async function ensureMediaPermission(): Promise<boolean> {
+    try {
+      const isWeb = Platform.select({ web: true, default: false }) as boolean;
+      if (isWeb) return true;
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission required", "Permission to access photos is required");
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn("Permission error", e);
+      return false;
+    }
+  }
+
+  async function pickFromLibrary(): Promise<ImagePicker.ImagePickerAsset | null> {
+    const ok = await ensureMediaPermission();
+    if (!ok) return null;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.9,
+      selectionLimit: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (res.canceled || !res.assets || res.assets.length === 0) return null;
+    return res.assets[0] ?? null;
+  }
+
+  async function uploadToSupabase(file: { uri: string; fileName?: string | null; mimeType?: string | null }) {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase is not configured");
+    const { uri, fileName, mimeType } = file;
+    const namePart = fileName && fileName.trim().length > 0 ? fileName : `${Date.now()}.jpg`;
+    const path = `avatars/${namePart}`;
+    const res = await fetch(uri);
+    const blob = await res.blob();
+    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: mimeType ?? (blob as any).type ?? "image/jpeg",
+    });
+    if (error) throw error as Error;
+    const { data: pub } = supabase.storage.from("model-photos").getPublicUrl(path);
+    return pub.publicUrl as string;
+  }
+
+  async function onChangeAvatar() {
+    try {
+      if (!data?.user_id || currentUserId !== data.user_id) return;
+      const asset = await pickFromLibrary();
+      if (!asset) return;
+      const url = await uploadToSupabase({ uri: asset.uri, fileName: asset.fileName ?? null, mimeType: (asset as any).mimeType ?? null });
+      updateProfile({ profile_picture: url } as any);
+    } catch (e: any) {
+      const msg = typeof e?.message === "string" ? e.message : "Failed to update avatar";
+      Alert.alert("Error", msg);
+    }
+  }
+
+  const isOwn = !!data?.user_id && currentUserId === data.user_id;
+
   return (
     <View style={styles.container} testID="profile-screen">
       <Stack.Screen options={{ headerShown: false }} />
@@ -70,9 +134,16 @@ export default function UserProfileScreen() {
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]}>
         <View style={styles.headerRow}>
-          <View style={styles.avatarWrap}>
+          <Pressable
+            disabled={!isOwn}
+            onPress={onChangeAvatar}
+            style={styles.avatarWrap}
+            testID="avatar-press"
+            accessibilityRole="button"
+            accessibilityLabel={isOwn ? "Change profile picture" : undefined}
+          >
             <Image source={{ uri: display.avatarUrl }} style={styles.avatar} />
-          </View>
+          </Pressable>
           <View style={styles.nameCol}>
             <Text style={styles.username}>{display.username}</Text>
             {!!data?.location && (
