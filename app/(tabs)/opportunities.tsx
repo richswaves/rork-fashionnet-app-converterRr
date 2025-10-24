@@ -106,7 +106,6 @@ export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [type, setType] = useState<string | null>(null);
   const [city, setCity] = useState<string | null>(null);
   const [seekingRole, setSeekingRole] = useState<string | null>(null);
   const [postedByRole, setPostedByRole] = useState<string | null>(null);
@@ -322,25 +321,11 @@ export default function OpportunitiesScreen() {
             testID="dd-payment"
           />
 
-          <Text style={styles.fieldLabel}>Type</Text>
-          <Dropdown
-            label="Any Type"
-            sections={[{ options: [
-              { label: "Full-time", value: "full-time" },
-              { label: "Part-time", value: "part-time" },
-              { label: "Contract", value: "contract" },
-              { label: "Internship", value: "internship" },
-            ]}]}
-            value={type}
-            onChange={setType}
-            testID="dd-type"
-          />
 
           <View style={styles.sheetActions}>
             <Pressable
               style={styles.resetBtn}
               onPress={() => {
-                setType(null);
                 setCity(null);
                 setSeekingRole(null);
                 setPostedByRole(null);
@@ -354,7 +339,7 @@ export default function OpportunitiesScreen() {
               style={styles.applyFiltersBtn}
               onPress={() => {
                 setShowFilters(false);
-                console.log("apply filters", { type, city, seekingRole, postedByRole, paymentStatus });
+                console.log("apply filters", { city, seekingRole, postedByRole, paymentStatus });
               }}
               testID="filters-apply"
             >
