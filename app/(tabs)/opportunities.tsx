@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
@@ -33,20 +33,27 @@ const VIEW_OPTIONS = [
 ];
 
 type ViewKey = typeof VIEW_OPTIONS[number]["key"];
+type DropdownOption = { label: string; value: string };
+interface DropdownSection { title?: string; options: DropdownOption[] }
+
 function Dropdown({
   label,
-  options,
+  sections,
   value,
   onChange,
   testID,
 }: {
   label: string;
-  options: string[];
+  sections: DropdownSection[];
   value: string | null;
   onChange: (val: string | null) => void;
   testID: string;
 }) {
   const [open, setOpen] = useState<boolean>(false);
+  const display = sections
+    .flatMap((s) => s.options)
+    .find((o) => o.value === value)?.label ?? value ?? label;
+
   return (
     <View style={styles.ddContainer} testID={`${testID}-container`}>
       <Pressable
@@ -54,7 +61,7 @@ function Dropdown({
         onPress={() => setOpen((s) => !s)}
         testID={`${testID}-toggle`}
       >
-        <Text style={styles.ddLabel}>{value ?? label}</Text>
+        <Text style={styles.ddLabel}>{display}</Text>
         {open ? <ChevronUp color="#E5E7EB" size={18} /> : <ChevronDown color="#E5E7EB" size={18} />}
       </Pressable>
       {open && (
@@ -67,20 +74,27 @@ function Dropdown({
             style={styles.ddItem}
             testID={`${testID}-clear`}
           >
-            <Text style={styles.ddItemText}>Any</Text>
+            <Text style={styles.ddItemText}>All</Text>
           </Pressable>
-          {options.map((opt) => (
-            <Pressable
-              key={opt}
-              onPress={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              style={styles.ddItem}
-              testID={`${testID}-opt-${opt}`}
-            >
-              <Text style={styles.ddItemText}>{opt}</Text>
-            </Pressable>
+          {sections.map((sec) => (
+            <View key={sec.title ?? Math.random().toString()}>
+              {!!sec.title && (
+                <Text style={styles.ddSectionLabel}>{sec.title.toUpperCase()}</Text>
+              )}
+              {sec.options.map((opt) => (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  style={styles.ddItem}
+                  testID={`${testID}-opt-${opt.value}`}
+                >
+                  <Text style={styles.ddItemText}>{opt.label}</Text>
+                </Pressable>
+              ))}
+            </View>
           ))}
         </View>
       )}
@@ -93,7 +107,10 @@ export default function OpportunitiesScreen() {
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [type, setType] = useState<string | null>(null);
-  const [location, setLocation] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [seekingRole, setSeekingRole] = useState<string | null>(null);
+  const [postedByRole, setPostedByRole] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [view, setView] = useState<ViewKey>("all");
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
@@ -260,20 +277,63 @@ export default function OpportunitiesScreen() {
       >
         <Pressable style={styles.backdrop} onPress={() => setShowFilters(false)} testID="filters-backdrop" />
         <View style={styles.sheet} testID="filters-sheet">
-          <Text style={styles.sheetTitle}>Filters</Text>
+          <Text style={styles.sheetTitle}>Filter Opportunities</Text>
+
+          <Text style={styles.fieldLabel}>Location</Text>
+          <View style={styles.textFieldWrap}>
+            <TextInput
+              placeholder="Enter city name"
+              placeholderTextColor="#6B7280"
+              value={city ?? ""}
+              onChangeText={(t) => setCity(t.length ? t : null)}
+              style={styles.textField}
+              testID="input-city"
+            />
+          </View>
+
+          <Text style={styles.fieldLabel}>Seeking a</Text>
           <Dropdown
-            label="Type"
-            options={["Full-time", "Part-time", "Contract", "Internship"]}
+            label="All Roles"
+            sections={ROLE_SECTIONS}
+            value={seekingRole}
+            onChange={setSeekingRole}
+            testID="dd-seeking"
+          />
+
+          <Text style={styles.fieldLabel}>Posted by a</Text>
+          <Dropdown
+            label="All Posters"
+            sections={ROLE_SECTIONS}
+            value={postedByRole}
+            onChange={setPostedByRole}
+            testID="dd-postedby"
+          />
+
+          <Text style={styles.fieldLabel}>Payment Status</Text>
+          <Dropdown
+            label="All Opportunities"
+            sections={[{ options: [
+              { label: "All Opportunities", value: "all" },
+              { label: "Paid Only", value: "paid" },
+              { label: "Unpaid Only", value: "unpaid" },
+            ]}]}
+            value={paymentStatus}
+            onChange={setPaymentStatus}
+            testID="dd-payment"
+          />
+
+          <Text style={styles.fieldLabel}>Type</Text>
+          <Dropdown
+            label="Any Type"
+            sections={[{ options: [
+              { label: "Full-time", value: "full-time" },
+              { label: "Part-time", value: "part-time" },
+              { label: "Contract", value: "contract" },
+              { label: "Internship", value: "internship" },
+            ]}]}
             value={type}
             onChange={setType}
             testID="dd-type"
-          />
-          <Dropdown
-            label="Location"
-            options={["Remote", "Hybrid", "On-site"]}
-            value={location}
-            onChange={setLocation}
-            testID="dd-location"
           />
 
           <View style={styles.sheetActions}>
@@ -281,7 +341,10 @@ export default function OpportunitiesScreen() {
               style={styles.resetBtn}
               onPress={() => {
                 setType(null);
-                setLocation(null);
+                setCity(null);
+                setSeekingRole(null);
+                setPostedByRole(null);
+                setPaymentStatus(null);
               }}
               testID="filters-reset"
             >
@@ -291,7 +354,7 @@ export default function OpportunitiesScreen() {
               style={styles.applyFiltersBtn}
               onPress={() => {
                 setShowFilters(false);
-                console.log("apply filters", { type, location });
+                console.log("apply filters", { type, city, seekingRole, postedByRole, paymentStatus });
               }}
               testID="filters-apply"
             >
@@ -303,6 +366,31 @@ export default function OpportunitiesScreen() {
     </View>
   );
 }
+
+const ROLE_SECTIONS: { title?: string; options: { label: string; value: string }[] }[] = [
+  {
+    title: "Creatives",
+    options: [
+      { label: "Photographer", value: "photographer" },
+      { label: "Model", value: "model" },
+      { label: "Videographer", value: "videographer" },
+      { label: "Content Creator", value: "content-creator" },
+      { label: "Stylist", value: "stylist" },
+      { label: "Designer", value: "designer" },
+      { label: "Creative Director", value: "creative-director" },
+    ],
+  },
+  {
+    title: "Business",
+    options: [
+      { label: "Clothing Brand", value: "clothing-brand" },
+      { label: "Agency", value: "agency" },
+      { label: "Publisher", value: "publisher" },
+      { label: "Photography Business", value: "photography-business" },
+      { label: "Other", value: "other" },
+    ],
+  },
+];
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
@@ -388,6 +476,9 @@ const styles = StyleSheet.create({
     borderColor: "#23232B",
   },
   sheetTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 12 },
+  fieldLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "800", marginTop: 6, marginBottom: 6, letterSpacing: 0.4 },
+  textFieldWrap: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 10 },
+  textField: { color: "#E5E7EB", fontSize: 14, paddingHorizontal: 12, paddingVertical: 12 },
   sheetActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
   resetBtn: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth },
   resetText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700" },
@@ -397,6 +488,7 @@ const styles = StyleSheet.create({
   ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#14141C", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   ddLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   ddMenu: { marginTop: 8, backgroundColor: "#14141C", borderRadius: 10, overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  ddSectionLabel: { color: "#9CA3AF", fontSize: 11, fontWeight: "800", paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, letterSpacing: 0.6 },
   ddItem: { paddingVertical: 12, paddingHorizontal: 12 },
   ddItemText: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" },
 });
