@@ -114,6 +114,32 @@ function Dropdown({
   );
 }
 
+function formatRelativeTime(iso?: string) {
+  if (!iso) return "";
+  try {
+    const posted = new Date(iso).getTime();
+    if (Number.isNaN(posted)) return "";
+    const now = Date.now();
+    const diffMs = Math.max(0, now - posted);
+    const sec = Math.floor(diffMs / 1000);
+    if (sec < 5) return "Just now";
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    const day = Math.floor(hr / 24);
+    if (day < 7) return `${day}d ago`;
+    const date = new Date(iso);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  } catch (e) {
+    return "";
+  }
+}
+
 export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
@@ -267,7 +293,7 @@ export default function OpportunitiesScreen() {
                 <Image source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
                   <Text numberOfLines={1} style={styles.postUsername}>{display.username}</Text>
-                  <Text numberOfLines={1} style={styles.postTime}>Just now</Text>
+                  <Text numberOfLines={1} style={styles.postTime}>{formatRelativeTime(item.created_at)}</Text>
                 </View>
               </Pressable>
 
