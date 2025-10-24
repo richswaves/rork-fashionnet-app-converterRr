@@ -142,33 +142,59 @@ export default function NetworkScreen() {
         {!!topErr && (
           <Text style={styles.errorText} testID="top-error">Failed to load members</Text>
         )}
-        <View style={styles.grid}>
-          {(topProfiles ?? []).map((m, idx) => { const horizontalPadding = 12 * 2; const gap = 12; const cardW = Math.floor((windowWidth - horizontalPadding - gap) / 2);
-            return (
-            <Pressable key={m.id} style={[styles.card, { width: cardW }, idx % 2 === 0 ? { marginRight: 12 } : null]} testID={`top-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
-              <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{m.name}</Text>
-                {!!m.location && (
-                  <View style={styles.locationRow}>
-                    <MapPin color="#9CA3AF" size={14} />
-                    <Text numberOfLines={1} style={styles.locationText}>{m.location}</Text>
+        {(() => {
+          const items = topProfiles ?? [];
+          const pagePadding = 12 * 2;
+          const gap = 12;
+          const pageWidth = Math.floor(windowWidth - pagePadding);
+          const cardW = Math.floor((pageWidth - gap) / 2);
+          const pages: typeof items[] = [];
+          for (let i = 0; i < items.length; i += 4) pages.push(items.slice(i, i + 4));
+          return (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.topPager}
+              testID="top-pager"
+            >
+              {pages.map((page, pIdx) => (
+                <View key={`page-${pIdx}`} style={[styles.page, { width: pageWidth }]}> 
+                  <View style={styles.grid}> 
+                    {page.map((m, idx) => (
+                      <Pressable
+                        key={m.id}
+                        style={[styles.card, { width: cardW }, idx % 2 === 0 ? { marginRight: 12 } : null]}
+                        testID={`top-${m.id}`}
+                        onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}
+                      >
+                        <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
+                        <View style={styles.cardBody}>
+                          <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>
+                          {!!m.location && (
+                            <View style={styles.locationRow}>
+                              <MapPin color="#9CA3AF" size={14} />
+                              <Text numberOfLines={1} style={styles.locationText}>{m.location}</Text>
+                            </View>
+                          )}
+                          <Pressable
+                            onPress={() => toggleFollow(m.id)}
+                            style={[styles.followBtn, following[m.id] && styles.followBtnActive]}
+                            testID={`follow-${m.id}`}
+                          >
+                            <Text style={[styles.followLabel, following[m.id] && styles.followLabelActive]}>
+                              {following[m.id] ? "Following" : "Follow"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </Pressable>
+                    ))}
                   </View>
-                )}
-                <Pressable
-                  onPress={() => toggleFollow(m.id)}
-                  style={[styles.followBtn, following[m.id] && styles.followBtnActive]}
-                  testID={`follow-${m.id}`}
-                >
-                  <Text style={[styles.followLabel, following[m.id] && styles.followLabelActive]}>
-                    {following[m.id] ? "Following" : "Follow"}
-                  </Text>
-                </Pressable>
-              </View>
-            </Pressable>
-            );
-          })}
-        </View>
+                </View>
+              ))}
+            </ScrollView>
+          );
+        })()}
 
         <Text style={[styles.h1, { marginTop: 8 }]}>New to the Network</Text>
         {loadingNew && (
@@ -248,8 +274,10 @@ const styles = StyleSheet.create({
   h1: { color: "#E5E7EB", fontSize: 24, fontWeight: "900", marginTop: 16, marginBottom: 12 },
 
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start" },
+  page: { marginRight: 12 },
+  topPager: { paddingRight: 12 },
   card: { backgroundColor: "#121218", borderRadius: 16, overflow: "hidden", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
-  cardImage: { width: "100%", height: 200 },
+  cardImage: { width: "100%", height: 140 },
   cardBody: { padding: 12 },
   cardTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800", marginBottom: 6 },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 8 },
