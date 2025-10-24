@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Building2, Filter, MapPin, ThumbsUp } from "lucide-react-native";
+import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 
@@ -25,9 +25,67 @@ interface OpportunityRow {
   profiles?: ProfileRow;
 }
 
+function Dropdown({
+  label,
+  options,
+  value,
+  onChange,
+  testID,
+}: {
+  label: string;
+  options: string[];
+  value: string | null;
+  onChange: (val: string | null) => void;
+  testID: string;
+}) {
+  const [open, setOpen] = useState<boolean>(false);
+  return (
+    <View style={styles.ddContainer} testID={`${testID}-container`}>
+      <Pressable
+        style={styles.ddHeader}
+        onPress={() => setOpen((s) => !s)}
+        testID={`${testID}-toggle`}
+      >
+        <Text style={styles.ddLabel}>{value ?? label}</Text>
+        {open ? <ChevronUp color="#E5E7EB" size={18} /> : <ChevronDown color="#E5E7EB" size={18} />}
+      </Pressable>
+      {open && (
+        <View style={styles.ddMenu} testID={`${testID}-menu`}>
+          <Pressable
+            onPress={() => {
+              onChange(null);
+              setOpen(false);
+            }}
+            style={styles.ddItem}
+            testID={`${testID}-clear`}
+          >
+            <Text style={styles.ddItemText}>Any</Text>
+          </Pressable>
+          {options.map((opt) => (
+            <Pressable
+              key={opt}
+              onPress={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
+              style={styles.ddItem}
+              testID={`${testID}-opt-${opt}`}
+            >
+              <Text style={styles.ddItemText}>{opt}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [type, setType] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
@@ -50,7 +108,7 @@ export default function OpportunitiesScreen() {
     <View style={container} testID="opportunities-screen">
       <View style={styles.header}>
         <Text style={styles.h1}>Opportunities</Text>
-        <Pressable style={styles.filterBtn} onPress={() => {}} testID="opp-filter">
+        <Pressable style={styles.filterBtn} onPress={() => setShowFilters(true)} testID="opp-filter">
           <Filter color="#E5E7EB" size={18} />
           <Text style={styles.filterText}>Filters</Text>
         </Pressable>
@@ -104,6 +162,55 @@ export default function OpportunitiesScreen() {
           );
         }}
       />
+
+      <Modal
+        visible={showFilters}
+        transparent
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setShowFilters(false)} testID="filters-backdrop" />
+        <View style={styles.sheet} testID="filters-sheet">
+          <Text style={styles.sheetTitle}>Filters</Text>
+          <Dropdown
+            label="Type"
+            options={["Full-time", "Part-time", "Contract", "Internship"]}
+            value={type}
+            onChange={setType}
+            testID="dd-type"
+          />
+          <Dropdown
+            label="Location"
+            options={["Remote", "Hybrid", "On-site"]}
+            value={location}
+            onChange={setLocation}
+            testID="dd-location"
+          />
+
+          <View style={styles.sheetActions}>
+            <Pressable
+              style={styles.resetBtn}
+              onPress={() => {
+                setType(null);
+                setLocation(null);
+              }}
+              testID="filters-reset"
+            >
+              <Text style={styles.resetText}>Reset</Text>
+            </Pressable>
+            <Pressable
+              style={styles.applyFiltersBtn}
+              onPress={() => {
+                setShowFilters(false);
+                console.log("apply filters", { type, location });
+              }}
+              testID="filters-apply"
+            >
+              <Text style={styles.applyFiltersText}>Apply</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -121,7 +228,7 @@ const styles = StyleSheet.create({
   filterBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 8 as const,
     backgroundColor: "#121218",
     borderColor: "#23232B",
     borderWidth: StyleSheet.hairlineWidth,
@@ -142,14 +249,39 @@ const styles = StyleSheet.create({
   cover: { width: "100%", height: 160 },
   body: { padding: 12 },
   title: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginBottom: 6 },
-  row: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  row: { flexDirection: "row", alignItems: "center", gap: 6 as const, marginBottom: 4 },
   metaText: { color: "#9CA3AF", fontSize: 12, flexShrink: 1 },
   footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
-  upvote: { flexDirection: "row", alignItems: "center", gap: 6 },
+  upvote: { flexDirection: "row", alignItems: "center", gap: 6 as const },
   upvoteText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
   upvoteActive: { color: "#10B981" },
   applyBtn: { backgroundColor: "#E5E7EB", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   applyText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
   loaderRow: { paddingVertical: 10, alignItems: "center" },
   errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },
+  backdrop: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)" },
+  sheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#0F0F15",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+  },
+  sheetTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 12 },
+  sheetActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
+  resetBtn: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth },
+  resetText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700" },
+  applyFiltersBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB" },
+  applyFiltersText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
+  ddContainer: { marginBottom: 10 },
+  ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#14141C", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  ddLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
+  ddMenu: { marginTop: 8, backgroundColor: "#14141C", borderRadius: 10, overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  ddItem: { paddingVertical: 12, paddingHorizontal: 12 },
+  ddItemText: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" },
 });
