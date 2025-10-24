@@ -1,23 +1,32 @@
-import React from "react";
-import { Redirect } from "expo-router";
+import React, { useEffect, useRef } from "react";
+import { useRouter } from "expo-router";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useProfile } from "@/contexts/ProfileContext";
 
 export default function Index() {
   const { session, isLoading } = useProfile();
+  const router = useRouter();
+  const didNavigate = useRef<boolean>(false);
 
-  if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (isLoading || didNavigate.current) return;
+    const target = session ? "/(tabs)/opportunities" : "/login";
+    const id = setTimeout(() => {
+      try {
+        router.replace(target as any);
+        didNavigate.current = true;
+      } catch (e) {
+        console.log("Deferred navigation error", e);
+      }
+    }, 0);
+    return () => clearTimeout(id);
+  }, [isLoading, session, router]);
 
-  if (session) {
-    return <Redirect href="/(tabs)/opportunities" />;
-  }
-  return <Redirect href="/login" />;
+  return (
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color="#8B5CF6" />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
