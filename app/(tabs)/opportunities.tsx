@@ -198,7 +198,7 @@ export default function OpportunitiesScreen() {
   return (
     <View style={container} testID="opportunities-screen">
       <View style={styles.topBar}>
-        <Pressable style={styles.topProfile} testID="opp-top-profile" onPress={() => console.log("open profile") }>
+        <Pressable style={styles.topProfile} testID="opp-top-profile" onPress={() => router.push("/profile/edit") }>
           <Image
             source={{ uri: resolvedProfile.avatarUrl }}
             style={styles.topAvatar}

@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View, Image } from "react-native";
 import { ArrowLeft, Bell, LogOut, Plus, Search, User } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import Colors from "@/constants/colors";
 
 export type AppView = "home" | "jobs" | "profile" | "messages" | "applicants" | "analytics" | "network" | "mynetwork";
@@ -57,6 +58,7 @@ const Navigation: React.FC<NavigationProps> = ({
   onLogout,
 }) => {
   const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
+  const router = useRouter();
 
   const name = profileData?.full_name ?? "User";
   const avatarUri = profileData?.profile_picture || AVATAR_PLACEHOLDER;
@@ -66,8 +68,12 @@ const Navigation: React.FC<NavigationProps> = ({
 
   const handleAvatarPress = useCallback(() => {
     console.log("Navigation: avatar pressed");
-    setCurrentView("profile");
-  }, [setCurrentView]);
+    try {
+      router.push("/profile/edit");
+    } catch (e) {
+      setCurrentView("profile");
+    }
+  }, [router, setCurrentView]);
 
   const handleBellPress = useCallback(() => {
     console.log("Navigation: bell pressed");

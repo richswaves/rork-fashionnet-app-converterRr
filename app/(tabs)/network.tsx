@@ -86,7 +86,7 @@ export default function NetworkScreen() {
   return (
     <View style={containerStyle} testID="network-screen">
       <View style={styles.topBar}>
-        <Pressable style={styles.profile} testID="top-profile" onPress={() => console.log("profile")}>
+        <Pressable style={styles.profile} testID="top-profile" onPress={() => router.push("/profile/edit")}>
           <Image source={{ uri: resolvedProfile.avatarUrl }} style={styles.avatar} />
           <Text style={styles.profileText}>{resolvedProfile.displayName}</Text>
         </Pressable>
