@@ -206,21 +206,39 @@ export default function EditProfileScreen() {
   async function onSave() {
     try {
       console.log("[onSave] Starting save process");
+      console.log("[onSave] pendingAvatar:", !!pendingAvatar, pendingAvatar?.uri?.substring(0, 50));
+      console.log("[onSave] pendingBanner:", !!pendingBanner, pendingBanner?.uri?.substring(0, 50));
+      console.log("[onSave] avatarUrl:", avatarUrl?.substring(0, 50));
+      console.log("[onSave] bannerUrl:", bannerUrl?.substring(0, 50));
+      
       const updates: Record<string, any> = {};
       let finalAvatarUrl = avatarUrl?.trim() ?? "";
       let finalBannerUrl = bannerUrl?.trim() ?? "";
 
       if (pendingAvatar) {
         console.log("[onSave] Uploading pending avatar to Supabase");
-        finalAvatarUrl = await uploadToSupabase(pendingAvatar, "avatars");
-        console.log("[onSave] Avatar uploaded:", finalAvatarUrl);
-        setPendingAvatar(null);
+        try {
+          finalAvatarUrl = await uploadToSupabase(pendingAvatar, "avatars");
+          console.log("[onSave] Avatar uploaded successfully:", finalAvatarUrl);
+          setAvatarUrl(finalAvatarUrl);
+          setPendingAvatar(null);
+        } catch (uploadError: any) {
+          console.error("[onSave] Avatar upload failed:", uploadError);
+          throw new Error(`Failed to upload profile picture: ${uploadError.message || 'Unknown error'}`);
+        }
       }
+      
       if (pendingBanner) {
         console.log("[onSave] Uploading pending banner to Supabase");
-        finalBannerUrl = await uploadToSupabase(pendingBanner, "banners");
-        console.log("[onSave] Banner uploaded:", finalBannerUrl);
-        setPendingBanner(null);
+        try {
+          finalBannerUrl = await uploadToSupabase(pendingBanner, "banners");
+          console.log("[onSave] Banner uploaded successfully:", finalBannerUrl);
+          setBannerUrl(finalBannerUrl);
+          setPendingBanner(null);
+        } catch (uploadError: any) {
+          console.error("[onSave] Banner upload failed:", uploadError);
+          throw new Error(`Failed to upload background image: ${uploadError.message || 'Unknown error'}`);
+        }
       }
 
       if (fullName !== (profile?.full_name ?? "")) updates.full_name = fullName.trim();
@@ -248,10 +266,14 @@ export default function EditProfileScreen() {
         router.back();
         return;
       }
+      
       console.log("[onSave] Updating profile with:", updates);
       await updateProfileAsync(updates as any);
-      console.log("[onSave] Profile updated successfully");
-      router.back();
+      console.log("[onSave] Profile updated successfully, navigating back");
+      
+      setTimeout(() => {
+        router.back();
+      }, 100);
     } catch (e: any) {
       console.error("[onSave] Save error:", e);
       const msg = typeof e?.message === "string" ? e.message : "Failed to update profile";
@@ -265,7 +287,12 @@ export default function EditProfileScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
         <View style={styles.coverWrap}>
-          <Image source={{ uri: bannerUrl || "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" }} style={styles.cover} resizeMode="cover" />
+          <Image 
+            key={bannerUrl}
+            source={{ uri: bannerUrl || "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" }} 
+            style={styles.cover} 
+            resizeMode="cover" 
+          />
           <View style={styles.coverOverlay} />
           <LinearGradient
             colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.25)", "#0B0B0F"]}
@@ -284,7 +311,11 @@ export default function EditProfileScreen() {
           </Pressable>
           <View style={styles.avatarFloating}>
             <Pressable accessibilityRole="button" accessibilityLabel="Change profile picture" onPress={onPickAvatar} style={styles.avatarWrap} testID="avatar-press">
-              <Image source={{ uri: avatarUrl || resolvedProfile.avatarUrl }} style={styles.avatar} />
+              <Image 
+                key={avatarUrl}
+                source={{ uri: avatarUrl || resolvedProfile.avatarUrl }} 
+                style={styles.avatar} 
+              />
               <Pressable testID="edit-avatar" onPress={onPickAvatar} style={styles.editFab}>
                 <Pencil color="#0B0B0F" size={16} />
               </Pressable>

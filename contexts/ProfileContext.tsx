@@ -1,5 +1,5 @@
 import createContextHook from "@nkzw/create-context-hook";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbUpsert, getSupabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
@@ -57,6 +57,7 @@ function resolveFromSession(profile: Profile | null, session: any): ResolvedProf
 }
 
 export const [ProfileProvider, useProfile] = createContextHook(() => {
+  const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [session, setSession] = useState<any>(null);
 
@@ -108,6 +109,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     mutationFn: async (updates: Partial<Profile>) => {
       if (!currentUserId) throw new Error("No user ID");
 
+      console.log("[ProfileContext] Starting profile update:", updates);
       const safeProfession = (updates.profession ?? profileQuery.data?.profession ?? "other") as string;
       const safeUsername = (updates.username ?? profileQuery.data?.username ?? resolved.username ?? "user") as string;
       const safeFullName = (updates.full_name ?? profileQuery.data?.full_name ?? resolved.displayName ?? safeUsername) as string;
@@ -129,11 +131,19 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates as any).profile_customization !== undefined ? { profile_customization: (updates as any).profile_customization as ProfileCustomization | null } : {},
       };
 
-      await sbUpsert("profiles", payload, "user_id");
+      console.log("[ProfileContext] Upserting profile payload:", payload);
+      const result = await sbUpsert("profiles", payload, "user_id");
+      console.log("[ProfileContext] Upsert complete:", result);
       return payload;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("[ProfileContext] Profile update successful, invalidating queries");
+      queryClient.invalidateQueries({ queryKey: ["profile", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       profileQuery.refetch();
+    },
+    onError: (error) => {
+      console.error("[ProfileContext] Profile update failed:", error);
     },
   });
 
