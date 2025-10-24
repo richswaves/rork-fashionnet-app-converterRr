@@ -200,12 +200,12 @@ export default function EditProfileScreen() {
             <ImageIcon color="#0B0B0F" size={16} />
           </Pressable>
           <View style={styles.avatarFloating}>
-            <View style={styles.avatarWrap}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Change profile picture" onPress={onPickAvatar} style={styles.avatarWrap} testID="avatar-press">
               <Image source={{ uri: avatarUrl }} style={styles.avatar} />
               <Pressable testID="edit-avatar" onPress={onPickAvatar} style={styles.editFab}>
                 <Pencil color="#0B0B0F" size={16} />
               </Pressable>
-            </View>
+            </Pressable>
           </View>
         </View>
 
