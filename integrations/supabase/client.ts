@@ -14,10 +14,10 @@ function resolveEnv(key: string): string | undefined {
   return val;
 }
 
-const RAW_SUPABASE_URL = resolveEnv("EXPO_PUBLIC_SUPABASE_URL") || "https://mnqgmpvkdmgmyoqhgswc.supabase.co";
-const RAW_SUPABASE_ANON_KEY = resolveEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ucWdtcHZrZG1nbXlvcWhnc3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMTM0NTksImV4cCI6MjA2Njg4OTQ1OX0.JeTVfB0c5MDmgSElxpkI9eVW6Ca7QLTNj3p-Vgq2VdE";
+const RAW_SUPABASE_URL = resolveEnv("EXPO_PUBLIC_SUPABASE_URL");
+const RAW_SUPABASE_ANON_KEY = resolveEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY");
 
-function normalizeUrl(url: string): string | null {
+function normalizeUrl(url?: string): string | null {
   try {
     if (!url) return null;
     const trimmed = url.trim();
@@ -33,7 +33,7 @@ const SUPABASE_URL = normalizeUrl(RAW_SUPABASE_URL);
 const SUPABASE_ANON_KEY = (RAW_SUPABASE_ANON_KEY ?? "").trim();
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn("Supabase env missing or invalid. Ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set.");
+  console.warn("Supabase env missing or invalid. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your project values.");
 }
 
 export type RestHeaders = {
