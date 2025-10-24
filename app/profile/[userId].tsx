@@ -215,11 +215,10 @@ export default function UserProfileScreen() {
                     Linking.openURL(fullUrl).catch(() => {});
                   }
                 }}
-                style={styles.socialBtn}
+                style={styles.socialIconBtn}
                 testID="social-instagram"
               >
-                <Instagram color="#C13584" size={20} />
-                <Text style={styles.socialLabel}>Instagram</Text>
+                <Instagram color="#fff" size={22} />
               </Pressable>
             )}
             {data.social_links.youtube && (
@@ -233,11 +232,10 @@ export default function UserProfileScreen() {
                     Linking.openURL(fullUrl).catch(() => {});
                   }
                 }}
-                style={styles.socialBtn}
+                style={styles.socialIconBtn}
                 testID="social-youtube"
               >
-                <Youtube color="#FF0000" size={20} />
-                <Text style={styles.socialLabel}>YouTube</Text>
+                <Youtube color="#fff" size={22} />
               </Pressable>
             )}
           </View>
@@ -277,9 +275,8 @@ const styles = StyleSheet.create({
   followText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
   followTextActive: { color: "#0B0B0F" },
   bio: { color: "#E5E7EB", fontSize: 14, marginTop: 14, lineHeight: 20 },
-  socialRow: { flexDirection: "row", gap: 10, marginTop: 16, flexWrap: "wrap" },
-  socialBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: "#14141C", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
-  socialLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
+  socialRow: { flexDirection: "row", gap: 12, marginTop: 16, flexWrap: "wrap" },
+  socialIconBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   statsRow: { flexDirection: "row", gap: 24, marginTop: 16 },
   statItem: { alignItems: "center" },
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
