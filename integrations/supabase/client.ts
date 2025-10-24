@@ -42,13 +42,29 @@ export type RestHeaders = {
   Prefer?: string;
 };
 
-export function getRestHeaders(): RestHeaders {
+export async function getAuthHeaders(prefer?: RestHeaders["Prefer"]): Promise<RestHeaders> {
   const { anonKey } = getEnv();
+  let authHeader = `Bearer ${anonKey}`;
+  try {
+    const supabase = getSupabase();
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (token && typeof token === "string" && token.length > 0) {
+        authHeader = `Bearer ${token}`;
+      }
+    }
+  } catch (e) {
+    if (__DEV__) {
+      console.warn("Falling back to anon key for REST calls", e);
+    }
+  }
   return {
     apikey: anonKey,
-    Authorization: `Bearer ${anonKey}`,
+    Authorization: authHeader,
     "Content-Type": "application/json",
-  };
+    ...(prefer ? { Prefer: prefer } : {}),
+  } as RestHeaders;
 }
 
 function assertConfigured() {
@@ -67,7 +83,7 @@ export async function sbSelect<T = unknown>(
 ): Promise<T[]> {
   assertConfigured();
   const { url } = getEnv();
-  const headers = getRestHeaders();
+  const headers = await getAuthHeaders();
   const { select = "*", query = {}, limit, order } = opts;
   const composed = new URL(`${url}/rest/v1/${table}`);
   composed.searchParams.set("select", select);
@@ -87,7 +103,7 @@ export async function sbSelect<T = unknown>(
 export async function sbInsert<T = unknown>(table: string, rows: T | T[], prefer: "return=representation" | "return=minimal" = "return=representation") {
   assertConfigured();
   const { url } = getEnv();
-  const headers = { ...getRestHeaders(), Prefer: prefer } as RestHeaders;
+  const headers = await getAuthHeaders(prefer);
   const res = await fetch(`${url}/rest/v1/${table}`, {
     method: "POST",
     headers,
@@ -104,7 +120,7 @@ export async function sbInsert<T = unknown>(table: string, rows: T | T[], prefer
 export async function sbUpsert<T = unknown>(table: string, rows: T | T[], onConflict?: string) {
   assertConfigured();
   const { url } = getEnv();
-  const headers: RestHeaders = { ...getRestHeaders(), Prefer: "resolution=merge-duplicates,return=representation" };
+  const headers: RestHeaders = await getAuthHeaders("resolution=merge-duplicates,return=representation");
   const composed = new URL(`${url}/rest/v1/${table}`);
   if (onConflict) composed.searchParams.set("on_conflict", onConflict);
   const res = await fetch(composed.toString(), {
@@ -125,7 +141,8 @@ export async function sbDelete(table: string, match: Record<string, string | num
   const { url } = getEnv();
   const composed = new URL(`${url}/rest/v1/${table}`);
   Object.entries(match).forEach(([k, v]) => composed.searchParams.set(k, `eq.${v}`));
-  const res = await fetch(composed.toString(), { method: "DELETE", headers: getRestHeaders() });
+  const headers = await getAuthHeaders();
+  const res = await fetch(composed.toString(), { method: "DELETE", headers });
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase delete error", res.status, text);
