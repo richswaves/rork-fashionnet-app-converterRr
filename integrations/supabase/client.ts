@@ -95,7 +95,8 @@ export async function sbSelect<T = unknown>(
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase select error", res.status, text);
-    throw new Error(`Supabase error ${res.status}`);
+    const msg = text && text.length < 500 ? text : `Supabase error ${res.status}`;
+    throw new Error(msg);
   }
   return (await res.json()) as T[];
 }
@@ -112,7 +113,8 @@ export async function sbInsert<T = unknown>(table: string, rows: T | T[], prefer
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase insert error", res.status, text);
-    throw new Error(`Supabase error ${res.status}`);
+    const msg = text && text.length < 500 ? text : `Supabase error ${res.status}`;
+    throw new Error(msg);
   }
   return prefer === "return=representation" ? res.json() : null;
 }
@@ -131,7 +133,8 @@ export async function sbUpsert<T = unknown>(table: string, rows: T | T[], onConf
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase upsert error", res.status, text);
-    throw new Error(`Supabase error ${res.status}`);
+    const msg = text && text.length < 500 ? text : `Supabase error ${res.status}`;
+    throw new Error(msg);
   }
   return res.json();
 }
@@ -146,7 +149,8 @@ export async function sbDelete(table: string, match: Record<string, string | num
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase delete error", res.status, text);
-    throw new Error(`Supabase error ${res.status}`);
+    const msg = text && text.length < 500 ? text : `Supabase error ${res.status}`;
+    throw new Error(msg);
   }
   return true;
 }

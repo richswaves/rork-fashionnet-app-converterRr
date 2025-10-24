@@ -25,7 +25,7 @@ export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getDisplayForProfile, currentUserId, updateProfile } = useProfile();
+  const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [following, setFollowing] = useState<boolean>(false);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
@@ -105,7 +105,7 @@ export default function UserProfileScreen() {
       const asset = await pickFromLibrary();
       if (!asset) return;
       const url = await uploadToSupabase({ uri: asset.uri, fileName: asset.fileName ?? null, mimeType: (asset as any).mimeType ?? null });
-      updateProfile({ profile_picture: url } as any);
+      await updateProfileAsync({ profile_picture: url } as any);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to update avatar";
       Alert.alert("Error", msg);

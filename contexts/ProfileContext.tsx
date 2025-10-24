@@ -168,8 +168,9 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     isLoading: profileQuery.isLoading,
     error: profileQuery.error,
     updateProfile: updateProfileMutation.mutate,
+    updateProfileAsync: updateProfileMutation.mutateAsync,
     isUpdating: updateProfileMutation.isPending,
     login,
     logout,
-  }), [currentUserId, session, profileQuery.data, resolved, getDisplayForProfile, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.isPending, login, logout]);
+  }), [currentUserId, session, profileQuery.data, resolved, getDisplayForProfile, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.mutateAsync, updateProfileMutation.isPending, login, logout]);
 });

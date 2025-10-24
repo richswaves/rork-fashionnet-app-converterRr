@@ -11,7 +11,7 @@ import { getSupabase } from "@/integrations/supabase/client";
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, isUpdating, updateProfile, resolvedProfile } = useProfile();
+  const { profile, isUpdating, updateProfileAsync, resolvedProfile } = useProfile();
 
   const [fullName, setFullName] = useState<string>(profile?.full_name ?? "");
   const [username, setUsername] = useState<string>(profile?.username ?? resolvedProfile.username ?? "");
@@ -168,7 +168,7 @@ export default function EditProfileScreen() {
         router.back();
         return;
       }
-      updateProfile(updates as any);
+      await updateProfileAsync(updates as any);
       router.back();
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to update profile";
