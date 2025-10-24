@@ -184,11 +184,11 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     if (!p) return resolved;
     if (p.user_id && session?.user?.id && p.user_id === session.user.id) return resolved;
 
-    const hasUsername = p.username && p.username.trim().length > 0;
+    const hasUsername = p.username && p.username.trim().length > 0 && !p.username.startsWith("user_");
     const hasFullName = p.full_name && p.full_name.trim().length > 0;
     
     const derivedDisplay = hasFullName ? p.full_name : (hasUsername ? p.username : "User");
-    const derivedUsername = hasUsername ? p.username : (hasFullName ? p.full_name!.replace(/\s+/g, "").toLowerCase() : "user");
+    const derivedUsername = hasUsername ? p.username : (hasFullName ? p.full_name!.replace(/\s+/g, "").toLowerCase() : p.user_id || "user");
     const derivedAvatar = p.profile_picture || initialsAvatar(derivedDisplay || "User");
 
     const displayName = String(derivedDisplay);
