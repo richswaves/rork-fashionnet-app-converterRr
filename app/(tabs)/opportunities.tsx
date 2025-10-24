@@ -265,7 +265,7 @@ export default function OpportunitiesScreen() {
               <Pressable style={styles.postHeader} onPress={() => { const uid = item.profiles?.user_id ?? item.user_id; if (uid) { router.push({ pathname: "/profile/[userId]", params: { userId: uid } }); } }} testID={`opp-user-${item.profiles?.user_id ?? item.user_id}`}>
                 <Image source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
-                  <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
+                  <Text numberOfLines={1} style={styles.postUsername}>{display.username}</Text>
                   <Text numberOfLines={1} style={styles.postTime}>Just now</Text>
                 </View>
               </Pressable>

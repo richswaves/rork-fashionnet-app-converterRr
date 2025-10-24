@@ -147,12 +147,12 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     };
 
     const baseName = !isGeneric(p.full_name) ? p.full_name : undefined;
-    const derivedDisplay = baseName ?? p.username ?? resolved.displayName;
-    const derivedUsername = p.username ?? (baseName ? baseName.replace(/\s+/g, "").toLowerCase() : resolved.username);
-    const derivedAvatar = p.profile_picture ?? initialsAvatar(derivedDisplay ?? derivedUsername ?? "User");
+    const derivedUsername = p.username || (baseName ? baseName.replace(/\s+/g, "").toLowerCase() : undefined) || "user";
+    const derivedDisplay = baseName || p.username || derivedUsername;
+    const derivedAvatar = p.profile_picture || initialsAvatar(derivedDisplay || derivedUsername || "User");
 
-    const displayName = String(derivedDisplay ?? "User");
-    const username = String(derivedUsername ?? "user");
+    const displayName = String(derivedDisplay || "User");
+    const username = String(derivedUsername || "user");
     const avatarUrl = String(derivedAvatar);
 
     return { user_id: p.user_id, displayName, username, avatarUrl } as ResolvedProfile;
