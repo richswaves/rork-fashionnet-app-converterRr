@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Network, BriefcaseBusiness } from "lucide-react-native";
+import { Network, BriefcaseBusiness, MessageSquare } from "lucide-react-native";
 import React from "react";
 
 import Colors from "@/constants/colors";
@@ -10,15 +10,24 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: Colors.light.tint,
-        tabBarInactiveTintColor: "#6B7280",
+        tabBarInactiveTintColor: Colors.light.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: "#0C0C12",
-          borderTopColor: "#23232B",
+          backgroundColor: Colors.light.background,
+          borderTopColor: Colors.light.border,
           borderTopWidth: 1,
         },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "700" },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "800" },
       }}
     >
+      <Tabs.Screen
+        name="opportunities"
+        options={{
+          title: "Opportunities",
+          tabBarIcon: ({ color, size }) => (
+            <BriefcaseBusiness color={color} size={size ?? 20} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="network"
         options={{
@@ -27,12 +36,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="opportunities"
+        name="messages"
         options={{
-          title: "Opportunities",
-          tabBarIcon: ({ color, size }) => (
-            <BriefcaseBusiness color={color} size={size ?? 20} />
-          ),
+          title: "Messages",
+          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size ?? 20} />,
         }}
       />
     </Tabs>

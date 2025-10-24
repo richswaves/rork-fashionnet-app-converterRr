@@ -4,8 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Redirect href="/network" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
+      <Redirect href="/opportunities" />
     </SafeAreaView>
   );
 }
