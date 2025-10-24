@@ -131,8 +131,8 @@ function formatRelativeTime(iso?: string) {
     const day = Math.floor(hr / 24);
     if (day < 7) return `${day}d ago`;
     const date = new Date(iso);
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
     return `${m}/${d}`;
   } catch (e) {
     return "";
