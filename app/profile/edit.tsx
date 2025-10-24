@@ -3,7 +3,7 @@ import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text,
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon } from "lucide-react-native";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -15,8 +15,20 @@ export default function EditProfileScreen() {
   const [location, setLocation] = useState<string>(profile?.location ?? "");
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "");
+  const [bannerUrl, setBannerUrl] = useState<string>(profile?.banner_image ?? "");
 
-  const [editing, setEditing] = useState<null | "name" | "location" | "bio" | "avatar" | "instagram" | "youtube" | "twitter" | "tiktok">(null);
+  const [editing, setEditing] = useState<
+    | null
+    | "name"
+    | "location"
+    | "bio"
+    | "avatar"
+    | "banner"
+    | "instagram"
+    | "youtube"
+    | "twitter"
+    | "tiktok"
+  >(null);
   const [temp, setTemp] = useState<string>("");
 
   const canSave = useMemo<boolean>(() => {
@@ -44,6 +56,9 @@ export default function EditProfileScreen() {
       case "avatar":
         setTemp(avatarUrl);
         break;
+      case "banner":
+        setTemp(bannerUrl);
+        break;
       default:
         setTemp("");
     }
@@ -56,6 +71,7 @@ export default function EditProfileScreen() {
     if (editing === "location") setLocation(val);
     if (editing === "bio") setBio(val);
     if (editing === "avatar") setAvatarUrl(val);
+    if (editing === "banner") setBannerUrl(val);
     setEditing(null);
   }
 
@@ -67,6 +83,7 @@ export default function EditProfileScreen() {
       if (location !== (profile?.location ?? "")) updates.location = location.trim();
       if (bio !== (profile?.bio ?? "")) updates.bio = bio.trim();
       if (avatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) updates.profile_picture = avatarUrl.trim();
+      if (bannerUrl !== (profile?.banner_image ?? "")) (updates as any).banner_image = bannerUrl.trim();
 
       if (Object.keys(updates).length === 0) {
         router.back();
@@ -90,15 +107,29 @@ export default function EditProfileScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
-        <View style={styles.hero}>
-          <View style={styles.heroGradient} />
-          <View style={styles.heroContent}>
+        <View style={styles.coverWrap}>
+          <Image source={{ uri: bannerUrl || "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" }} style={styles.cover} resizeMode="cover" />
+          <View style={styles.coverOverlay} />
+          <Pressable
+            testID="edit-banner"
+            onPress={() => openEditor("banner")}
+            style={[styles.coverEditFab, { top: 12 + insets.top }]}
+            accessibilityLabel="Edit background"
+          >
+            <ImageIcon color="#0B0B0F" size={16} />
+          </Pressable>
+          <View style={styles.avatarFloating}>
             <View style={styles.avatarWrap}>
               <Image source={{ uri: avatarUrl }} style={styles.avatar} />
               <Pressable testID="edit-avatar" onPress={() => openEditor("avatar")} style={styles.editFab}>
                 <Pencil color="#0B0B0F" size={16} />
               </Pressable>
             </View>
+          </View>
+        </View>
+
+        <View style={styles.hero}>
+          <View style={styles.heroContent}>
 
             <View style={styles.nameRow}>
               <Text style={styles.nameText}>{fullName || resolvedProfile.displayName || "Your name"}</Text>
@@ -176,6 +207,7 @@ export default function EditProfileScreen() {
               {editing === "location" && "Edit location"}
               {editing === "bio" && "Edit bio"}
               {editing === "avatar" && "Edit avatar URL"}
+              {editing === "banner" && "Edit background image URL"}
               {editing === "instagram" && "Instagram link"}
               {editing === "youtube" && "YouTube link"}
               {editing === "twitter" && "Twitter link"}
@@ -211,7 +243,12 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  hero: { width: "100%", paddingTop: 48, paddingBottom: 24 },
+  coverWrap: { width: "100%", height: 200, backgroundColor: "#111318" },
+  cover: { width: "100%", height: 200 },
+  coverOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#00000055" },
+  coverEditFab: { position: "absolute", right: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center" },
+  avatarFloating: { position: "absolute", bottom: -48, left: 0, right: 0, alignItems: "center" },
+  hero: { width: "100%", paddingTop: 64, paddingBottom: 24 },
   heroGradient: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#0B0B0F" },
   heroContent: { alignItems: "center", paddingHorizontal: 16 },
   avatarWrap: { width: 96, height: 96, borderRadius: 48, overflow: "hidden", borderWidth: 3, borderColor: "#0B0B0F", backgroundColor: "#111318" },

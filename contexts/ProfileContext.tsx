@@ -8,6 +8,7 @@ interface Profile {
   full_name?: string;
   username?: string;
   profile_picture?: string;
+  banner_image?: string;
   profession?: string;
   professions?: string[];
   location?: string;
