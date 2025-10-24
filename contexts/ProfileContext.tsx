@@ -1,7 +1,6 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { sbSelect, sbUpsert } from "@/integrations/supabase/client";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sbSelect, sbUpsert, supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 interface Profile {
@@ -19,11 +18,26 @@ interface Profile {
 
 export const [ProfileProvider, useProfile] = createContextHook(() => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem("current_user_id").then((id) => {
-      if (id) setCurrentUserId(id);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user?.id) {
+        setCurrentUserId(session.user.id);
+      }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user?.id) {
+        setCurrentUserId(session.user.id);
+      } else {
+        setCurrentUserId(undefined);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const profileQuery = useQuery<Profile | null>({
@@ -52,24 +66,30 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     },
   });
 
-  const setUserId = useCallback(async (userId: string) => {
-    await AsyncStorage.setItem("current_user_id", userId);
-    setCurrentUserId(userId);
+  const login = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
   }, []);
 
   const logout = useCallback(async () => {
-    await AsyncStorage.removeItem("current_user_id");
+    await supabase.auth.signOut();
     setCurrentUserId(undefined);
+    setSession(null);
   }, []);
 
   return useMemo(() => ({
     currentUserId,
+    session,
     profile: profileQuery.data ?? null,
     isLoading: profileQuery.isLoading,
     error: profileQuery.error,
     updateProfile: updateProfileMutation.mutate,
     isUpdating: updateProfileMutation.isPending,
-    setUserId,
+    login,
     logout,
-  }), [currentUserId, profileQuery.data, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.isPending, setUserId, logout]);
+  }), [currentUserId, session, profileQuery.data, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.isPending, login, logout]);
 });
