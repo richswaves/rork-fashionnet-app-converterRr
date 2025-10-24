@@ -17,8 +17,11 @@ export default function EditProfileScreen() {
   const [username, setUsername] = useState<string>(profile?.username ?? resolvedProfile.username ?? "");
   const [location, setLocation] = useState<string>(profile?.location ?? "");
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
-  const [avatarUrl, setAvatarUrl] = useState<string>(profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "");
-  const [bannerUrl, setBannerUrl] = useState<string>((profile as any)?.profile_customization?.backgroundImage ?? (Array.isArray((profile as any)?.model_photos) && (profile as any)?.model_photos?.length ? ((profile as any)?.model_photos?.[0] as string) : (Array.isArray((profile as any)?.portfolio_photos) && (profile as any)?.portfolio_photos?.length ? ((profile as any)?.portfolio_photos?.[0] as string) : "")));
+  const initialAvatar = profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "";
+  const initialBanner = (profile as any)?.profile_customization?.backgroundImage ?? (Array.isArray((profile as any)?.model_photos) && (profile as any)?.model_photos?.length ? ((profile as any)?.model_photos?.[0] as string) : (Array.isArray((profile as any)?.portfolio_photos) && (profile as any)?.portfolio_photos?.length ? ((profile as any)?.portfolio_photos?.[0] as string) : ""));
+  
+  const [avatarUrl, setAvatarUrl] = useState<string>(initialAvatar);
+  const [bannerUrl, setBannerUrl] = useState<string>(initialBanner);
   const [pendingAvatar, setPendingAvatar] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [pendingBanner, setPendingBanner] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
@@ -153,13 +156,18 @@ export default function EditProfileScreen() {
 
   async function onPickAvatar() {
     try {
-      console.log("pick avatar start");
+      console.log("[onPickAvatar] Starting image picker");
       const asset = await pickFromLibrary();
-      if (!asset) return;
+      if (!asset) {
+        console.log("[onPickAvatar] No asset selected");
+        return;
+      }
+      console.log("[onPickAvatar] Asset selected:", asset.uri);
       setPendingAvatar(asset);
-      const localPreview = asset.uri;
-      setAvatarUrl(localPreview);
+      setAvatarUrl(asset.uri);
+      console.log("[onPickAvatar] State updated with preview");
     } catch (e: any) {
+      console.error("[onPickAvatar] Error:", e);
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
       Alert.alert("Error", msg);
     }
@@ -167,13 +175,18 @@ export default function EditProfileScreen() {
 
   async function onPickBanner() {
     try {
-      console.log("pick banner start");
+      console.log("[onPickBanner] Starting image picker");
       const asset = await pickFromLibrary();
-      if (!asset) return;
+      if (!asset) {
+        console.log("[onPickBanner] No asset selected");
+        return;
+      }
+      console.log("[onPickBanner] Asset selected:", asset.uri);
       setPendingBanner(asset);
-      const localPreview = asset.uri;
-      setBannerUrl(localPreview);
+      setBannerUrl(asset.uri);
+      console.log("[onPickBanner] State updated with preview");
     } catch (e: any) {
+      console.error("[onPickBanner] Error:", e);
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
       Alert.alert("Error", msg);
     }
@@ -192,18 +205,21 @@ export default function EditProfileScreen() {
 
   async function onSave() {
     try {
+      console.log("[onSave] Starting save process");
       const updates: Record<string, any> = {};
       let finalAvatarUrl = avatarUrl?.trim() ?? "";
       let finalBannerUrl = bannerUrl?.trim() ?? "";
 
       if (pendingAvatar) {
-        console.log("[save] uploading pending avatar");
+        console.log("[onSave] Uploading pending avatar to Supabase");
         finalAvatarUrl = await uploadToSupabase(pendingAvatar, "avatars");
+        console.log("[onSave] Avatar uploaded:", finalAvatarUrl);
         setPendingAvatar(null);
       }
       if (pendingBanner) {
-        console.log("[save] uploading pending banner");
+        console.log("[onSave] Uploading pending banner to Supabase");
         finalBannerUrl = await uploadToSupabase(pendingBanner, "banners");
+        console.log("[onSave] Banner uploaded:", finalBannerUrl);
         setPendingBanner(null);
       }
 
@@ -213,25 +229,31 @@ export default function EditProfileScreen() {
       if (bio !== (profile?.bio ?? "")) updates.bio = bio.trim();
 
       if (finalAvatarUrl && finalAvatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) {
+        console.log("[onSave] Adding profile_picture to updates:", finalAvatarUrl);
         updates.profile_picture = finalAvatarUrl;
       }
 
-      if ((finalBannerUrl ?? "").length > 0) {
+      if ((finalBannerUrl ?? "").length > 0 && finalBannerUrl !== initialBanner) {
         const prev = (profile as any)?.profile_customization ?? {};
         updates.profile_customization = {
           ...prev,
           backgroundType: "image",
           backgroundImage: finalBannerUrl,
         };
+        console.log("[onSave] Adding profile_customization to updates:", updates.profile_customization);
       }
 
       if (Object.keys(updates).length === 0) {
+        console.log("[onSave] No changes to save");
         router.back();
         return;
       }
+      console.log("[onSave] Updating profile with:", updates);
       await updateProfileAsync(updates as any);
+      console.log("[onSave] Profile updated successfully");
       router.back();
     } catch (e: any) {
+      console.error("[onSave] Save error:", e);
       const msg = typeof e?.message === "string" ? e.message : "Failed to update profile";
       Alert.alert("Error", msg);
     }
