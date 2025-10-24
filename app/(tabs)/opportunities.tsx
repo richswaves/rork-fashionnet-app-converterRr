@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp } from "lucide-react-native";
+import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 
@@ -25,6 +25,14 @@ interface OpportunityRow {
   profiles?: ProfileRow;
 }
 
+const VIEW_OPTIONS = [
+  { key: "all" as const, label: "All Opportunities", Icon: Layers },
+  { key: "applied" as const, label: "Applied", Icon: CheckCircle2 },
+  { key: "posted" as const, label: "Posted by Me", Icon: Send },
+  { key: "saved" as const, label: "Saved", Icon: Bookmark },
+];
+
+type ViewKey = typeof VIEW_OPTIONS[number]["key"];
 function Dropdown({
   label,
   options,
@@ -86,17 +94,71 @@ export default function OpportunitiesScreen() {
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [type, setType] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
+  const [view, setView] = useState<ViewKey>("all");
+  const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
+  const currentUserId = undefined as string | undefined;
+
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
-    queryKey: ["opportunities", "all"],
+    queryKey: ["opportunities", view, currentUserId ?? "anon"],
     queryFn: async () => {
-      const rows = await sbSelect<OpportunityRow>("opportunities", {
-        select: "*,profiles:user_id(*)",
-        order: { column: "created_at", ascending: false },
-        limit: 50,
-      });
-      return rows;
+      switch (view) {
+        case "all": {
+          const rows = await sbSelect<OpportunityRow>("opportunities", {
+            select: "*,profiles:user_id(*)",
+            order: { column: "created_at", ascending: false },
+            limit: 50,
+          });
+          return rows;
+        }
+        case "posted": {
+          if (!currentUserId) return [];
+          const rows = await sbSelect<OpportunityRow>("opportunities", {
+            select: "*,profiles:user_id(*)",
+            query: { user_id: `eq.${currentUserId}` },
+            order: { column: "created_at", ascending: false },
+            limit: 50,
+          });
+          return rows;
+        }
+        case "applied": {
+          if (!currentUserId) return [];
+          const apps = await sbSelect<{ opportunity_id: string }>("applications", {
+            select: "opportunity_id",
+            query: { applicant_id: `eq.${currentUserId}` },
+            limit: 200,
+          });
+          const ids = apps.map((a) => a.opportunity_id).filter(Boolean);
+          if (ids.length === 0) return [];
+          const idList = `in.(${ids.join(",")})`;
+          const rows = await sbSelect<OpportunityRow>("opportunities", {
+            select: "*,profiles:user_id(*)",
+            query: { id: idList },
+            order: { column: "created_at", ascending: false },
+            limit: 200,
+          });
+          return rows;
+        }
+        case "saved": {
+          if (!currentUserId) return [];
+          const saves = await sbSelect<{ opportunity_id: string }>("saved_opportunities", {
+            select: "opportunity_id",
+            query: { user_id: `eq.${currentUserId}` },
+            limit: 200,
+          });
+          const ids = saves.map((s) => s.opportunity_id).filter(Boolean);
+          if (ids.length === 0) return [];
+          const idList = `in.(${ids.join(",")})`;
+          const rows = await sbSelect<OpportunityRow>("opportunities", {
+            select: "*,profiles:user_id(*)",
+            query: { id: idList },
+            order: { column: "created_at", ascending: false },
+            limit: 200,
+          });
+          return rows;
+        }
+      }
     },
   });
 
@@ -107,7 +169,15 @@ export default function OpportunitiesScreen() {
   return (
     <View style={container} testID="opportunities-screen">
       <View style={styles.header}>
-        <Text style={styles.h1}>Opportunities</Text>
+        <Pressable style={styles.viewSelector} onPress={() => setViewMenuOpen((s) => !s)} testID="opp-view-toggle">
+          {(() => {
+            const opt = VIEW_OPTIONS.find((o) => o.key === view);
+            return opt ? React.createElement(opt.Icon, { color: "#E5E7EB", size: 16 }) : null;
+          })()}
+          <Text style={styles.viewSelectorText}>{VIEW_OPTIONS.find((o) => o.key === view)?.label ?? "All Opportunities"}</Text>
+          <ChevronDown color="#E5E7EB" size={16} />
+        </Pressable>
+
         <Pressable style={styles.filterBtn} onPress={() => setShowFilters(true)} testID="opp-filter">
           <Filter color="#E5E7EB" size={18} />
           <Text style={styles.filterText}>Filters</Text>
@@ -121,6 +191,25 @@ export default function OpportunitiesScreen() {
       )}
       {!!error && (
         <Text style={styles.errorText} testID="opps-error">Failed to load opportunities</Text>
+      )}
+
+      {viewMenuOpen && (
+        <View style={styles.viewMenu} testID="opp-view-menu">
+          {VIEW_OPTIONS.map(({ key, label, Icon }) => (
+            <Pressable
+              key={key}
+              style={[styles.viewItem, view === key && styles.viewItemActive]}
+              onPress={() => {
+                setView(key);
+                setViewMenuOpen(false);
+              }}
+              testID={`opp-view-${key}`}
+            >
+              <Icon color="#E5E7EB" size={16} />
+              <Text style={styles.viewItemText}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
       )}
 
       <FlatList
@@ -218,13 +307,27 @@ export default function OpportunitiesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 8 as const,
   },
   h1: { color: "#E5E7EB", fontSize: 24, fontWeight: "900" },
+  viewSelector: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8 as const,
+    backgroundColor: "#121218",
+    borderColor: "#23232B",
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  viewSelectorText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800", flex: 1 },
   filterBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -237,6 +340,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   filterText: { color: "#E5E7EB", fontSize: 13, fontWeight: "700" },
+  viewMenu: {
+    marginHorizontal: 12,
+    marginTop: 8,
+    backgroundColor: "#14141C",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+    overflow: "hidden",
+  },
+  viewItem: { flexDirection: "row", alignItems: "center", gap: 10 as const, paddingHorizontal: 12, paddingVertical: 12 },
+  viewItemActive: { backgroundColor: "#16161D" },
+  viewItemText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   list: { padding: 12, paddingBottom: 24 },
   card: {
     backgroundColor: "#121218",
