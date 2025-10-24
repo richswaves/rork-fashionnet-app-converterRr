@@ -28,7 +28,7 @@ export default function LoginScreen() {
 
   const resolveEmailFromIdentifier = async (value: string): Promise<string> => {
     const trimmed = value.trim();
-    if (trimmed.includes("@")) return trimmed;
+    if (trimmed.includes("@")) return trimmed.toLowerCase();
     try {
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,username,email",
@@ -37,30 +37,34 @@ export default function LoginScreen() {
       });
       const email = rows[0]?.email ?? null;
       if (!email) throw new Error("No email linked to that username");
-      return email;
+      return String(email).trim().toLowerCase();
     } catch (e) {
       console.error("resolveEmailFromIdentifier error", e);
-      throw new Error("Username login requires the profile to store an email. Please use your email.");
+      throw new Error("We couldn't find an email for that username. Try your full email address.");
     }
   };
 
   const handleLogin = async () => {
-    if (!identifier || !password) {
+    const id = identifier.trim();
+    const pwd = password.trim();
+    if (!id || !pwd) {
       Alert.alert("Error", "Enter username or email and password");
       return;
     }
 
     setIsLoading(true);
     try {
-      const email = await resolveEmailFromIdentifier(identifier);
-      await login(email, password);
+      const email = await resolveEmailFromIdentifier(id);
+      await login(email, pwd);
       router.replace("/(tabs)/opportunities");
     } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert(
-        "Login Failed",
-        error?.message ?? "Invalid credentials. If you typed a username, try your email."
-      );
+      const msg = typeof error?.message === "string" ? error.message : undefined;
+      const friendly =
+        msg?.toLowerCase().includes("invalid login credentials")
+          ? "Incorrect email or password. If you signed up with a social login or magic link, use that method or reset your password."
+          : msg ?? "We couldn't sign you in. Please check your details and try again.";
+      Alert.alert("Login Failed", friendly);
     } finally {
       setIsLoading(false);
     }
@@ -118,9 +122,9 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
+              style={[styles.button, (isLoading || !supabaseConfigured) && styles.buttonDisabled]}
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isLoading || !supabaseConfigured}
               testID="login-submit"
             >
               {isLoading ? (

@@ -77,11 +77,24 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   const login = useCallback(async (email: string, password: string) => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app settings.");
+
+    const cleanedEmail = String(email ?? "").trim().toLowerCase();
+    const cleanedPassword = String(password ?? "").trim();
+    console.log("Attempting login for", cleanedEmail);
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: cleanedEmail,
+      password: cleanedPassword,
     });
-    if (error) throw error;
+
+    if (error) {
+      const msg = typeof error.message === "string" ? error.message : "Login failed";
+      if (msg.toLowerCase().includes("invalid login credentials")) {
+        throw new Error("Invalid login credentials");
+      }
+      throw error;
+    }
+
     return data;
   }, []);
 
