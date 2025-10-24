@@ -23,6 +23,13 @@ export type ResolvedProfile = {
   avatarUrl: string;
 };
 
+function initialsAvatar(name: string | undefined): string {
+  const safe = (name ?? "Member").trim() || "Member";
+  const bg = "1f2937";
+  const color = "e5e7eb";
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(safe)}&background=${bg}&color=${color}&size=256&bold=true`;
+}
+
 function resolveFromSession(profile: Profile | null, session: any): ResolvedProfile {
   const md = session?.user?.user_metadata ?? session?.user?.app_metadata ?? {};
   const email: string | undefined = session?.user?.email ?? undefined;
@@ -32,7 +39,7 @@ function resolveFromSession(profile: Profile | null, session: any): ResolvedProf
 
   const displayName = (profile?.full_name ?? fullNameFromAuth ?? profile?.username ?? usernameFromEmail ?? "Member") as string;
   const username = (profile?.username ?? usernameFromEmail ?? (fullNameFromAuth ? fullNameFromAuth.replace(/\s+/g, "").toLowerCase() : undefined) ?? "member") as string;
-  const avatarUrl = (profile?.profile_picture ?? avatarFromGoogle ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&auto=format&fit=crop&q=60") as string;
+  const avatarUrl = (profile?.profile_picture ?? avatarFromGoogle ?? initialsAvatar(profile?.full_name ?? fullNameFromAuth ?? username)) as string;
 
   return { user_id: profile?.user_id ?? session?.user?.id, displayName, username, avatarUrl };
 }
@@ -135,7 +142,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     if (p.user_id && session?.user?.id && p.user_id === session.user.id) return resolved;
     const displayName = (p.full_name ?? p.username ?? resolved.displayName);
     const username = (p.username ?? resolved.username);
-    const avatarUrl = (p.profile_picture ?? resolved.avatarUrl);
+    const avatarUrl = (p.profile_picture ?? initialsAvatar(p.full_name ?? p.username ?? username));
     return { user_id: p.user_id, displayName, username, avatarUrl } as ResolvedProfile;
   }, [resolved, session?.user?.id]);
 
