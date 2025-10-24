@@ -53,7 +53,7 @@ export default function LoginScreen() {
     try {
       const email = await resolveEmailFromIdentifier(identifier);
       await login(email, password);
-      router.replace("/opportunities");
+      router.replace("/(tabs)/opportunities");
     } catch (error: any) {
       console.error("Login error:", error);
       Alert.alert(

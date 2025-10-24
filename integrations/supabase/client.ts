@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function resolveEnv(key: string): string | undefined {
@@ -127,15 +127,20 @@ export async function sbDelete(table: string, match: Record<string, string | num
 
 export const supabaseConfig = { url: SUPABASE_URL ?? "", anonKey: SUPABASE_ANON_KEY, platform: Platform.OS } as const;
 
-export const supabase = createClient(
-  SUPABASE_URL ?? "",
-  SUPABASE_ANON_KEY,
-  {
-    auth: {
-      storage: AsyncStorage,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false,
-    },
-  }
-);
+let _supabase: SupabaseClient | null = null;
+if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+  _supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    }
+  );
+}
+
+export const supabase = _supabase;

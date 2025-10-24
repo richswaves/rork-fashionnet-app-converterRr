@@ -21,6 +21,13 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
+    if (!supabase) {
+      console.warn("Supabase is not configured; auth disabled.");
+      setSession(null);
+      setCurrentUserId(undefined);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user?.id) {
@@ -51,7 +58,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
       });
       return rows[0] ?? null;
     },
-    enabled: !!currentUserId,
+    enabled: !!currentUserId && !!supabase,
   });
 
   const updateProfileMutation = useMutation({
@@ -67,6 +74,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   });
 
   const login = useCallback(async (email: string, password: string) => {
+    if (!supabase) throw new Error("Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app settings.");
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -76,7 +84,9 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setCurrentUserId(undefined);
     setSession(null);
   }, []);
