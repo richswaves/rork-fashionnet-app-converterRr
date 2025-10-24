@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -254,35 +254,36 @@ export default function OpportunitiesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
-          const title = item.title ?? "Opportunity";
-          const company = item.company ?? item.profiles?.full_name ?? item.profiles?.username ?? "";
-          const locationText = [item.location ?? "", item.type ?? ""].filter(Boolean).join(" • ");
+          const title = item.title ?? "";
+          const username = item.profiles?.username ?? item.profiles?.full_name ?? "Unknown";
+          const avatar = item.profiles?.profile_picture ?? "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=128&auto=format&fit=crop&q=60";
           const imageUri = item.cover_image ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60";
           const upvotes = 0;
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
-              <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
-              <View style={styles.body}>
-                <Text numberOfLines={2} style={styles.title}>{title}</Text>
-                <View style={styles.row}>
-                  <Building2 color="#9CA3AF" size={14} />
-                  <Text numberOfLines={1} style={styles.metaText}>{company}</Text>
+              <View style={styles.postHeader}>
+                <Image source={{ uri: avatar }} style={styles.postAvatar} />
+                <View style={styles.postHeaderInfo}>
+                  <Text numberOfLines={1} style={styles.postUsername}>{username}</Text>
+                  <Text numberOfLines={1} style={styles.postTime}>Just now</Text>
                 </View>
-                <View style={styles.row}>
-                  <MapPin color="#9CA3AF" size={14} />
-                  <Text numberOfLines={1} style={styles.metaText}>{locationText}</Text>
-                </View>
+              </View>
 
-                <View style={styles.footerRow}>
-                  <Pressable style={styles.upvote} onPress={() => toggleUpvote(item.id)} testID={`upvote-${item.id}`}>
-                    <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
-                    <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
-                  </Pressable>
+              <View style={styles.mediaWrap}>
+                <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
+              </View>
 
-                  <Pressable style={styles.applyBtn} onPress={() => {}} testID={`apply-${item.id}`}>
-                    <Text style={styles.applyText}>Apply</Text>
-                  </Pressable>
+              {!!title && (
+                <View style={styles.body}>
+                  <Text numberOfLines={3} style={styles.caption}>{title}</Text>
                 </View>
+              )}
+
+              <View style={styles.footerRow}>
+                <Pressable style={styles.upvote} onPress={() => toggleUpvote(item.id)} testID={`upvote-${item.id}`}>
+                  <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
+                  <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
+                </Pressable>
               </View>
             </View>
           );
@@ -469,17 +470,19 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 12,
   },
-  cover: { width: "100%", height: 160 },
-  body: { padding: 12 },
-  title: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginBottom: 6 },
-  row: { flexDirection: "row", alignItems: "center", gap: 6 as const, marginBottom: 4 },
-  metaText: { color: "#9CA3AF", fontSize: 12, flexShrink: 1 },
-  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
+  postHeader: { flexDirection: "row", alignItems: "center", gap: 10 as const, paddingHorizontal: 12, paddingTop: 12 },
+  postAvatar: { width: 32, height: 32, borderRadius: 16 },
+  postHeaderInfo: { flex: 1 },
+  postUsername: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
+  postTime: { color: "#9CA3AF", fontSize: 11, fontWeight: "700" },
+  mediaWrap: { paddingHorizontal: 8, paddingTop: 6 },
+  cover: { width: "100%", height: 320, borderRadius: 14 },
+  body: { paddingHorizontal: 12, paddingVertical: 10 },
+  caption: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
+  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, marginTop: 4, marginBottom: 10 },
   upvote: { flexDirection: "row", alignItems: "center", gap: 6 as const },
   upvoteText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
   upvoteActive: { color: "#10B981" },
-  applyBtn: { backgroundColor: "#E5E7EB", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  applyText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
   loaderRow: { paddingVertical: 10, alignItems: "center" },
   errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },
   backdrop: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)" },
