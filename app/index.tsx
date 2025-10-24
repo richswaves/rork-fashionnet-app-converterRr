@@ -1,27 +1,25 @@
-import React, { useEffect } from "react";
-import { useRouter } from "expo-router";
+import React from "react";
+import { Redirect, useRootNavigationState } from "expo-router";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useProfile } from "@/contexts/ProfileContext";
 
 export default function Index() {
   const { session, isLoading } = useProfile();
-  const router = useRouter();
+  const rootState = useRootNavigationState();
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (session) {
-        router.replace("/opportunities");
-      } else {
-        router.replace("/login");
-      }
-    }
-  }, [session, isLoading, router]);
+  const notReady = !rootState?.key || isLoading;
+  if (notReady) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+      </View>
+    );
+  }
 
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#8B5CF6" />
-    </View>
-  );
+  if (session) {
+    return <Redirect href="/(tabs)/opportunities" />;
+  }
+  return <Redirect href="/login" />;
 }
 
 const styles = StyleSheet.create({
