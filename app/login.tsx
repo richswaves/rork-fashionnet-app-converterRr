@@ -9,12 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "expo-router";
 import { LogIn, AlertTriangle } from "lucide-react-native";
 import { sbSelect, getSupabase } from "@/integrations/supabase/client";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 
 interface ProfileRow { username?: string; user_id: string; email?: string | null }
 
@@ -65,6 +68,33 @@ export default function LoginScreen() {
           ? "Incorrect email or password. If you signed up with a social login or magic link, use that method or reset your password."
           : msg ?? "We couldn't sign you in. Please check your details and try again.";
       Alert.alert("Login Failed", friendly);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      Alert.alert("Error", "Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app settings.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      WebBrowser.maybeCompleteAuthSession?.();
+      const redirectTo = Platform.select<string | undefined>({
+        web: typeof window !== "undefined" ? window.location.origin : undefined,
+        default: Linking.createURL("/") ?? undefined,
+      });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Google login error:", error);
+      const msg = typeof error?.message === "string" ? error.message : "We couldn't start Google sign-in.";
+      Alert.alert("Google Sign-in Failed", msg);
     } finally {
       setIsLoading(false);
     }
@@ -132,6 +162,25 @@ export default function LoginScreen() {
               ) : (
                 <Text style={styles.buttonText}>Sign In</Text>
               )}
+            </TouchableOpacity>
+
+            <View style={styles.separatorRow}>
+              <View style={styles.separator} />
+              <Text style={styles.separatorText}>or</Text>
+              <View style={styles.separator} />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.googleBtn, (isLoading || !supabaseConfigured) && styles.buttonDisabled]}
+              onPress={handleGoogleLogin}
+              disabled={isLoading || !supabaseConfigured}
+              testID="login-google"
+            >
+              <Image
+                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleText}>Continue with Google</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -211,6 +260,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700" as const,
     color: "#FFFFFF",
+  },
+  separatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginVertical: 16,
+  },
+  separator: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#2D2D3A",
+  },
+  separatorText: {
+    color: "#6B7280",
+    fontSize: 12,
+    fontWeight: "600" as const,
+  },
+  googleBtn: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+  },
+  googleIcon: {
+    width: 18,
+    height: 18,
+  },
+  googleText: {
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: "700" as const,
   },
   warning: {
     flexDirection: "row",
