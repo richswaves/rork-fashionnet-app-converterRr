@@ -140,9 +140,21 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   const getDisplayForProfile = useCallback((p?: { user_id?: string; full_name?: string; username?: string; profile_picture?: string } | null) => {
     if (!p) return resolved;
     if (p.user_id && session?.user?.id && p.user_id === session.user.id) return resolved;
-    const displayName = (p.full_name ?? p.username ?? resolved.displayName);
-    const username = (p.username ?? resolved.username);
-    const avatarUrl = (p.profile_picture ?? initialsAvatar(p.full_name ?? p.username ?? username));
+
+    const isGeneric = (val?: string) => {
+      const v = (val ?? "").trim();
+      return v.length === 0 || v.toLowerCase() === "member" || /^user[_-]/i.test(v);
+    };
+
+    const baseName = !isGeneric(p.full_name) ? p.full_name : undefined;
+    const derivedDisplay = baseName ?? p.username ?? resolved.displayName;
+    const derivedUsername = p.username ?? (baseName ? baseName.replace(/\s+/g, "").toLowerCase() : resolved.username);
+    const derivedAvatar = p.profile_picture ?? initialsAvatar(derivedDisplay ?? derivedUsername ?? "User");
+
+    const displayName = String(derivedDisplay ?? "User");
+    const username = String(derivedUsername ?? "user");
+    const avatarUrl = String(derivedAvatar);
+
     return { user_id: p.user_id, displayName, username, avatarUrl } as ResolvedProfile;
   }, [resolved, session?.user?.id]);
 
