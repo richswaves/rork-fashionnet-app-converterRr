@@ -154,6 +154,7 @@ export default function EditProfileScreen() {
       console.log("pick avatar start");
       const asset = await pickFromLibrary();
       if (!asset) return;
+      setAvatarUrl(asset.uri);
       const url = await uploadToSupabase(asset, "avatars");
       setAvatarUrl(url);
     } catch (e: any) {
@@ -167,6 +168,7 @@ export default function EditProfileScreen() {
       console.log("pick banner start");
       const asset = await pickFromLibrary();
       if (!asset) return;
+      setBannerUrl(asset.uri);
       const url = await uploadToSupabase(asset, "banners");
       setBannerUrl(url);
     } catch (e: any) {
