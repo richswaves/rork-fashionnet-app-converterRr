@@ -1,6 +1,6 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { sbSelect, sbUpsert, supabase } from "@/integrations/supabase/client";
+import { sbSelect, sbUpsert, getSupabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 interface Profile {
@@ -21,6 +21,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
+    const supabase = getSupabase();
     if (!supabase) {
       console.warn("Supabase is not configured; auth disabled.");
       setSession(null);
@@ -58,7 +59,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
       });
       return rows[0] ?? null;
     },
-    enabled: !!currentUserId && !!supabase,
+    enabled: !!currentUserId && !!getSupabase(),
   });
 
   const updateProfileMutation = useMutation({
@@ -74,6 +75,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   });
 
   const login = useCallback(async (email: string, password: string) => {
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app settings.");
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -84,6 +86,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
   }, []);
 
   const logout = useCallback(async () => {
+    const supabase = getSupabase();
     if (supabase) {
       await supabase.auth.signOut();
     }

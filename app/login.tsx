@@ -13,8 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "expo-router";
-import { LogIn } from "lucide-react-native";
-import { sbSelect } from "@/integrations/supabase/client";
+import { LogIn, AlertTriangle } from "lucide-react-native";
+import { sbSelect, getSupabase } from "@/integrations/supabase/client";
 
 interface ProfileRow { username?: string; user_id: string; email?: string | null }
 
@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { login } = useProfile();
   const router = useRouter();
+  const supabaseConfigured: boolean = !!getSupabase();
 
   const resolveEmailFromIdentifier = async (value: string): Promise<string> => {
     const trimmed = value.trim();
@@ -80,6 +81,12 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>Sign in to continue</Text>
           </View>
 
+          {!supabaseConfigured && (
+            <View style={styles.warning} testID="supabase-missing-warning">
+              <AlertTriangle size={18} color="#F59E0B" />
+              <Text style={styles.warningText}>Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app settings.</Text>
+            </View>
+          )}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Username or Email</Text>
@@ -91,7 +98,7 @@ export default function LoginScreen() {
                 onChangeText={setIdentifier}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                editable={!isLoading}
+                editable={!isLoading && supabaseConfigured}
                 testID="login-identifier"
               />
             </View>
@@ -105,7 +112,7 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                editable={!isLoading}
+                editable={!isLoading && supabaseConfigured}
                 testID="login-password"
               />
             </View>
@@ -200,5 +207,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700" as const,
     color: "#FFFFFF",
+  },
+  warning: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#2A1E0A",
+    borderColor: "#3F2A0F",
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  warningText: {
+    color: "#F59E0B",
+    flex: 1,
   },
 });

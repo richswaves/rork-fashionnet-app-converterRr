@@ -14,9 +14,6 @@ function resolveEnv(key: string): string | undefined {
   return val;
 }
 
-const RAW_SUPABASE_URL = resolveEnv("EXPO_PUBLIC_SUPABASE_URL");
-const RAW_SUPABASE_ANON_KEY = resolveEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY");
-
 function normalizeUrl(url?: string): string | null {
   try {
     if (!url) return null;
@@ -29,11 +26,13 @@ function normalizeUrl(url?: string): string | null {
   }
 }
 
-const SUPABASE_URL = normalizeUrl(RAW_SUPABASE_URL);
-const SUPABASE_ANON_KEY = (RAW_SUPABASE_ANON_KEY ?? "").trim();
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn("Supabase env missing or invalid. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your project values.");
+function getEnv(): { url: string | null; anonKey: string } {
+  const rawUrl = resolveEnv("EXPO_PUBLIC_SUPABASE_URL");
+  const rawKey = resolveEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY");
+  return {
+    url: normalizeUrl(rawUrl),
+    anonKey: (rawKey ?? "").trim(),
+  };
 }
 
 export type RestHeaders = {
@@ -43,17 +42,21 @@ export type RestHeaders = {
   Prefer?: string;
 };
 
-export const supabaseRestHeaders: RestHeaders = {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  "Content-Type": "application/json",
-};
+export function getRestHeaders(): RestHeaders {
+  const { anonKey } = getEnv();
+  return {
+    apikey: anonKey,
+    Authorization: `Bearer ${anonKey}`,
+    "Content-Type": "application/json",
+  };
+}
 
 function assertConfigured() {
-  if (!SUPABASE_URL) {
+  const { url, anonKey } = getEnv();
+  if (!url) {
     throw new Error("Supabase URL is not configured");
   }
-  if (!SUPABASE_ANON_KEY) {
+  if (!anonKey) {
     throw new Error("Supabase anon key is not configured");
   }
 }
@@ -63,14 +66,16 @@ export async function sbSelect<T = unknown>(
   opts: { select?: string; query?: Record<string, string>; limit?: number; order?: { column: string; ascending?: boolean } } = {}
 ): Promise<T[]> {
   assertConfigured();
+  const { url } = getEnv();
+  const headers = getRestHeaders();
   const { select = "*", query = {}, limit, order } = opts;
-  const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-  url.searchParams.set("select", select);
-  Object.entries(query).forEach(([k, v]) => url.searchParams.set(k, v));
-  if (typeof limit === "number") url.searchParams.set("limit", String(limit));
-  if (order?.column) url.searchParams.set("order", `${order.column}.${order.ascending === false ? "desc" : "asc"}`);
+  const composed = new URL(`${url}/rest/v1/${table}`);
+  composed.searchParams.set("select", select);
+  Object.entries(query).forEach(([k, v]) => composed.searchParams.set(k, v));
+  if (typeof limit === "number") composed.searchParams.set("limit", String(limit));
+  if (order?.column) composed.searchParams.set("order", `${order.column}.${order.ascending === false ? "desc" : "asc"}`);
 
-  const res = await fetch(url.toString(), { headers: supabaseRestHeaders });
+  const res = await fetch(composed.toString(), { headers });
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase select error", res.status, text);
@@ -81,9 +86,11 @@ export async function sbSelect<T = unknown>(
 
 export async function sbInsert<T = unknown>(table: string, rows: T | T[], prefer: "return=representation" | "return=minimal" = "return=representation") {
   assertConfigured();
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+  const { url } = getEnv();
+  const headers = { ...getRestHeaders(), Prefer: prefer } as RestHeaders;
+  const res = await fetch(`${url}/rest/v1/${table}`, {
     method: "POST",
-    headers: { ...supabaseRestHeaders, Prefer: prefer },
+    headers,
     body: JSON.stringify(rows),
   });
   if (!res.ok) {
@@ -96,10 +103,11 @@ export async function sbInsert<T = unknown>(table: string, rows: T | T[], prefer
 
 export async function sbUpsert<T = unknown>(table: string, rows: T | T[], onConflict?: string) {
   assertConfigured();
-  const headers: RestHeaders = { ...supabaseRestHeaders, Prefer: "resolution=merge-duplicates,return=representation" };
-  const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-  if (onConflict) url.searchParams.set("on_conflict", onConflict);
-  const res = await fetch(url.toString(), {
+  const { url } = getEnv();
+  const headers: RestHeaders = { ...getRestHeaders(), Prefer: "resolution=merge-duplicates,return=representation" };
+  const composed = new URL(`${url}/rest/v1/${table}`);
+  if (onConflict) composed.searchParams.set("on_conflict", onConflict);
+  const res = await fetch(composed.toString(), {
     method: "POST",
     headers,
     body: JSON.stringify(rows),
@@ -114,9 +122,10 @@ export async function sbUpsert<T = unknown>(table: string, rows: T | T[], onConf
 
 export async function sbDelete(table: string, match: Record<string, string | number>) {
   assertConfigured();
-  const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-  Object.entries(match).forEach(([k, v]) => url.searchParams.set(k, `eq.${v}`));
-  const res = await fetch(url.toString(), { method: "DELETE", headers: supabaseRestHeaders });
+  const { url } = getEnv();
+  const composed = new URL(`${url}/rest/v1/${table}`);
+  Object.entries(match).forEach(([k, v]) => composed.searchParams.set(k, `eq.${v}`));
+  const res = await fetch(composed.toString(), { method: "DELETE", headers: getRestHeaders() });
   if (!res.ok) {
     const text = await res.text();
     console.error("Supabase delete error", res.status, text);
@@ -125,22 +134,45 @@ export async function sbDelete(table: string, match: Record<string, string | num
   return true;
 }
 
-export const supabaseConfig = { url: SUPABASE_URL ?? "", anonKey: SUPABASE_ANON_KEY, platform: Platform.OS } as const;
+export function getSupabaseConfig() {
+  const { url, anonKey } = getEnv();
+  return { url: url ?? "", anonKey, platform: Platform.OS } as const;
+}
 
-let _supabase: SupabaseClient | null = null;
-if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-  _supabase = createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
+let client: SupabaseClient | null = null;
+let cachedUrl: string | null = null;
+let cachedKey: string | null = null;
+
+export function getSupabase(): SupabaseClient | null {
+  const { url, anonKey } = getEnv();
+  if (!url || !anonKey) {
+    if (__DEV__) {
+      console.warn("Supabase not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.");
+    }
+    return null;
+  }
+  if (!client || cachedUrl !== url || cachedKey !== anonKey) {
+    client = createClient(url, anonKey, {
       auth: {
         storage: AsyncStorage,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
       },
-    }
-  );
+    });
+    cachedUrl = url;
+    cachedKey = anonKey;
+  }
+  return client;
 }
 
-export const supabase = _supabase;
+export function setRuntimeSupabaseEnv(url: string, anonKey: string) {
+  (globalThis as any).__ENV__ = {
+    ...(globalThis as any).__ENV__,
+    EXPO_PUBLIC_SUPABASE_URL: url,
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: anonKey,
+  };
+  cachedUrl = null;
+  cachedKey = null;
+  client = null;
+}
