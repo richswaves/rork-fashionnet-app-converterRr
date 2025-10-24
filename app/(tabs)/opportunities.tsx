@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
   user_id: string;
@@ -124,7 +125,7 @@ export default function OpportunitiesScreen() {
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
-  const currentUserId = undefined as string | undefined;
+  const { currentUserId } = useProfile();
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],

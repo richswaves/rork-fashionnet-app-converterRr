@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -32,9 +33,11 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
-        <RootLayoutNav />
-      </GestureHandlerRootView>
+      <ProfileProvider>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
+          <RootLayoutNav />
+        </GestureHandlerRootView>
+      </ProfileProvider>
     </QueryClientProvider>
   );
 }

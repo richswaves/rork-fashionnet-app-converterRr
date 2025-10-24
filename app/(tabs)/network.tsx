@@ -4,6 +4,7 @@ import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
   user_id: string;
@@ -31,6 +32,7 @@ export default function NetworkScreen() {
   const [following, setFollowing] = useState<Record<string, boolean>>({});
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
 
+  const { profile } = useProfile();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
@@ -77,8 +79,8 @@ export default function NetworkScreen() {
     <View style={containerStyle} testID="network-screen">
       <View style={styles.topBar}>
         <Pressable style={styles.profile} testID="top-profile" onPress={() => console.log("profile")}>
-          <Image source={{ uri: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60" }} style={styles.avatar} />
-          <Text style={styles.profileText}>Network</Text>
+          <Image source={{ uri: profile?.profile_picture ?? "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60" }} style={styles.avatar} />
+          <Text style={styles.profileText}>{profile?.full_name ?? profile?.username ?? "Network"}</Text>
         </Pressable>
 
         <View style={styles.topIcons}>
