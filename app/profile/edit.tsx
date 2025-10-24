@@ -157,7 +157,9 @@ export default function EditProfileScreen() {
       const asset = await pickFromLibrary();
       if (!asset) return;
       setPendingAvatar(asset);
-      setAvatarUrl(asset.uri);
+      const mime = (asset as any).mimeType ?? "image/jpeg";
+      const localPreview = asset.base64 && asset.base64.length > 0 ? `data:${mime};base64,${asset.base64}` : asset.uri;
+      setAvatarUrl(localPreview);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
       Alert.alert("Error", msg);
@@ -170,7 +172,9 @@ export default function EditProfileScreen() {
       const asset = await pickFromLibrary();
       if (!asset) return;
       setPendingBanner(asset);
-      setBannerUrl(asset.uri);
+      const mime = (asset as any).mimeType ?? "image/jpeg";
+      const localPreview = asset.base64 && asset.base64.length > 0 ? `data:${mime};base64,${asset.base64}` : asset.uri;
+      setBannerUrl(localPreview);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to pick image";
       Alert.alert("Error", msg);
