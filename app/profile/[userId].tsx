@@ -18,7 +18,6 @@ interface ProfileRow {
   bio?: string | null;
   model_photos?: string[] | null;
   portfolio_photos?: string[] | null;
-  banner_image?: string | null;
 }
 
 export default function UserProfileScreen() {
@@ -45,7 +44,6 @@ export default function UserProfileScreen() {
   const display = useMemo(() => getDisplayForProfile(data ?? undefined), [data, getDisplayForProfile]);
 
   const coverCandidates: (string | undefined)[] = [
-    data?.banner_image ?? undefined,
     Array.isArray(data?.model_photos) ? data?.model_photos[0] : undefined,
     Array.isArray(data?.portfolio_photos) ? data?.portfolio_photos[0] : undefined,
   ];

@@ -18,7 +18,7 @@ export default function EditProfileScreen() {
   const [location, setLocation] = useState<string>(profile?.location ?? "");
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "");
-  const [bannerUrl, setBannerUrl] = useState<string>(profile?.banner_image ?? "");
+  const [bannerUrl, setBannerUrl] = useState<string>("");
 
   const [editing, setEditing] = useState<
     | null
@@ -162,7 +162,7 @@ export default function EditProfileScreen() {
       if (location !== (profile?.location ?? "")) updates.location = location.trim();
       if (bio !== (profile?.bio ?? "")) updates.bio = bio.trim();
       if (avatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) updates.profile_picture = avatarUrl.trim();
-      if (bannerUrl !== (profile?.banner_image ?? "")) (updates as any).banner_image = bannerUrl.trim();
+      
 
       if (Object.keys(updates).length === 0) {
         router.back();
