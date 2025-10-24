@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2 } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX } from "lucide-react-native";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -16,9 +16,48 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "");
 
+  const [editing, setEditing] = useState<null | "name" | "location" | "bio" | "avatar" | "instagram" | "youtube" | "twitter" | "tiktok">(null);
+  const [temp, setTemp] = useState<string>("");
+
   const canSave = useMemo<boolean>(() => {
-    return (fullName ?? "").trim().length > 0 || (username ?? "").trim().length > 0 || (location ?? "").trim().length > 0 || (bio ?? "").trim().length > 0 || (avatarUrl ?? "").trim().length > 0;
+    return (
+      (fullName ?? "").trim().length > 0 ||
+      (username ?? "").trim().length > 0 ||
+      (location ?? "").trim().length > 0 ||
+      (bio ?? "").trim().length > 0 ||
+      (avatarUrl ?? "").trim().length > 0
+    );
   }, [fullName, username, location, bio, avatarUrl]);
+
+  function openEditor(kind: NonNullable<typeof editing>) {
+    setEditing(kind);
+    switch (kind) {
+      case "name":
+        setTemp(fullName);
+        break;
+      case "location":
+        setTemp(location);
+        break;
+      case "bio":
+        setTemp(bio);
+        break;
+      case "avatar":
+        setTemp(avatarUrl);
+        break;
+      default:
+        setTemp("");
+    }
+  }
+
+  function applyEdit() {
+    if (!editing) return;
+    const val = temp.trim();
+    if (editing === "name") setFullName(val);
+    if (editing === "location") setLocation(val);
+    if (editing === "bio") setBio(val);
+    if (editing === "avatar") setAvatarUrl(val);
+    setEditing(null);
+  }
 
   async function onSave() {
     try {
@@ -33,7 +72,7 @@ export default function EditProfileScreen() {
         router.back();
         return;
       }
-      updateProfile(updates);
+      updateProfile(updates as any);
       router.back();
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to update profile";
@@ -47,70 +86,74 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <View style={[styles.container]} testID="edit-profile-screen">
-      <Stack.Screen options={{ headerShown: true, title: "Edit Profile", headerTintColor: "#E5E7EB", headerStyle: { backgroundColor: "#0B0B0F" } }} />
+    <View style={styles.container} testID="edit-profile-screen">
+      <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]} keyboardShouldPersistTaps="handled">
-        <Text style={styles.label}>Full name</Text>
-        <View style={styles.fieldWrap} testID="field-fullname">
-          <TextInput
-            value={fullName}
-            onChangeText={setFullName}
-            placeholder="Your name"
-            placeholderTextColor="#6B7280"
-            style={styles.input}
-            autoCapitalize="words"
-          />
+      <ScrollView contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
+        <View style={styles.hero}>
+          <View style={styles.heroGradient} />
+          <View style={styles.heroContent}>
+            <View style={styles.avatarWrap}>
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              <Pressable testID="edit-avatar" onPress={() => openEditor("avatar")} style={styles.editFab}>
+                <Pencil color="#0B0B0F" size={16} />
+              </Pressable>
+            </View>
+
+            <View style={styles.nameRow}>
+              <Text style={styles.nameText}>{fullName || resolvedProfile.displayName || "Your name"}</Text>
+              <Pressable testID="edit-name" onPress={() => openEditor("name")} style={styles.inlineEditBtn}>
+                <Pencil color="#E5E7EB" size={16} />
+              </Pressable>
+            </View>
+
+            <View style={styles.locationRow}>
+              <MapPin color="#9CA3AF" size={14} />
+              <Text style={styles.locationText}>{location || "City, State"}</Text>
+              <Pressable testID="edit-location" onPress={() => openEditor("location")} style={styles.inlineEditBtnSmall}>
+                <Pencil color="#E5E7EB" size={14} />
+              </Pressable>
+            </View>
+
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Followers</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Following</Text>
+              </View>
+            </View>
+
+            <View style={styles.socialRow}>
+              <Pressable testID="social-instagram" style={[styles.socialBtn, { backgroundColor: "#C13584" }]} onPress={() => openEditor("instagram")}>
+                <Instagram color="#fff" size={20} />
+              </Pressable>
+              <Pressable testID="social-youtube" style={[styles.socialBtn, { backgroundColor: "#FF0000" }]} onPress={() => openEditor("youtube")}>
+                <Youtube color="#fff" size={20} />
+              </Pressable>
+              <View style={[styles.socialBtn, { backgroundColor: "#2C2C33" }]}> 
+                <CircleX color="#9CA3AF" size={20} />
+              </View>
+              <View style={[styles.socialBtn, { backgroundColor: "#2C2C33" }]}>
+                <Text style={{ color: "#9CA3AF", fontWeight: "800" }}>t</Text>
+              </View>
+            </View>
+
+            <View style={styles.bioWrap}>
+              <Text style={styles.bioText}>{bio || "Tell people about yourself..."}</Text>
+              <Pressable testID="edit-bio" onPress={() => openEditor("bio")} style={styles.inlineEditBtn}>
+                <Pencil color="#E5E7EB" size={16} />
+              </Pressable>
+            </View>
+          </View>
         </View>
 
-        <Text style={styles.label}>Username</Text>
-        <View style={styles.fieldWrap} testID="field-username">
-          <TextInput
-            value={username}
-            onChangeText={(t) => setUsername(t.replace(/\s+/g, "").toLowerCase())}
-            placeholder="username"
-            placeholderTextColor="#6B7280"
-            style={styles.input}
-            autoCapitalize="none"
-          />
-        </View>
-
-        <Text style={styles.label}>Location</Text>
-        <View style={styles.fieldWrap} testID="field-location">
-          <TextInput
-            value={location}
-            onChangeText={setLocation}
-            placeholder="City, State"
-            placeholderTextColor="#6B7280"
-            style={styles.input}
-          />
-        </View>
-
-        <Text style={styles.label}>Bio</Text>
-        <View style={styles.fieldWrap} testID="field-bio">
-          <TextInput
-            value={bio}
-            onChangeText={setBio}
-            placeholder="Tell people about yourself"
-            placeholderTextColor="#6B7280"
-            style={[styles.input, styles.multiline]}
-            multiline
-            numberOfLines={4}
-            maxLength={200}
-          />
-          <Text style={styles.counter}>{bio.length} / 200</Text>
-        </View>
-
-        <Text style={styles.label}>Avatar URL</Text>
-        <View style={styles.fieldWrap} testID="field-avatar">
-          <TextInput
-            value={avatarUrl}
-            onChangeText={setAvatarUrl}
-            placeholder="https://..."
-            placeholderTextColor="#6B7280"
-            style={styles.input}
-            autoCapitalize="none"
-          />
+        <View style={styles.cardUpload}>
+          <View style={styles.dashed} />
+          <Text style={styles.uploadTitle}>Add portfolio photos</Text>
+          <Text style={styles.uploadSubtitle}>Coming soon</Text>
         </View>
 
         <View style={styles.actions}>
@@ -124,22 +167,85 @@ export default function EditProfileScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {editing === "name" && "Edit name"}
+              {editing === "location" && "Edit location"}
+              {editing === "bio" && "Edit bio"}
+              {editing === "avatar" && "Edit avatar URL"}
+              {editing === "instagram" && "Instagram link"}
+              {editing === "youtube" && "YouTube link"}
+              {editing === "twitter" && "Twitter link"}
+              {editing === "tiktok" && "TikTok link"}
+            </Text>
+            <TextInput
+              value={temp}
+              onChangeText={setTemp}
+              placeholder={editing === "bio" ? "About you" : "https://"}
+              placeholderTextColor="#6B7280"
+              style={[styles.input, styles.modalInput, editing === "bio" ? styles.multiline : undefined]}
+              autoCapitalize="none"
+              multiline={editing === "bio"}
+              numberOfLines={editing === "bio" ? 4 : 1}
+              maxLength={editing === "bio" ? 200 : 200}
+            />
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
+                <X color="#E5E7EB" size={18} />
+                <Text style={styles.cancelText}>Close</Text>
+              </Pressable>
+              <Pressable onPress={applyEdit} style={styles.saveBtn}>
+                <Check color="#0B0B0F" size={16} />
+                <Text style={styles.saveText}>Apply</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  content: { paddingHorizontal: 16, paddingTop: 12 },
-  label: { color: "#9CA3AF", fontSize: 12, fontWeight: "800", marginTop: 12, marginBottom: 6, letterSpacing: 0.4 },
-  fieldWrap: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
-  input: { color: "#E5E7EB", fontSize: 15, fontWeight: "600" },
-  multiline: { minHeight: 100, textAlignVertical: "top" as const },
-  counter: { color: "#6B7280", fontSize: 11, marginTop: 6, textAlign: "right" as const },
-  actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18 },
+  hero: { width: "100%", paddingTop: 48, paddingBottom: 24 },
+  heroGradient: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#0B0B0F" },
+  heroContent: { alignItems: "center", paddingHorizontal: 16 },
+  avatarWrap: { width: 96, height: 96, borderRadius: 48, overflow: "hidden", borderWidth: 3, borderColor: "#0B0B0F", backgroundColor: "#111318" },
+  avatar: { width: 96, height: 96, borderRadius: 48 },
+  editFab: { position: "absolute", right: -2, bottom: -2, width: 36, height: 36, borderRadius: 18, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center" },
+  nameRow: { marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8 },
+  nameText: { color: "#E5E7EB", fontSize: 22, fontWeight: "900" },
+  inlineEditBtn: { marginLeft: 6, padding: 6, borderRadius: 16 },
+  inlineEditBtnSmall: { marginLeft: 6, padding: 4, borderRadius: 14 },
+  locationRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
+  locationText: { color: "#9CA3AF", fontSize: 14 },
+  statsRow: { flexDirection: "row", gap: 36, marginTop: 18 },
+  statItem: { alignItems: "center" },
+  statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
+  statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" },
+  socialRow: { flexDirection: "row", gap: 12, marginTop: 20 },
+  socialBtn: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
+  bioWrap: { marginTop: 18, maxWidth: 360, width: "100%", alignItems: "center" },
+  bioText: { color: "#E5E7EB", fontSize: 14, textAlign: "center" as const },
+  cardUpload: { marginTop: 24, marginHorizontal: 16, backgroundColor: "#111318", borderRadius: 16, padding: 16, alignItems: "center" },
+  dashed: { width: "100%", height: 90, borderRadius: 12, borderStyle: "dashed", borderWidth: 2, borderColor: "#2C2C33" },
+  uploadTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginTop: 12 },
+  uploadSubtitle: { color: "#9CA3AF", fontSize: 12, marginTop: 2 },
+  actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 24, paddingHorizontal: 16 },
   cancelBtn: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#2C2C33", backgroundColor: "#121218", flexDirection: "row", alignItems: "center", gap: 8 },
   cancelText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
   saveBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB", flexDirection: "row", alignItems: "center", gap: 8 },
   saveBtnDisabled: { opacity: 0.6 },
   saveText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
+  input: { color: "#E5E7EB", fontSize: 15, fontWeight: "600" },
+  multiline: { minHeight: 100, textAlignVertical: "top" as const },
+  modalBackdrop: { flex: 1, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center", padding: 16 },
+  modalCard: { width: "100%", maxWidth: 420, backgroundColor: "#0F0F14", borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: "#2C2C33" },
+  modalTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginBottom: 8 },
+  modalInput: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginTop: 6 },
+  modalActions: { flexDirection: "row", justifyContent: "space-between", marginTop: 14 },
 });
