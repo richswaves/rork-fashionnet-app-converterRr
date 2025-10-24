@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MapPin, ArrowLeft } from "lucide-react-native";
+import { MapPin, ArrowLeft, Instagram, Youtube } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -25,6 +25,12 @@ interface ProfileRow {
     backgroundImageAdjustments?: { positionX?: number; positionY?: number };
     theme?: string;
     typographyColor?: string;
+  } | null;
+  social_links?: {
+    instagram?: string;
+    youtube?: string;
+    twitter?: string;
+    tiktok?: string;
   } | null;
 }
 
@@ -196,6 +202,47 @@ export default function UserProfileScreen() {
           <Text style={styles.bio}>{data.bio}</Text>
         )}
 
+        {data?.social_links && (data.social_links.instagram || data.social_links.youtube) && (
+          <View style={styles.socialRow}>
+            {data.social_links.instagram && (
+              <Pressable
+                onPress={() => {
+                  const url = data.social_links?.instagram ?? "";
+                  const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
+                  if (Platform.OS === "web") {
+                    window.open(fullUrl, "_blank");
+                  } else {
+                    Linking.openURL(fullUrl).catch(() => {});
+                  }
+                }}
+                style={styles.socialBtn}
+                testID="social-instagram"
+              >
+                <Instagram color="#C13584" size={20} />
+                <Text style={styles.socialLabel}>Instagram</Text>
+              </Pressable>
+            )}
+            {data.social_links.youtube && (
+              <Pressable
+                onPress={() => {
+                  const url = data.social_links?.youtube ?? "";
+                  const fullUrl = url.startsWith("http") ? url : `https://youtube.com/${url}`;
+                  if (Platform.OS === "web") {
+                    window.open(fullUrl, "_blank");
+                  } else {
+                    Linking.openURL(fullUrl).catch(() => {});
+                  }
+                }}
+                style={styles.socialBtn}
+                testID="social-youtube"
+              >
+                <Youtube color="#FF0000" size={20} />
+                <Text style={styles.socialLabel}>YouTube</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>1</Text>
@@ -230,6 +277,9 @@ const styles = StyleSheet.create({
   followText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
   followTextActive: { color: "#0B0B0F" },
   bio: { color: "#E5E7EB", fontSize: 14, marginTop: 14, lineHeight: 20 },
+  socialRow: { flexDirection: "row", gap: 10, marginTop: 16, flexWrap: "wrap" },
+  socialBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: "#14141C", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  socialLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   statsRow: { flexDirection: "row", gap: 24, marginTop: 16 },
   statItem: { alignItems: "center" },
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
