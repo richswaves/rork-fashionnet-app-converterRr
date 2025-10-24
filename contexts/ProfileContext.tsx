@@ -14,6 +14,8 @@ interface Profile {
   bio?: string;
   account_status?: string;
   created_at?: string;
+  model_photos?: string[];
+  portfolio_photos?: string[];
 }
 
 export type ResolvedProfile = {
@@ -112,6 +114,8 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates.profile_picture !== undefined ? { profile_picture: updates.profile_picture } : {}),
         ...(updates.professions !== undefined ? { professions: updates.professions } : {}),
         ...(updates.account_status !== undefined ? { account_status: updates.account_status } : {}),
+        ...(updates.model_photos !== undefined ? { model_photos: updates.model_photos } : {}),
+        ...(updates.portfolio_photos !== undefined ? { portfolio_photos: updates.portfolio_photos } : {}),
       };
 
       await sbUpsert("profiles", payload, "user_id");

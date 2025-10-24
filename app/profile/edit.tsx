@@ -18,7 +18,7 @@ export default function EditProfileScreen() {
   const [location, setLocation] = useState<string>(profile?.location ?? "");
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "");
-  const [bannerUrl, setBannerUrl] = useState<string>("");
+  const [bannerUrl, setBannerUrl] = useState<string>(Array.isArray((profile as any)?.model_photos) && (profile as any)?.model_photos?.length ? ((profile as any)?.model_photos?.[0] as string) : (Array.isArray((profile as any)?.portfolio_photos) && (profile as any)?.portfolio_photos?.length ? ((profile as any)?.portfolio_photos?.[0] as string) : ""));
 
   const [editing, setEditing] = useState<
     | null
@@ -156,13 +156,18 @@ export default function EditProfileScreen() {
 
   async function onSave() {
     try {
-      const updates: Record<string, string> = {};
+      const updates: Record<string, any> = {};
       if (fullName !== (profile?.full_name ?? "")) updates.full_name = fullName.trim();
       if (username !== (profile?.username ?? resolvedProfile.username ?? "")) updates.username = username.trim();
       if (location !== (profile?.location ?? "")) updates.location = location.trim();
       if (bio !== (profile?.bio ?? "")) updates.bio = bio.trim();
       if (avatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) updates.profile_picture = avatarUrl.trim();
       
+      if ((bannerUrl ?? "").trim().length > 0) {
+        const current: string[] = Array.isArray((profile as any)?.model_photos) ? ((profile as any)?.model_photos as string[]) : [];
+        const next = [bannerUrl.trim(), ...current.filter((u) => u && u !== bannerUrl.trim())];
+        updates.model_photos = next;
+      }
 
       if (Object.keys(updates).length === 0) {
         router.back();
