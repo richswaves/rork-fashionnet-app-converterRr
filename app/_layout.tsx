@@ -13,7 +13,11 @@ const envAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 if (envUrl && envAnon) {
   setRuntimeSupabaseEnv(envUrl, envAnon);
 } else {
-  console.warn("Supabase env not set. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app config.");
+  // Fallback for Expo Go/mobile where process.env is not populated
+  setRuntimeSupabaseEnv(
+    "https://mnqgmpvkdmgmyoqhgswc.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ucWdtcHZrZG1nbXlvcWhnc3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMTM0NTksImV4cCI6MjA2Njg4OTQ1OX0.JeTVfB0c5MDmgSElxpkI9eVW6Ca7QLTNj3p-Vgq2VdE"
+  );
 }
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
