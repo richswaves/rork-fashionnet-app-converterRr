@@ -181,7 +181,7 @@ export default function UserProfileScreen() {
             <Image source={{ uri: display.avatarUrl }} style={styles.avatar} />
           </Pressable>
           <View style={styles.nameCol}>
-            <Text style={styles.username}>{display.username}</Text>
+            <Text style={styles.username}>{display.displayName}</Text>
             {!!data?.location && (
               <View style={styles.locationRow}>
                 <MapPin color="#9CA3AF" size={14} />
