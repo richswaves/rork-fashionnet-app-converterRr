@@ -155,7 +155,14 @@ export default function NetworkScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              directionalLockEnabled
+              nestedScrollEnabled
+              decelerationRate="fast"
+              bounces={false}
+              scrollEventThrottle={16}
+              onStartShouldSetResponderCapture={() => true}
               contentContainerStyle={styles.topPager}
+              style={styles.hScrollWebContain}
               testID="top-pager"
             >
               {pages.map((page, pIdx) => (
@@ -205,7 +212,19 @@ export default function NetworkScreen() {
         {!!newErr && (
           <Text style={styles.errorText} testID="new-error">Failed to load new members</Text>
         )}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          directionalLockEnabled
+          nestedScrollEnabled
+          decelerationRate="fast"
+          bounces={false}
+          scrollEventThrottle={16}
+          onStartShouldSetResponderCapture={() => true}
+          contentContainerStyle={styles.horizontalList}
+          style={styles.hScrollWebContain}
+          testID="new-list"
+        >
           {(newProfiles ?? []).map((m) => (
             <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
@@ -276,6 +295,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start" },
   page: { marginRight: 12 },
   topPager: { paddingRight: 12 },
+  hScrollWebContain: { overscrollBehavior: "contain" as any },
   card: { backgroundColor: "#121218", borderRadius: 16, overflow: "hidden", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
   cardImage: { width: "100%", height: 140 },
   cardBody: { padding: 12 },
