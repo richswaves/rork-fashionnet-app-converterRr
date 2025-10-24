@@ -38,6 +38,12 @@ export default function EditProfileScreen() {
     | "tiktok"
   >(null);
   const [temp, setTemp] = useState<string>("");
+  const [socialLinks, setSocialLinks] = useState<{
+    instagram?: string;
+    youtube?: string;
+    twitter?: string;
+    tiktok?: string;
+  }>((profile as any)?.social_links ?? {});
 
   const canSave = useMemo<boolean>(() => {
     return (
@@ -66,6 +72,18 @@ export default function EditProfileScreen() {
         break;
       case "banner":
         setTemp(bannerUrl);
+        break;
+      case "instagram":
+        setTemp(socialLinks.instagram ?? "");
+        break;
+      case "youtube":
+        setTemp(socialLinks.youtube ?? "");
+        break;
+      case "twitter":
+        setTemp(socialLinks.twitter ?? "");
+        break;
+      case "tiktok":
+        setTemp(socialLinks.tiktok ?? "");
         break;
       default:
         setTemp("");
@@ -200,6 +218,10 @@ export default function EditProfileScreen() {
     if (editing === "bio") setBio(val);
     if (editing === "avatar") setAvatarUrl(val);
     if (editing === "banner") setBannerUrl(val);
+    if (editing === "instagram") setSocialLinks(prev => ({ ...prev, instagram: val }));
+    if (editing === "youtube") setSocialLinks(prev => ({ ...prev, youtube: val }));
+    if (editing === "twitter") setSocialLinks(prev => ({ ...prev, twitter: val }));
+    if (editing === "tiktok") setSocialLinks(prev => ({ ...prev, tiktok: val }));
     setEditing(null);
   }
 
@@ -259,6 +281,13 @@ export default function EditProfileScreen() {
           backgroundImage: finalBannerUrl,
         };
         console.log("[onSave] Adding profile_customization to updates:", updates.profile_customization);
+      }
+
+      const existingSocial = (profile as any)?.social_links ?? {};
+      const hasChangedSocial = JSON.stringify(socialLinks) !== JSON.stringify(existingSocial);
+      if (hasChangedSocial) {
+        updates.social_links = socialLinks;
+        console.log("[onSave] Adding social_links to updates:", socialLinks);
       }
 
       if (Object.keys(updates).length === 0) {

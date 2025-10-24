@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -13,6 +13,12 @@ interface ProfileRow {
   profile_picture?: string;
   profession?: string;
   username?: string;
+  social_links?: {
+    instagram?: string;
+    youtube?: string;
+    twitter?: string;
+    tiktok?: string;
+  } | null;
 }
 
 interface OpportunityRow {
@@ -294,6 +300,44 @@ export default function OpportunitiesScreen() {
                   <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
                   <Text numberOfLines={1} style={styles.postTime}>{formatRelativeTime(item.created_at)}</Text>
                 </View>
+                {item.profiles?.social_links && (item.profiles.social_links.instagram || item.profiles.social_links.youtube) && (
+                  <View style={styles.socialIcons}>
+                    {item.profiles.social_links.instagram && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.social_links?.instagram ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-instagram-${item.id}`}
+                      >
+                        <Instagram color="#C13584" size={16} />
+                      </Pressable>
+                    )}
+                    {item.profiles.social_links.youtube && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.social_links?.youtube ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://youtube.com/${url}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-youtube-${item.id}`}
+                      >
+                        <Youtube color="#FF0000" size={16} />
+                      </Pressable>
+                    )}
+                  </View>
+                )}
               </Pressable>
 
               <View style={styles.mediaWrap}>
@@ -498,6 +542,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   postHeader: { flexDirection: "row", alignItems: "center", gap: 10 as const, paddingHorizontal: 12, paddingTop: 12 },
+  socialIcons: { flexDirection: "row", alignItems: "center", gap: 8 as const, marginLeft: "auto" as const },
+  socialIconBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   postAvatar: { width: 32, height: 32, borderRadius: 16 },
   postHeaderInfo: { flex: 1 },
   postUsername: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },

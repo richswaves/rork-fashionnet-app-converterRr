@@ -12,6 +12,13 @@ interface ProfileCustomization {
   typographyColor?: string;
 }
 
+interface SocialLinks {
+  instagram?: string;
+  youtube?: string;
+  twitter?: string;
+  tiktok?: string;
+}
+
 interface Profile {
   user_id: string;
   full_name?: string;
@@ -26,6 +33,7 @@ interface Profile {
   model_photos?: string[];
   portfolio_photos?: string[];
   profile_customization?: ProfileCustomization | null;
+  social_links?: SocialLinks | null;
 }
 
 export type ResolvedProfile = {
@@ -129,6 +137,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates.model_photos !== undefined ? { model_photos: updates.model_photos } : {}),
         ...(updates.portfolio_photos !== undefined ? { portfolio_photos: updates.portfolio_photos } : {}),
         ...(updates as any).profile_customization !== undefined ? { profile_customization: (updates as any).profile_customization as ProfileCustomization | null } : {},
+        ...(updates.social_links !== undefined ? { social_links: updates.social_links } : {}),
       };
 
       console.log("[ProfileContext] Upserting profile payload:", payload);
