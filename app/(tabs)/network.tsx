@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -36,6 +36,8 @@ export default function NetworkScreen() {
   const { resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
+
+  const { width: windowWidth } = useWindowDimensions();
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
     queryKey: ["profiles", "top"],
@@ -141,8 +143,9 @@ export default function NetworkScreen() {
           <Text style={styles.errorText} testID="top-error">Failed to load members</Text>
         )}
         <View style={styles.grid}>
-          {(topProfiles ?? []).map((m) => (
-            <Pressable key={m.id} style={styles.card} testID={`top-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
+          {(topProfiles ?? []).map((m, idx) => { const horizontalPadding = 12 * 2; const gap = 12; const cardW = Math.floor((windowWidth - horizontalPadding - gap) / 2);
+            return (
+            <Pressable key={m.id} style={[styles.card, { width: cardW }, idx % 2 === 0 ? { marginRight: 12 } : null]} testID={`top-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
               <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle}>{m.name}</Text>
@@ -163,7 +166,8 @@ export default function NetworkScreen() {
                 </Pressable>
               </View>
             </Pressable>
-          ))}
+            );
+          })}
         </View>
 
         <Text style={[styles.h1, { marginTop: 8 }]}>New to the Network</Text>
@@ -243,8 +247,8 @@ const styles = StyleSheet.create({
 
   h1: { color: "#E5E7EB", fontSize: 24, fontWeight: "900", marginTop: 16, marginBottom: 12 },
 
-  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  card: { width: "48%", backgroundColor: "#121218", borderRadius: 16, overflow: "hidden", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start" },
+  card: { backgroundColor: "#121218", borderRadius: 16, overflow: "hidden", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
   cardImage: { width: "100%", height: 200 },
   cardBody: { padding: 12 },
   cardTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800", marginBottom: 6 },
