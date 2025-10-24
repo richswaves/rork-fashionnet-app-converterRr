@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Building2, ChevronDown, ChevronUp, Filter, MapPin, ThumbsUp, Layers, CheckCircle2, Send, Bookmark } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
@@ -53,6 +53,8 @@ function Dropdown({
   const display = sections
     .flatMap((s) => s.options)
     .find((o) => o.value === value)?.label ?? value ?? label;
+  const windowH = Dimensions.get("window").height;
+  const maxMenuH = Math.max(180, Math.min(320, windowH * 0.45));
 
   return (
     <View style={styles.ddContainer} testID={`${testID}-container`}>
@@ -65,37 +67,45 @@ function Dropdown({
         {open ? <ChevronUp color="#E5E7EB" size={18} /> : <ChevronDown color="#E5E7EB" size={18} />}
       </Pressable>
       {open && (
-        <View style={styles.ddMenu} testID={`${testID}-menu`}>
-          <Pressable
-            onPress={() => {
-              onChange(null);
-              setOpen(false);
-            }}
-            style={styles.ddItem}
-            testID={`${testID}-clear`}
-          >
-            <Text style={styles.ddItemText}>All</Text>
-          </Pressable>
-          {sections.map((sec) => (
-            <View key={sec.title ?? Math.random().toString()}>
-              {!!sec.title && (
-                <Text style={styles.ddSectionLabel}>{sec.title.toUpperCase()}</Text>
-              )}
-              {sec.options.map((opt) => (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                  style={styles.ddItem}
-                  testID={`${testID}-opt-${opt.value}`}
-                >
-                  <Text style={styles.ddItemText}>{opt.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ))}
+        <View style={[styles.ddMenu, { maxHeight: maxMenuH }]} testID={`${testID}-menu`}>
+          <View style={styles.ddMenuHeader}>
+            <Text style={styles.ddMenuTitle}>{label}</Text>
+            <Pressable onPress={() => setOpen(false)} style={styles.ddCollapseBtn} testID={`${testID}-collapse`}>
+              <ChevronUp color="#E5E7EB" size={18} />
+            </Pressable>
+          </View>
+          <ScrollView style={{ maxHeight: maxMenuH - 44 }} contentContainerStyle={styles.ddScrollContent} showsVerticalScrollIndicator>
+            <Pressable
+              onPress={() => {
+                onChange(null);
+                setOpen(false);
+              }}
+              style={styles.ddItem}
+              testID={`${testID}-clear`}
+            >
+              <Text style={styles.ddItemText}>All</Text>
+            </Pressable>
+            {sections.map((sec) => (
+              <View key={sec.title ?? Math.random().toString()}>
+                {!!sec.title && (
+                  <Text style={styles.ddSectionLabel}>{sec.title.toUpperCase()}</Text>
+                )}
+                {sec.options.map((opt) => (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                    style={styles.ddItem}
+                    testID={`${testID}-opt-${opt.value}`}
+                  >
+                    <Text style={styles.ddItemText}>{opt.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
@@ -276,51 +286,53 @@ export default function OpportunitiesScreen() {
       >
         <Pressable style={styles.backdrop} onPress={() => setShowFilters(false)} testID="filters-backdrop" />
         <View style={styles.sheet} testID="filters-sheet">
+          <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Filter Opportunities</Text>
 
-          <Text style={styles.fieldLabel}>Location</Text>
-          <View style={styles.textFieldWrap}>
-            <TextInput
-              placeholder="Enter city name"
-              placeholderTextColor="#6B7280"
-              value={city ?? ""}
-              onChangeText={(t) => setCity(t.length ? t : null)}
-              style={styles.textField}
-              testID="input-city"
+          <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetScrollContent}>
+            <Text style={styles.fieldLabel}>Location</Text>
+            <View style={styles.textFieldWrap}>
+              <TextInput
+                placeholder="Enter city name"
+                placeholderTextColor="#6B7280"
+                value={city ?? ""}
+                onChangeText={(t) => setCity(t.length ? t : null)}
+                style={styles.textField}
+                testID="input-city"
+              />
+            </View>
+
+            <Text style={styles.fieldLabel}>Seeking a</Text>
+            <Dropdown
+              label="All Roles"
+              sections={ROLE_SECTIONS}
+              value={seekingRole}
+              onChange={setSeekingRole}
+              testID="dd-seeking"
             />
-          </View>
 
-          <Text style={styles.fieldLabel}>Seeking a</Text>
-          <Dropdown
-            label="All Roles"
-            sections={ROLE_SECTIONS}
-            value={seekingRole}
-            onChange={setSeekingRole}
-            testID="dd-seeking"
-          />
+            <Text style={styles.fieldLabel}>Posted by a</Text>
+            <Dropdown
+              label="All Posters"
+              sections={ROLE_SECTIONS}
+              value={postedByRole}
+              onChange={setPostedByRole}
+              testID="dd-postedby"
+            />
 
-          <Text style={styles.fieldLabel}>Posted by a</Text>
-          <Dropdown
-            label="All Posters"
-            sections={ROLE_SECTIONS}
-            value={postedByRole}
-            onChange={setPostedByRole}
-            testID="dd-postedby"
-          />
-
-          <Text style={styles.fieldLabel}>Payment Status</Text>
-          <Dropdown
-            label="All Opportunities"
-            sections={[{ options: [
-              { label: "All Opportunities", value: "all" },
-              { label: "Paid Only", value: "paid" },
-              { label: "Unpaid Only", value: "unpaid" },
-            ]}]}
-            value={paymentStatus}
-            onChange={setPaymentStatus}
-            testID="dd-payment"
-          />
-
+            <Text style={styles.fieldLabel}>Payment Status</Text>
+            <Dropdown
+              label="All Opportunities"
+              sections={[{ options: [
+                { label: "All Opportunities", value: "all" },
+                { label: "Paid Only", value: "paid" },
+                { label: "Unpaid Only", value: "unpaid" },
+              ]}]}
+              value={paymentStatus}
+              onChange={setPaymentStatus}
+              testID="dd-payment"
+            />
+          </ScrollView>
 
           <View style={styles.sheetActions}>
             <Pressable
@@ -456,11 +468,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#0F0F15",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: "#23232B",
+    maxHeight: Dimensions.get("window").height * 0.9,
   },
+  sheetHandle: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: "#23232B", marginBottom: 8 },
   sheetTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 12 },
+  sheetScroll: { maxHeight: Dimensions.get("window").height * 0.9 - 100 },
+  sheetScrollContent: { paddingBottom: 8 },
   fieldLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "800", marginTop: 6, marginBottom: 6, letterSpacing: 0.4 },
   textFieldWrap: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 10 },
   textField: { color: "#E5E7EB", fontSize: 14, paddingHorizontal: 12, paddingVertical: 12 },
@@ -472,7 +490,11 @@ const styles = StyleSheet.create({
   ddContainer: { marginBottom: 10 },
   ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#14141C", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   ddLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
-  ddMenu: { marginTop: 8, backgroundColor: "#14141C", borderRadius: 10, overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  ddMenu: { marginTop: 8, backgroundColor: "#14141C", borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  ddMenuHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 10, borderBottomColor: "#23232B", borderBottomWidth: StyleSheet.hairlineWidth },
+  ddMenuTitle: { color: "#E5E7EB", fontSize: 13, fontWeight: "800", letterSpacing: 0.4 },
+  ddCollapseBtn: { padding: 6, borderRadius: 8 },
+  ddScrollContent: { paddingBottom: 8 },
   ddSectionLabel: { color: "#9CA3AF", fontSize: 11, fontWeight: "800", paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, letterSpacing: 0.6 },
   ddItem: { paddingVertical: 12, paddingHorizontal: 12 },
   ddItemText: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" },
