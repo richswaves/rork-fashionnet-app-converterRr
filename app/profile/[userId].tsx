@@ -135,8 +135,13 @@ export default function UserProfileScreen() {
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]}>
         <View style={styles.headerRow}>
           <Pressable
-            disabled={!isOwn}
-            onPress={onChangeAvatar}
+            onPress={() => {
+              if (!isOwn) {
+                Alert.alert("Not allowed", "You can only change your own profile picture");
+                return;
+              }
+              onChangeAvatar();
+            }}
             style={styles.avatarWrap}
             testID="avatar-press"
             accessibilityRole="button"
