@@ -125,7 +125,7 @@ export default function OpportunitiesScreen() {
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
-  const { currentUserId, profile } = useProfile();
+  const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
@@ -198,10 +198,10 @@ export default function OpportunitiesScreen() {
       <View style={styles.topBar}>
         <Pressable style={styles.topProfile} testID="opp-top-profile" onPress={() => console.log("open profile") }>
           <Image
-            source={{ uri: (profile?.profile_picture ?? "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60") }}
+            source={{ uri: resolvedProfile.avatarUrl }}
             style={styles.topAvatar}
           />
-          <Text style={styles.topName}>{profile?.full_name ?? profile?.username ?? "Welcome"}</Text>
+          <Text style={styles.topName}>{resolvedProfile.displayName}</Text>
         </Pressable>
       </View>
 
@@ -255,16 +255,15 @@ export default function OpportunitiesScreen() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
           const title = item.title ?? "";
-          const username = item.profiles?.username ?? item.profiles?.full_name ?? "Unknown";
-          const avatar = item.profiles?.profile_picture ?? "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=128&auto=format&fit=crop&q=60";
-          const imageUri = item.cover_image ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60";
+          const display = getDisplayForProfile(item.profiles);
+          const imageUri = (item.cover_image ?? (item as any).image_url ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60");
           const upvotes = 0;
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
               <View style={styles.postHeader}>
-                <Image source={{ uri: avatar }} style={styles.postAvatar} />
+                <Image source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
-                  <Text numberOfLines={1} style={styles.postUsername}>{username}</Text>
+                  <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
                   <Text numberOfLines={1} style={styles.postTime}>Just now</Text>
                 </View>
               </View>

@@ -16,6 +16,27 @@ interface Profile {
   created_at?: string;
 }
 
+export type ResolvedProfile = {
+  user_id?: string;
+  displayName: string;
+  username: string;
+  avatarUrl: string;
+};
+
+function resolveFromSession(profile: Profile | null, session: any): ResolvedProfile {
+  const md = session?.user?.user_metadata ?? session?.user?.app_metadata ?? {};
+  const email: string | undefined = session?.user?.email ?? undefined;
+  const avatarFromGoogle: string | undefined = md["avatar_url"] ?? md["picture"] ?? undefined;
+  const fullNameFromAuth: string | undefined = md["full_name"] ?? md["name"] ?? undefined;
+  const usernameFromEmail: string | undefined = email ? email.split("@")[0] : undefined;
+
+  const displayName = (profile?.full_name ?? fullNameFromAuth ?? profile?.username ?? usernameFromEmail ?? "Member") as string;
+  const username = (profile?.username ?? usernameFromEmail ?? (fullNameFromAuth ? fullNameFromAuth.replace(/\s+/g, "").toLowerCase() : undefined) ?? "member") as string;
+  const avatarUrl = (profile?.profile_picture ?? avatarFromGoogle ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&auto=format&fit=crop&q=60") as string;
+
+  return { user_id: profile?.user_id ?? session?.user?.id, displayName, username, avatarUrl };
+}
+
 export const [ProfileProvider, useProfile] = createContextHook(() => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [session, setSession] = useState<any>(null);
@@ -62,6 +83,8 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     enabled: !!currentUserId && !!getSupabase(),
   });
 
+  const resolved = useMemo<ResolvedProfile>(() => resolveFromSession(profileQuery.data ?? null, session), [profileQuery.data, session]);
+
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<Profile>) => {
       if (!currentUserId) throw new Error("No user ID");
@@ -107,15 +130,26 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     setSession(null);
   }, []);
 
+  const getDisplayForProfile = useCallback((p?: { user_id?: string; full_name?: string; username?: string; profile_picture?: string } | null) => {
+    if (!p) return resolved;
+    if (p.user_id && session?.user?.id && p.user_id === session.user.id) return resolved;
+    const displayName = (p.full_name ?? p.username ?? resolved.displayName);
+    const username = (p.username ?? resolved.username);
+    const avatarUrl = (p.profile_picture ?? resolved.avatarUrl);
+    return { user_id: p.user_id, displayName, username, avatarUrl } as ResolvedProfile;
+  }, [resolved, session?.user?.id]);
+
   return useMemo(() => ({
     currentUserId,
     session,
     profile: profileQuery.data ?? null,
+    resolvedProfile: resolved,
+    getDisplayForProfile,
     isLoading: profileQuery.isLoading,
     error: profileQuery.error,
     updateProfile: updateProfileMutation.mutate,
     isUpdating: updateProfileMutation.isPending,
     login,
     logout,
-  }), [currentUserId, session, profileQuery.data, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.isPending, login, logout]);
+  }), [currentUserId, session, profileQuery.data, resolved, getDisplayForProfile, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.isPending, login, logout]);
 });

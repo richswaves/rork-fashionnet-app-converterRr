@@ -32,7 +32,7 @@ export default function NetworkScreen() {
   const [following, setFollowing] = useState<Record<string, boolean>>({});
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
 
-  const { profile } = useProfile();
+  const { resolvedProfile, getDisplayForProfile } = useProfile();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
@@ -40,16 +40,19 @@ export default function NetworkScreen() {
     queryFn: async () => {
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
-        query: { account_status: "eq.approved", profile_picture: "not.is.null" },
+        query: { account_status: "eq.approved" },
         order: { column: "created_at", ascending: false },
         limit: 8,
       });
-      return rows.map((r) => ({
-        id: r.user_id,
-        name: r.full_name ?? r.username ?? "Member",
-        image: r.profile_picture ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=60",
-        location: r.location ?? undefined,
-      }));
+      return rows.map((r) => {
+        const d = getDisplayForProfile(r);
+        return {
+          id: r.user_id,
+          name: d.displayName,
+          image: d.avatarUrl,
+          location: r.location ?? undefined,
+        };
+      });
     },
   });
 
@@ -62,12 +65,15 @@ export default function NetworkScreen() {
         order: { column: "created_at", ascending: false },
         limit: 12,
       });
-      return rows.map((r) => ({
-        id: r.user_id,
-        name: r.full_name ?? r.username ?? "Member",
-        image: r.profile_picture ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=60",
-        location: r.location ?? undefined,
-      }));
+      return rows.map((r) => {
+        const d = getDisplayForProfile(r);
+        return {
+          id: r.user_id,
+          name: d.displayName,
+          image: d.avatarUrl,
+          location: r.location ?? undefined,
+        };
+      });
     },
   });
 
@@ -79,8 +85,8 @@ export default function NetworkScreen() {
     <View style={containerStyle} testID="network-screen">
       <View style={styles.topBar}>
         <Pressable style={styles.profile} testID="top-profile" onPress={() => console.log("profile")}>
-          <Image source={{ uri: profile?.profile_picture ?? "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60" }} style={styles.avatar} />
-          <Text style={styles.profileText}>{profile?.full_name ?? profile?.username ?? "Network"}</Text>
+          <Image source={{ uri: resolvedProfile.avatarUrl }} style={styles.avatar} />
+          <Text style={styles.profileText}>{resolvedProfile.displayName}</Text>
         </Pressable>
 
         <View style={styles.topIcons}>
