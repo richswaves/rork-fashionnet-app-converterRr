@@ -245,11 +245,11 @@ export default function UserProfileScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>1</Text>
+            <Text style={styles.statValue}>0</Text>
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>4</Text>
+            <Text style={styles.statValue}>0</Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>
