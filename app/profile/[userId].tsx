@@ -82,24 +82,42 @@ export default function UserProfileScreen() {
       quality: 0.9,
       selectionLimit: 1,
       allowsEditing: true,
+      base64: true,
       aspect: [1, 1],
     });
     if (res.canceled || !res.assets || res.assets.length === 0) return null;
     return res.assets[0] ?? null;
   }
 
-  async function uploadToSupabase(file: { uri: string; fileName?: string | null; mimeType?: string | null }) {
+  async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset) {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured");
-    const { uri, fileName, mimeType } = file;
-    const namePart = fileName && fileName.trim().length > 0 ? fileName : `${Date.now()}.jpg`;
+    const uri = asset.uri;
+    const fileName = (asset.fileName ?? `${Date.now()}`).replace(/\s+/g, "_");
+    const extFromType = (asset as any).mimeType?.split("/")?.[1] ?? uri.split(".").pop() ?? "jpg";
+    const namePart = /\.[a-zA-Z0-9]+$/.test(fileName) ? fileName : `${fileName}.${extFromType}`;
     const path = `avatars/${namePart}`;
-    const res = await fetch(uri);
-    const blob = await res.blob();
+
+    let blob: Blob;
+    try {
+      if (Platform.OS === "web") {
+        blob = await (await fetch(uri)).blob();
+      } else if (asset.base64) {
+        const mime = (asset as any).mimeType ?? "image/jpeg";
+        const dataUrl = `data:${mime};base64,${asset.base64}`;
+        blob = await (await fetch(dataUrl)).blob();
+      } else {
+        blob = await (await fetch(uri)).blob();
+      }
+    } catch (e) {
+      throw new Error("Could not read selected image on this device");
+    }
+
+    const contentType = (asset as any).mimeType ?? (blob as any).type ?? "image/jpeg";
     const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
       cacheControl: "3600",
       upsert: true,
-      contentType: mimeType ?? (blob as any).type ?? "image/jpeg",
+      contentType,
     });
     if (error) throw error as Error;
     const { data: pub } = supabase.storage.from("model-photos").getPublicUrl(path);
@@ -111,7 +129,7 @@ export default function UserProfileScreen() {
       if (!data?.user_id || currentUserId !== data.user_id) return;
       const asset = await pickFromLibrary();
       if (!asset) return;
-      const url = await uploadToSupabase({ uri: asset.uri, fileName: asset.fileName ?? null, mimeType: (asset as any).mimeType ?? null });
+      const url = await uploadToSupabase(asset);
       await updateProfileAsync({ profile_picture: url } as any);
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Failed to update avatar";

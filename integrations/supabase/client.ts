@@ -1,12 +1,22 @@
 import { Platform } from "react-native";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 function resolveEnv(key: string): string | undefined {
   const fromProcess = typeof process !== "undefined" ? (process.env as Record<string, string | undefined>)[key] : undefined;
+  const fromConstants = (() => {
+    try {
+      const extra = (Constants?.expoConfig as any)?.extra ?? (Constants as any)?.manifest2?.extra ?? (Constants as any)?.manifest?.extra;
+      const v = extra ? extra[key] : undefined;
+      return typeof v === "string" ? v : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
   const fromWindow = typeof window !== "undefined" ? (window as any)[key] ?? (window as any).__ENV__?.[key] : undefined;
   const fromGlobal = (globalThis as any)?.__ENV__?.[key] ?? (globalThis as any)?.ENV?.[key];
-  const val = fromProcess ?? fromWindow ?? fromGlobal;
+  const val = fromProcess ?? fromConstants ?? fromWindow ?? fromGlobal;
   if (typeof val === "string") {
     const trimmed = val.trim();
     return trimmed.length > 0 ? trimmed : undefined;
