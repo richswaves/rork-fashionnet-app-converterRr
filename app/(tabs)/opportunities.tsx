@@ -1,55 +1,46 @@
 import React, { useMemo, useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Building2, Filter, MapPin, ThumbsUp } from "lucide-react-native";
+import { useQuery } from "@tanstack/react-query";
+import { sbSelect } from "@/integrations/supabase/client";
 
-interface Opportunity {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: string;
-  image: string;
-  upvotes: number;
+interface ProfileRow {
+  user_id: string;
+  full_name?: string;
+  profile_picture?: string;
+  profession?: string;
+  username?: string;
 }
 
-const MOCK_OPPS: Opportunity[] = [
-  {
-    id: "o1",
-    title: "Lifestyle Shoot for Summer Campaign",
-    company: "Bright Studio",
-    location: "Los Angeles, CA",
-    type: "Contract",
-    image:
-      "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60",
-    upvotes: 128,
-  },
-  {
-    id: "o2",
-    title: "Product Photographer (Tech Gadgets)",
-    company: "Volt Labs",
-    location: "Remote",
-    type: "Part-time",
-    image:
-      "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=1200&auto=format&fit=crop&q=60",
-    upvotes: 64,
-  },
-  {
-    id: "o3",
-    title: "Event Videographer for Music Festival",
-    company: "Northwave",
-    location: "Austin, TX",
-    type: "Weekend",
-    image:
-      "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&auto=format&fit=crop&q=60",
-    upvotes: 203,
-  },
-];
+interface OpportunityRow {
+  id: string;
+  title?: string;
+  company?: string | null;
+  location?: string | null;
+  type?: string | null;
+  cover_image?: string | null;
+  created_at?: string;
+  user_id?: string;
+  profiles?: ProfileRow;
+}
 
 export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
+
+  const { data, isLoading, error } = useQuery<OpportunityRow[]>({
+    queryKey: ["opportunities", "all"],
+    queryFn: async () => {
+      const rows = await sbSelect<OpportunityRow>("opportunities", {
+        select: "*,profiles:user_id(*)",
+        order: { column: "created_at", ascending: false },
+        limit: 50,
+      });
+      return rows;
+    },
+  });
 
   function toggleUpvote(id: string) {
     setLiked((s) => ({ ...s, [id]: !s[id] }));
@@ -65,37 +56,53 @@ export default function OpportunitiesScreen() {
         </Pressable>
       </View>
 
+      {isLoading && (
+        <View style={styles.loaderRow} testID="opps-loading">
+          <ActivityIndicator color="#E5E7EB" />
+        </View>
+      )}
+      {!!error && (
+        <Text style={styles.errorText} testID="opps-error">Failed to load opportunities</Text>
+      )}
+
       <FlatList
-        data={MOCK_OPPS}
+        data={data ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.card} testID={`opp-${item.id}`}>
-            <Image source={{ uri: item.image }} style={styles.cover} resizeMode="cover" />
-            <View style={styles.body}>
-              <Text numberOfLines={2} style={styles.title}>{item.title}</Text>
-              <View style={styles.row}>
-                <Building2 color="#9CA3AF" size={14} />
-                <Text numberOfLines={1} style={styles.metaText}>{item.company}</Text>
-              </View>
-              <View style={styles.row}>
-                <MapPin color="#9CA3AF" size={14} />
-                <Text numberOfLines={1} style={styles.metaText}>{item.location} • {item.type}</Text>
-              </View>
+        renderItem={({ item }) => {
+          const title = item.title ?? "Opportunity";
+          const company = item.company ?? item.profiles?.full_name ?? item.profiles?.username ?? "";
+          const locationText = [item.location ?? "", item.type ?? ""].filter(Boolean).join(" • ");
+          const imageUri = item.cover_image ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60";
+          const upvotes = 0;
+          return (
+            <View style={styles.card} testID={`opp-${item.id}`}>
+              <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
+              <View style={styles.body}>
+                <Text numberOfLines={2} style={styles.title}>{title}</Text>
+                <View style={styles.row}>
+                  <Building2 color="#9CA3AF" size={14} />
+                  <Text numberOfLines={1} style={styles.metaText}>{company}</Text>
+                </View>
+                <View style={styles.row}>
+                  <MapPin color="#9CA3AF" size={14} />
+                  <Text numberOfLines={1} style={styles.metaText}>{locationText}</Text>
+                </View>
 
-              <View style={styles.footerRow}>
-                <Pressable style={styles.upvote} onPress={() => toggleUpvote(item.id)} testID={`upvote-${item.id}`}>
-                  <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
-                  <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{item.upvotes + (liked[item.id] ? 1 : 0)}</Text>
-                </Pressable>
+                <View style={styles.footerRow}>
+                  <Pressable style={styles.upvote} onPress={() => toggleUpvote(item.id)} testID={`upvote-${item.id}`}>
+                    <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
+                    <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
+                  </Pressable>
 
-                <Pressable style={styles.applyBtn} onPress={() => {}} testID={`apply-${item.id}`}>
-                  <Text style={styles.applyText}>Apply</Text>
-                </Pressable>
+                  <Pressable style={styles.applyBtn} onPress={() => {}} testID={`apply-${item.id}`}>
+                    <Text style={styles.applyText}>Apply</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          );
+        }}
       />
     </View>
   );
@@ -143,4 +150,6 @@ const styles = StyleSheet.create({
   upvoteActive: { color: "#10B981" },
   applyBtn: { backgroundColor: "#E5E7EB", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   applyText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
+  loaderRow: { paddingVertical: 10, alignItems: "center" },
+  errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },
 });

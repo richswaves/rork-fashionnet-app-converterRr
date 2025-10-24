@@ -1,7 +1,20 @@
 import React, { useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQuery } from "@tanstack/react-query";
+import { sbSelect } from "@/integrations/supabase/client";
+
+interface ProfileRow {
+  user_id: string;
+  full_name?: string;
+  profile_picture?: string;
+  location?: string;
+  profession?: string;
+  professions?: string[] | null;
+  username?: string;
+  created_at?: string;
+}
 
 interface MemberCard {
   id: string;
@@ -9,17 +22,6 @@ interface MemberCard {
   image: string;
   location?: string;
 }
-
-const TOP_MEMBERS: MemberCard[] = [
-  { id: "1", name: "Keen Dorsey", image: "https://images.unsplash.com/photo-1563237023-5e4f23695f22?w=800&auto=format&fit=crop&q=60" },
-  { id: "2", name: "Elijah Varona", image: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=800&auto=format&fit=crop&q=60" },
-];
-
-const NEW_MEMBERS: MemberCard[] = [
-  { id: "3", name: "User_99f9dc38", image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=60" },
-  { id: "4", name: "Joshua Crawford", image: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=800&auto=format&fit=crop&q=60" },
-  { id: "5", name: "thebrxnd", image: "https://images.unsplash.com/photo-1553531384-cc64ac80f931?w=800&auto=format&fit=crop&q=60", location: "New Britain, CT" },
-];
 
 const ROLES: string[] = ["Professional Role", "Photographer", "Model", "Videographer", "Designer", "Other"];
 
@@ -31,6 +33,42 @@ export default function NetworkScreen() {
 
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
+  const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
+    queryKey: ["profiles", "top"],
+    queryFn: async () => {
+      const rows = await sbSelect<ProfileRow>("profiles", {
+        select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
+        query: { account_status: "eq.approved", profile_picture: "not.is.null" },
+        order: { column: "created_at", ascending: false },
+        limit: 8,
+      });
+      return rows.map((r) => ({
+        id: r.user_id,
+        name: r.full_name ?? r.username ?? "Member",
+        image: r.profile_picture ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=60",
+        location: r.location ?? undefined,
+      }));
+    },
+  });
+
+  const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
+    queryKey: ["profiles", "new"],
+    queryFn: async () => {
+      const rows = await sbSelect<ProfileRow>("profiles", {
+        select: "user_id,full_name,profile_picture,location,username,created_at",
+        query: { account_status: "eq.approved" },
+        order: { column: "created_at", ascending: false },
+        limit: 12,
+      });
+      return rows.map((r) => ({
+        id: r.user_id,
+        name: r.full_name ?? r.username ?? "Member",
+        image: r.profile_picture ?? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=60",
+        location: r.location ?? undefined,
+      }));
+    },
+  });
+
   function toggleFollow(id: string) {
     setFollowing((cur) => ({ ...cur, [id]: !cur[id] }));
   }
@@ -40,7 +78,7 @@ export default function NetworkScreen() {
       <View style={styles.topBar}>
         <Pressable style={styles.profile} testID="top-profile" onPress={() => console.log("profile")}>
           <Image source={{ uri: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60" }} style={styles.avatar} />
-          <Text style={styles.profileText}>test</Text>
+          <Text style={styles.profileText}>Network</Text>
         </Pressable>
 
         <View style={styles.topIcons}>
@@ -84,8 +122,16 @@ export default function NetworkScreen() {
         )}
 
         <Text style={styles.h1}>Top Members</Text>
+        {loadingTop && (
+          <View style={styles.loaderRow} testID="top-loading">
+            <ActivityIndicator color="#E5E7EB" />
+          </View>
+        )}
+        {!!topErr && (
+          <Text style={styles.errorText} testID="top-error">Failed to load members</Text>
+        )}
         <View style={styles.grid}>
-          {TOP_MEMBERS.map((m) => (
+          {(topProfiles ?? []).map((m) => (
             <View key={m.id} style={styles.card} testID={`top-${m.id}`}>
               <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
               <View style={styles.cardBody}>
@@ -111,8 +157,16 @@ export default function NetworkScreen() {
         </View>
 
         <Text style={[styles.h1, { marginTop: 8 }]}>New to the Network</Text>
+        {loadingNew && (
+          <View style={styles.loaderRow} testID="new-loading">
+            <ActivityIndicator color="#E5E7EB" />
+          </View>
+        )}
+        {!!newErr && (
+          <Text style={styles.errorText} testID="new-error">Failed to load new members</Text>
+        )}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
-          {NEW_MEMBERS.map((m) => (
+          {(newProfiles ?? []).map((m) => (
             <View key={m.id} style={styles.hCard} testID={`new-${m.id}`}>
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
               <View style={styles.cardBody}>
@@ -190,6 +244,9 @@ const styles = StyleSheet.create({
   followBtnActive: { backgroundColor: "#E5E7EB" },
   followLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
   followLabelActive: { color: "#0B0B0F" },
+
+  loaderRow: { paddingVertical: 10, alignItems: "center" },
+  errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },
 
   horizontalList: { paddingRight: 12, gap: 12 },
   hCard: { width: 240, backgroundColor: "#121218", borderRadius: 16, overflow: "hidden", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth },
