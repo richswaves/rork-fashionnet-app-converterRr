@@ -125,7 +125,7 @@ export default function OpportunitiesScreen() {
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
-  const { currentUserId } = useProfile();
+  const { currentUserId, profile } = useProfile();
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
@@ -195,6 +195,16 @@ export default function OpportunitiesScreen() {
 
   return (
     <View style={container} testID="opportunities-screen">
+      <View style={styles.topBar}>
+        <Pressable style={styles.topProfile} testID="opp-top-profile" onPress={() => console.log("open profile") }>
+          <Image
+            source={{ uri: (profile?.profile_picture ?? "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60") }}
+            style={styles.topAvatar}
+          />
+          <Text style={styles.topName}>{profile?.full_name ?? profile?.username ?? "Welcome"}</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.header}>
         <Pressable style={styles.viewSelector} onPress={() => setViewMenuOpen((s) => !s)} testID="opp-view-toggle">
           {(() => {
@@ -392,6 +402,18 @@ const ROLE_SECTIONS: { title?: string; options: { label: string; value: string }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
+  topBar: {
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  topProfile: { flexDirection: "row", alignItems: "center", gap: 10 as const },
+  topAvatar: { width: 28, height: 28, borderRadius: 14 },
+  topName: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" },
+
   header: {
     paddingHorizontal: 12,
     paddingVertical: 10,
