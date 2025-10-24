@@ -154,7 +154,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.button, (isLoading || !supabaseConfigured) && styles.buttonDisabled]}
               onPress={handleLogin}
-              disabled={isLoading || !supabaseConfigured}
+              disabled={isLoading}
               testID="login-submit"
             >
               {isLoading ? (
@@ -173,7 +173,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.googleBtn, (isLoading || !supabaseConfigured) && styles.buttonDisabled]}
               onPress={handleGoogleLogin}
-              disabled={isLoading || !supabaseConfigured}
+              disabled={isLoading}
               testID="login-google"
             >
               <Image
