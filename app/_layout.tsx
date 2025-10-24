@@ -8,9 +8,13 @@ import { ProfileProvider } from "@/contexts/ProfileContext";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { setRuntimeSupabaseEnv } from "@/integrations/supabase/client";
 
-const envUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "https://mnqgmpvkdmgmyoqhgswc.supabase.co";
-const envAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ucWdtcHZrZG1nbXlvcWhnc3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMTM0NTksImV4cCI6MjA2Njg4OTQ1OX0.JeTVfB0c5MDmgSElxpkI9eVW6Ca7QLTNj3p-Vgq2VdE";
-setRuntimeSupabaseEnv(envUrl, envAnon);
+const envUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const envAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+if (envUrl && envAnon) {
+  setRuntimeSupabaseEnv(envUrl, envAnon);
+} else {
+  console.warn("Supabase env not set. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in app config.");
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
