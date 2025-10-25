@@ -563,29 +563,11 @@ export default function OpportunitiesScreen() {
                     <MoreVertical color="#9CA3AF" size={20} />
                   </Pressable>
                 )}
-                {((item.profiles?.instagram_website && item.profiles.instagram_website !== "https://www.instagram.com") ||
-                  item.profiles?.social_links?.instagram ||
+                {(item.profiles?.social_links?.instagram ||
                   item.profiles?.social_links?.twitter ||
                   item.profiles?.social_links?.youtube ||
                   item.profiles?.social_links?.tiktok) && (
                   <View style={styles.socialIcons}>
-                    {(item.profiles?.instagram_website && item.profiles.instagram_website !== "https://www.instagram.com") && (
-                      <Pressable
-                        onPress={() => {
-                          const url = item.profiles?.instagram_website ?? "";
-                          const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
-                          if (Platform.OS === "web") {
-                            window.open(fullUrl, "_blank");
-                          } else {
-                            Linking.openURL(fullUrl).catch(() => {});
-                          }
-                        }}
-                        style={styles.socialIconBtn}
-                        testID={`social-instagram-${item.id}`}
-                      >
-                        <Instagram color="#C13584" size={16} />
-                      </Pressable>
-                    )}
                     {item.profiles?.social_links?.instagram && (
                       <Pressable
                         onPress={() => {
