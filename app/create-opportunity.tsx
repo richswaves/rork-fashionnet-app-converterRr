@@ -35,6 +35,103 @@ const NEED_TYPES = [
   "Other",
 ];
 
+const US_CITIES = [
+  { city: "New York", state: "NY" },
+  { city: "Los Angeles", state: "CA" },
+  { city: "Chicago", state: "IL" },
+  { city: "Houston", state: "TX" },
+  { city: "Phoenix", state: "AZ" },
+  { city: "Philadelphia", state: "PA" },
+  { city: "San Antonio", state: "TX" },
+  { city: "San Diego", state: "CA" },
+  { city: "Dallas", state: "TX" },
+  { city: "San Jose", state: "CA" },
+  { city: "Austin", state: "TX" },
+  { city: "Jacksonville", state: "FL" },
+  { city: "Fort Worth", state: "TX" },
+  { city: "Columbus", state: "OH" },
+  { city: "Charlotte", state: "NC" },
+  { city: "San Francisco", state: "CA" },
+  { city: "Indianapolis", state: "IN" },
+  { city: "Seattle", state: "WA" },
+  { city: "Denver", state: "CO" },
+  { city: "Boston", state: "MA" },
+  { city: "Nashville", state: "TN" },
+  { city: "Detroit", state: "MI" },
+  { city: "Portland", state: "OR" },
+  { city: "Las Vegas", state: "NV" },
+  { city: "Memphis", state: "TN" },
+  { city: "Baltimore", state: "MD" },
+  { city: "Milwaukee", state: "WI" },
+  { city: "Albuquerque", state: "NM" },
+  { city: "Tucson", state: "AZ" },
+  { city: "Fresno", state: "CA" },
+  { city: "Mesa", state: "AZ" },
+  { city: "Sacramento", state: "CA" },
+  { city: "Atlanta", state: "GA" },
+  { city: "Kansas City", state: "MO" },
+  { city: "Colorado Springs", state: "CO" },
+  { city: "Raleigh", state: "NC" },
+  { city: "Miami", state: "FL" },
+  { city: "Long Beach", state: "CA" },
+  { city: "Virginia Beach", state: "VA" },
+  { city: "Oakland", state: "CA" },
+  { city: "Minneapolis", state: "MN" },
+  { city: "Tampa", state: "FL" },
+  { city: "Tulsa", state: "OK" },
+  { city: "Arlington", state: "TX" },
+  { city: "New Orleans", state: "LA" },
+  { city: "Wichita", state: "KS" },
+  { city: "Cleveland", state: "OH" },
+  { city: "Bakersfield", state: "CA" },
+  { city: "Aurora", state: "CO" },
+  { city: "Anaheim", state: "CA" },
+  { city: "Honolulu", state: "HI" },
+  { city: "Santa Ana", state: "CA" },
+  { city: "Riverside", state: "CA" },
+  { city: "Corpus Christi", state: "TX" },
+  { city: "Lexington", state: "KY" },
+  { city: "Henderson", state: "NV" },
+  { city: "Stockton", state: "CA" },
+  { city: "Saint Paul", state: "MN" },
+  { city: "Cincinnati", state: "OH" },
+  { city: "St. Louis", state: "MO" },
+  { city: "Pittsburgh", state: "PA" },
+  { city: "Greensboro", state: "NC" },
+  { city: "Lincoln", state: "NE" },
+  { city: "Anchorage", state: "AK" },
+  { city: "Plano", state: "TX" },
+  { city: "Orlando", state: "FL" },
+  { city: "Irvine", state: "CA" },
+  { city: "Newark", state: "NJ" },
+  { city: "Durham", state: "NC" },
+  { city: "Chula Vista", state: "CA" },
+  { city: "Toledo", state: "OH" },
+  { city: "Fort Wayne", state: "IN" },
+  { city: "St. Petersburg", state: "FL" },
+  { city: "Laredo", state: "TX" },
+  { city: "Jersey City", state: "NJ" },
+  { city: "Chandler", state: "AZ" },
+  { city: "Madison", state: "WI" },
+  { city: "Lubbock", state: "TX" },
+  { city: "Scottsdale", state: "AZ" },
+  { city: "Reno", state: "NV" },
+  { city: "Buffalo", state: "NY" },
+  { city: "Gilbert", state: "AZ" },
+  { city: "Glendale", state: "AZ" },
+  { city: "North Las Vegas", state: "NV" },
+  { city: "Winston-Salem", state: "NC" },
+  { city: "Chesapeake", state: "VA" },
+  { city: "Norfolk", state: "VA" },
+  { city: "Fremont", state: "CA" },
+  { city: "Garland", state: "TX" },
+  { city: "Irving", state: "TX" },
+  { city: "Hialeah", state: "FL" },
+  { city: "Richmond", state: "VA" },
+  { city: "Boise", state: "ID" },
+  { city: "Spokane", state: "WA" },
+];
+
 export default function CreateOpportunityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -51,7 +148,7 @@ export default function CreateOpportunityScreen() {
   const [newRequirement, setNewRequirement] = useState("");
   const [showNeedDropdown, setShowNeedDropdown] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<{ city: string; state: string; display: string }[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
   const createMutation = useMutation({
@@ -95,33 +192,28 @@ export default function CreateOpportunityScreen() {
   };
 
   useEffect(() => {
-    const fetchLocationSuggestions = async () => {
-      if (location.length < 3) {
-        setLocationSuggestions([]);
-        return;
-      }
+    if (location.length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationDropdown(false);
+      return;
+    }
 
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            location
-          )}&limit=5`,
-          {
-            headers: {
-              "User-Agent": "FashionNetworkApp/1.0",
-            },
-          }
-        );
-        const data = await response.json();
-        setLocationSuggestions(data);
-        setShowLocationDropdown(data.length > 0);
-      } catch (error) {
-        console.error("[LocationAutocomplete] Error:", error);
-      }
-    };
+    const searchLower = location.toLowerCase().trim();
+    const matches = US_CITIES.filter((loc) => {
+      const cityMatch = loc.city.toLowerCase().includes(searchLower);
+      const stateMatch = loc.state.toLowerCase().includes(searchLower);
+      const fullMatch = `${loc.city}, ${loc.state}`.toLowerCase().includes(searchLower);
+      return cityMatch || stateMatch || fullMatch;
+    })
+      .slice(0, 10)
+      .map((loc) => ({
+        city: loc.city,
+        state: loc.state,
+        display: `${loc.city}, ${loc.state}`,
+      }));
 
-    const debounceTimer = setTimeout(fetchLocationSuggestions, 300);
-    return () => clearTimeout(debounceTimer);
+    setLocationSuggestions(matches);
+    setShowLocationDropdown(matches.length > 0);
   }, [location]);
 
   const handlePickImage = async () => {
@@ -228,21 +320,22 @@ export default function CreateOpportunityScreen() {
               testID="input-location"
             />
             {showLocationDropdown && locationSuggestions.length > 0 && (
-              <View style={styles.dropdownMenu}>
+              <View style={styles.locationDropdownMenu}>
                 <FlatList
                   data={locationSuggestions}
-                  keyExtractor={(item) => item.place_id.toString()}
+                  keyExtractor={(item, index) => `${item.display}-${index}`}
                   renderItem={({ item }) => (
                     <Pressable
                       style={styles.dropdownItem}
                       onPress={() => {
-                        setLocation(item.display_name);
+                        setLocation(item.display);
                         setShowLocationDropdown(false);
                         setLocationSuggestions([]);
                       }}
+                      testID={`location-${item.display}`}
                     >
-                      <Text style={styles.dropdownItemText} numberOfLines={2}>
-                        {item.display_name}
+                      <Text style={styles.dropdownItemText} numberOfLines={1}>
+                        {item.display}
                       </Text>
                     </Pressable>
                   )}
@@ -546,6 +639,22 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 10,
     maxHeight: 200,
+    zIndex: 1000,
+    ...(Platform.OS === "web" && {
+      boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+    }),
+    elevation: 8,
+  },
+  locationDropdownMenu: {
+    position: "absolute",
+    top: 70,
+    left: 0,
+    right: 0,
+    backgroundColor: "#14141C",
+    borderColor: "#23232B",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    maxHeight: 250,
     zIndex: 1000,
     ...(Platform.OS === "web" && {
       boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
