@@ -152,18 +152,25 @@ export default function UserProfileScreen() {
       <View style={styles.coverWrap}>
         <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.72)", "#0B0B0F"]}
-          locations={[0, 0.35, 0.6, 0.82, 1]}
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.22)", "rgba(0,0,0,0.58)", "rgba(0,0,0,0.88)", "#0B0B0F"]}
+          locations={[0, 0.42, 0.65, 0.84, 1]}
           start={{ x: 0.5, y: 0.0 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.coverFade}
         />
         <LinearGradient
-          colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.5)", "rgba(11,11,15,0.9)", "#0B0B0F"]}
-          locations={[0, 0.5, 0.85, 1]}
+          colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.6)", "#0B0B0F"]}
+          locations={[0, 0.46, 1]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.bottomFeather}
+        />
+        <LinearGradient
+          colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.85)", "rgba(11,11,15,0)"]}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.avatarFeather}
         />
         <View style={styles.coverCurve} />
         <Pressable testID="back" onPress={() => router.back()} style={[styles.backBtn, { top: 12 + insets.top }]}>
@@ -268,12 +275,13 @@ const styles = StyleSheet.create({
   coverWrap: { width: "100%", height: 420, backgroundColor: "#111318" },
   cover: { width: "100%", height: 420 },
   coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 420 },
-  bottomFeather: { position: "absolute", left: 0, right: 0, bottom: 120, height: 220 },
+  bottomFeather: { position: "absolute", left: 0, right: 0, bottom: 118, height: 230 },
+  avatarFeather: { position: "absolute", left: 0, right: 0, bottom: 160, height: 160 },
   coverCurve: { position: "absolute", left: -1, right: -1, bottom: -1, height: 180, backgroundColor: "#0B0B0F", borderTopLeftRadius: 48, borderTopRightRadius: 48 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
   scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -8 },
   headerColumn: { alignItems: "center" },
-  avatarFloating: { position: "absolute", bottom: -64, left: 0, right: 0, alignItems: "center", zIndex: 10, elevation: 10 },
+  avatarFloating: { position: "absolute", bottom: -64, left: 0, right: 0, alignItems: "center", zIndex: 20, elevation: 20 },
   avatarWrapLarge: { width: 120, height: 120, borderRadius: 60, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#111318" },
   avatarLarge: { width: 120, height: 120, borderRadius: 60 },
   usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 86 },
