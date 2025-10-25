@@ -175,6 +175,7 @@ export default function OpportunitiesScreen() {
   const [postedByRole, setPostedByRole] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [view, setView] = useState<ViewKey>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
@@ -413,7 +414,27 @@ export default function OpportunitiesScreen() {
         <Pressable style={styles.filterBtn} onPress={() => setShowFilters(true)} testID="opp-filter">
           <Filter color="#E5E7EB" size={18} />
           <Text style={styles.filterText}>Filters</Text>
+          {(() => {
+            const activeCount = [city, seekingRole, postedByRole, paymentStatus].filter((v) => v && v !== "all").length;
+            return activeCount > 0 ? (
+              <View style={styles.filterBadge} testID="opp-filter-badge">
+                <Text style={styles.filterBadgeText}>{activeCount}</Text>
+              </View>
+            ) : null;
+          })()}
         </Pressable>
+      </View>
+
+      <View style={styles.searchRow}>
+        <Search color="#9CA3AF" size={16} />
+        <TextInput
+          placeholder="Search title, company, or location"
+          placeholderTextColor="#6B7280"
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          testID="opp-search-input"
+        />
       </View>
 
       {isLoading && (
@@ -445,7 +466,38 @@ export default function OpportunitiesScreen() {
       )}
 
       <FlatList
-        data={data ?? []}
+        data={useMemo(() => {
+          let filteredData = [...(data ?? [])];
+          const q = searchQuery.trim().toLowerCase();
+          if (q) {
+            filteredData = filteredData.filter((app) =>
+              (app?.title ?? "").toLowerCase().includes(q) ||
+              (app?.company ?? "").toLowerCase().includes(q) ||
+              (app?.location ?? "").toLowerCase().includes(q)
+            );
+          }
+          if (city && city !== "all") {
+            filteredData = filteredData.filter((opp) => (opp.location ?? "").toLowerCase().includes((city ?? "").toLowerCase()));
+          }
+          if (seekingRole && seekingRole !== "all") {
+            filteredData = filteredData.filter((opp) => (opp.type ?? "").toLowerCase() === (seekingRole ?? "").toLowerCase());
+          }
+          if (paymentStatus === "paid") {
+            filteredData = filteredData.filter((opp) => (opp.budget ?? "").toLowerCase() !== "unpaid" && (opp.budget ?? "") !== "");
+          } else if (paymentStatus === "unpaid") {
+            filteredData = filteredData.filter((opp) => !(opp.budget ?? "") || (opp.budget ?? "").toLowerCase() === "unpaid");
+          }
+          if (postedByRole && postedByRole !== "all") {
+            filteredData = filteredData.filter((opp) => {
+              const profile = opp.profiles as any;
+              const profession: string = (profile?.profession ?? "").toLowerCase();
+              const professions: string[] = Array.isArray(profile?.professions) ? (profile.professions as string[]).map((p) => p.toLowerCase()) : [];
+              const target = (postedByRole ?? "").toLowerCase();
+              return profession === target || professions.includes(target);
+            });
+          }
+          return filteredData;
+        }, [data, searchQuery, city, seekingRole, paymentStatus, postedByRole])}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
@@ -815,6 +867,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   filterText: { color: "#E5E7EB", fontSize: 13, fontWeight: "700" },
+  filterBadge: { marginLeft: 6, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#4CB963", alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
+  filterBadgeText: { color: "#0B0B0F", fontSize: 11, fontWeight: "900" },
   viewMenu: {
     marginHorizontal: 12,
     marginTop: 8,
@@ -949,6 +1003,8 @@ const styles = StyleSheet.create({
   resetText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700" },
   applyFiltersBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB" },
   applyFiltersText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 as const, paddingHorizontal: 12, paddingVertical: 8 },
+  searchInput: { flex: 1, backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, color: "#E5E7EB", paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
   ddContainer: { marginBottom: 10 },
   ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#14141C", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   ddLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
