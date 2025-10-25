@@ -505,7 +505,6 @@ export default function CreateOpportunityScreen() {
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
         company: resolvedProfile.displayName || "Unknown",
-        is_paid: paymentType === "paid",
         price_min: paymentType === "paid" && priceMin.trim() ? Number(priceMin.replace(/[^0-9.]/g, "")) : null,
         price_max: paymentType === "paid" && priceMax.trim() ? Number(priceMax.replace(/[^0-9.]/g, "")) : null,
       } as Record<string, unknown>;
