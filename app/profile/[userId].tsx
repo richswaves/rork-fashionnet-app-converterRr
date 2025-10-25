@@ -801,8 +801,14 @@ function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
   const columnWidth = (screenWidth - padding * 2 - gap * (numColumns - 1)) / numColumns;
 
   const columns: PortfolioItem[][] = useMemo(() => {
-    const cols: PortfolioItem[][] = Array.from({ length: numColumns }, () => []);
-    const columnHeights: number[] = Array(numColumns).fill(0);
+    const cols: PortfolioItem[][] = [];
+    for (let i = 0; i < numColumns; i++) {
+      cols.push([]);
+    }
+    const columnHeights: number[] = [];
+    for (let i = 0; i < numColumns; i++) {
+      columnHeights.push(0);
+    }
 
     items.forEach((item) => {
       const aspectRatio = (item.width && item.height && item.width > 0 && item.height > 0) 
