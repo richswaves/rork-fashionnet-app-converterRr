@@ -266,7 +266,7 @@ export default function UserProfileScreen() {
     Array.isArray(data?.model_photos) ? data?.model_photos[0] : undefined,
     Array.isArray(data?.portfolio_photos) ? data?.portfolio_photos[0] : undefined,
   ];
-  const cover = (coverCandidates.find((c) => typeof c === "string" && !!c) ?? "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60") as string;
+  const cover = coverCandidates.find((c) => typeof c === "string" && !!c);
 
   async function ensureMediaPermission(): Promise<boolean> {
     try {
@@ -354,16 +354,18 @@ export default function UserProfileScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]} testID="profile-scroll">
-        <View style={styles.coverWrap}>
-          <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
-          <LinearGradient
-            colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.35)", "rgba(11,11,15,0.85)", "#0B0B0F"]}
-            locations={[0, 0.5, 0.8, 1]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.coverFade}
-          />
-        </View>
+        {cover && (
+          <View style={styles.coverWrap}>
+            <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
+            <LinearGradient
+              colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.35)", "rgba(11,11,15,0.85)", "#0B0B0F"]}
+              locations={[0, 0.5, 0.8, 1]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={styles.coverFade}
+            />
+          </View>
+        )}
         <View style={styles.inner}>
           <View style={styles.headerColumn}>
           <Pressable
@@ -496,15 +498,16 @@ export default function UserProfileScreen() {
                   opp.cover_image ?? 
                   opp.image_url ?? 
                   fromArray ?? 
-                  fromMedia ?? 
-                  "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60"
-                ) as string;
+                  fromMedia
+                );
                 
                 console.log(`[Profile] Using imageUri for opp ${opp.id}:`, imageUri);
                 const isOwnPost = opp.user_id === currentUserId;
                 return (
                   <View key={opp.id} style={styles.oppCard} testID={`opp-${opp.id}`}>
-                    <Image source={{ uri: imageUri }} style={styles.oppImage} resizeMode="cover" />
+                    {imageUri && (
+                      <Image source={{ uri: imageUri }} style={styles.oppImage} resizeMode="cover" />
+                    )}
                     <View style={styles.oppBody}>
                       <Text numberOfLines={2} style={styles.oppTitle}>{opp.title ?? "Untitled"}</Text>
                       {!!opp.location && <Text numberOfLines={1} style={styles.oppMeta}>{opp.location}</Text>}
