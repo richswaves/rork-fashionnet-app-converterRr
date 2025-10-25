@@ -162,16 +162,19 @@ export default function OpportunitiesScreen() {
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
 
-  const { data: appliedIds } = useQuery<Set<string>>({
+  const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],
     queryFn: async () => {
-      if (!currentUserId) return new Set<string>();
-      const apps = await sbSelect<{ opportunity_id: string }>("applications", {
-        select: "opportunity_id",
+      if (!currentUserId) return {};
+      const apps = await sbSelect<{ opportunity_id: string; status?: string }>("applications", {
+        select: "opportunity_id,status",
         query: { applicant_id: `eq.${currentUserId}` },
         limit: 1000,
       });
-      return new Set(apps.map((a) => a.opportunity_id));
+      return apps.reduce((acc, app) => {
+        acc[app.opportunity_id] = { applied: true, status: app.status };
+        return acc;
+      }, {} as Record<string, { applied: boolean; status?: string }>);
     },
     enabled: !!currentUserId,
   });
@@ -474,27 +477,35 @@ export default function OpportunitiesScreen() {
                   <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
                   <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
                 </Pressable>
-                {(item.user_id !== currentUserId) && (
+                {(item.user_id !== currentUserId) && (() => {
+                  const appInfo = applications?.[item.id];
+                  const isApproved = appInfo?.status === "approved";
+                  const isApplied = appInfo?.applied;
+                  return (
                   <View style={styles.actionButtons}>
                     <Pressable
-                      style={[styles.actionBtn, appliedIds?.has(item.id) && styles.actionBtnActive]}
+                      style={[styles.actionBtn, (isApplied || isApproved) && styles.actionBtnActive]}
                       onPress={() => {
                         if (!currentUserId) {
                           console.log("Must be logged in to apply");
                           return;
                         }
-                        if (appliedIds?.has(item.id)) {
+                        if (isApproved) {
+                          console.log("Cannot unapply from approved opportunity");
+                          return;
+                        }
+                        if (isApplied) {
                           unapplyMutation.mutate(item.id);
                         } else {
                           applyMutation.mutate(item.id);
                         }
                       }}
-                      disabled={applyMutation.isPending || unapplyMutation.isPending}
+                      disabled={applyMutation.isPending || unapplyMutation.isPending || isApproved}
                       testID={`apply-${item.id}`}
                     >
-                      <CheckCircle2 color={appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
-                      <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
-                        {appliedIds?.has(item.id) ? "Applied" : "Apply"}
+                      <CheckCircle2 color={(isApplied || isApproved) ? "#4CB963" : "#E5E7EB"} size={16} />
+                      <Text style={[styles.actionText, (isApplied || isApproved) && styles.actionTextActive]}>
+                        {isApproved ? "Approved" : isApplied ? "Applied" : "Apply"}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -519,7 +530,8 @@ export default function OpportunitiesScreen() {
                       </Text>
                     </Pressable>
                   </View>
-                )}
+                  );
+                })()}
               </View>
             </View>
           );
