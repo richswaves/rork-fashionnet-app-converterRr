@@ -63,7 +63,6 @@ export default function CreateOpportunityScreen() {
         type: needType,
         location: location.trim() || null,
         user_id: currentUserId,
-        cover_image: imageUrl.trim() || null,
         company: null,
       };
 
