@@ -519,10 +519,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   oppActionBtnApplied: { 
-    backgroundColor: "#10B981", 
-    borderColor: "#059669",
-    shadowColor: "#10B981",
-    shadowOpacity: 0.3,
+    backgroundColor: "#4CB963", 
+    borderColor: "#3EA653",
+    shadowColor: "#4CB963",
+    shadowOpacity: 0.25,
   },
   oppActionBtnSaved: { 
     backgroundColor: "#F59E0B", 
