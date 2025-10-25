@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Plus } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -69,6 +69,40 @@ export default function UserProfileScreen() {
       return rows[0] ?? null;
     },
     enabled: !!userId,
+  });
+
+  const { data: isFollowingUser } = useQuery<boolean>({
+    queryKey: ["is-following", currentUserId, userId],
+    queryFn: async () => {
+      if (!currentUserId || !userId) return false;
+      const rows = await sbSelect<{ follower_id: string }>("follows", {
+        select: "follower_id",
+        query: { follower_id: `eq.${currentUserId}`, followed_id: `eq.${userId}` },
+        limit: 1,
+      });
+      return rows.length > 0;
+    },
+    enabled: !!currentUserId && !!userId && currentUserId !== userId,
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId || !userId) throw new Error("Must be logged in");
+      if (isFollowingUser) {
+        await sbDelete("follows", {
+          follower_id: currentUserId,
+          followed_id: userId,
+        });
+      } else {
+        await sbInsert("follows", {
+          follower_id: currentUserId,
+          followed_id: userId,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["is-following", currentUserId, userId] });
+    },
   });
 
   const display = useMemo(() => getDisplayForProfile(data ?? undefined), [data, getDisplayForProfile]);
@@ -306,6 +340,22 @@ export default function UserProfileScreen() {
             accessibilityLabel={isOwn ? "Change profile picture" : undefined}
           >
             <Image key={userId} source={{ uri: display.avatarUrl }} style={styles.avatarLarge} />
+            {!isOwn && (
+              <Pressable
+                onPress={() => {
+                  if (!currentUserId) {
+                    Alert.alert("Login Required", "You must be logged in to follow users");
+                    return;
+                  }
+                  followMutation.mutate();
+                }}
+                style={[styles.followPlusBtn, isFollowingUser && styles.followPlusBtnActive]}
+                testID="follow-plus-btn"
+                disabled={followMutation.isPending}
+              >
+                <Plus color="#FFFFFF" size={20} strokeWidth={3} />
+              </Pressable>
+            )}
           </Pressable>
           <Text style={styles.usernameXL}>{display.displayName}</Text>
           {!!data?.location && (
@@ -497,8 +547,29 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 32 },
   inner: { paddingHorizontal: 16 },
   headerColumn: { alignItems: "center", paddingTop: 12 },
-  avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F" },
-  avatarLarge: { width: 116, height: 116 },
+  avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "visible", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F", position: "relative" as const },
+  avatarLarge: { width: 116, height: 116, borderRadius: 54 },
+  followPlusBtn: {
+    position: "absolute" as const,
+    bottom: -2,
+    right: -2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#3b82f6",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#0B0B0F",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  followPlusBtnActive: {
+    backgroundColor: "#4CB963",
+  },
   usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 12 },
   locationRowCenter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   locationText: { color: "#9CA3AF", fontSize: 13, maxWidth: 220 },
