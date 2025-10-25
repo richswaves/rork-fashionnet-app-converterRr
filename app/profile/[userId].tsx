@@ -152,16 +152,8 @@ export default function UserProfileScreen() {
       <View style={styles.coverWrap}>
         <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
         <LinearGradient
-          colors={[
-            "rgba(11,11,15,0)",
-            "rgba(11,11,15,0.02)",
-            "rgba(11,11,15,0.06)",
-            "rgba(11,11,15,0.14)",
-            "rgba(11,11,15,0.28)",
-            "rgba(11,11,15,0.48)",
-            "#0B0B0F",
-          ]}
-          locations={[0, 0.55, 0.7, 0.82, 0.9, 0.97, 1]}
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.4)", "#0B0B0F"]}
+          locations={[0, 0.5, 0.82, 1]}
           start={{ x: 0.5, y: 0.1 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.coverFade}
@@ -265,11 +257,11 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  coverWrap: { width: "100%", height: 380, backgroundColor: "#111318" },
-  cover: { width: "100%", height: 380 },
-  coverFade: { position: "absolute", left: 0, right: 0, bottom: -12, height: 420 },
+  coverWrap: { width: "100%", height: 360, backgroundColor: "#111318" },
+  cover: { width: "100%", height: 360 },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 320 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -28 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -20 },
   headerColumn: { alignItems: "center" },
   avatarFloating: { position: "absolute", bottom: -56, left: 0, right: 0, alignItems: "center" },
   avatarWrapLarge: { width: 112, height: 112, borderRadius: 56, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#111318" },
