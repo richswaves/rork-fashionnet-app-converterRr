@@ -293,6 +293,23 @@ export default function OpportunitiesScreen() {
     },
   });
 
+  const { data: uniqueLocations } = useQuery<string[]>({
+    queryKey: ["unique-locations"],
+    queryFn: async () => {
+      const allOpps = await sbSelect<OpportunityRow>("opportunities", {
+        select: "location",
+        limit: 5000,
+      });
+      const locationSet = new Set<string>();
+      allOpps.forEach((opp) => {
+        if (opp.location && opp.location.trim()) {
+          locationSet.add(opp.location.trim());
+        }
+      });
+      return Array.from(locationSet).sort();
+    },
+  });
+
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
     queryFn: async () => {
@@ -714,23 +731,23 @@ export default function OpportunitiesScreen() {
           <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetScrollContent}>
             <Text style={styles.fieldLabel}>Location</Text>
             <View style={styles.locationChips}>
-              {LOCATION_OPTIONS.map((loc) => (
+              {(uniqueLocations ?? []).map((loc) => (
                 <Pressable
-                  key={loc.value}
+                  key={loc}
                   style={[
                     styles.locationChip,
-                    city === loc.value && styles.locationChipActive,
+                    city === loc && styles.locationChipActive,
                   ]}
-                  onPress={() => setCity(city === loc.value ? null : loc.value)}
-                  testID={`location-${loc.value}`}
+                  onPress={() => setCity(city === loc ? null : loc)}
+                  testID={`location-${loc}`}
                 >
                   <Text
                     style={[
                       styles.locationChipText,
-                      city === loc.value && styles.locationChipTextActive,
+                      city === loc && styles.locationChipTextActive,
                     ]}
                   >
-                    {loc.label}
+                    {loc}
                   </Text>
                 </Pressable>
               ))}
@@ -798,18 +815,7 @@ export default function OpportunitiesScreen() {
   );
 }
 
-const LOCATION_OPTIONS = [
-  { label: "New York", value: "new york" },
-  { label: "Los Angeles", value: "los angeles" },
-  { label: "Chicago", value: "chicago" },
-  { label: "Miami", value: "miami" },
-  { label: "San Francisco", value: "san francisco" },
-  { label: "Austin", value: "austin" },
-  { label: "Seattle", value: "seattle" },
-  { label: "Boston", value: "boston" },
-  { label: "Denver", value: "denver" },
-  { label: "Atlanta", value: "atlanta" },
-];
+
 
 const ROLE_SECTIONS: { title?: string; options: { label: string; value: string }[] }[] = [
   {
