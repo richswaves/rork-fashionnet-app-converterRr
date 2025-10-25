@@ -687,8 +687,15 @@ export default function CreateOpportunityScreen() {
       console.log("[CreateOpportunity] Insert result:", result);
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async () => {
+      console.log("[CreateOpportunity] Success, invalidating all opportunity-related queries");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
+        queryClient.invalidateQueries({ queryKey: ["unique-locations"] }),
+      ]);
+      queryClient.refetchQueries({ queryKey: ["opportunities"] });
+      queryClient.refetchQueries({ queryKey: ["unique-locations"] });
+      console.log("[CreateOpportunity] Queries invalidated and refetched");
       router.back();
     },
     onError: (error) => {

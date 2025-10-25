@@ -223,9 +223,14 @@ export default function OpportunitiesScreen() {
       });
       return opportunityId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async () => {
+      console.log("[Apply] Success, invalidating queries");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
+      ]);
+      queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.refetchQueries({ queryKey: ["opportunities"] });
     },
   });
 
@@ -238,9 +243,14 @@ export default function OpportunitiesScreen() {
       });
       return opportunityId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async () => {
+      console.log("[Unapply] Success, invalidating queries");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
+      ]);
+      queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.refetchQueries({ queryKey: ["opportunities"] });
     },
   });
 
@@ -253,9 +263,14 @@ export default function OpportunitiesScreen() {
       });
       return opportunityId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async () => {
+      console.log("[Save] Success, invalidating queries");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
+      ]);
+      queryClient.refetchQueries({ queryKey: ["saved-ids", currentUserId] });
+      queryClient.refetchQueries({ queryKey: ["opportunities"] });
     },
   });
 
@@ -268,9 +283,14 @@ export default function OpportunitiesScreen() {
       });
       return opportunityId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async () => {
+      console.log("[Unsave] Success, invalidating queries");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
+      ]);
+      queryClient.refetchQueries({ queryKey: ["saved-ids", currentUserId] });
+      queryClient.refetchQueries({ queryKey: ["opportunities"] });
     },
   });
 

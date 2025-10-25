@@ -8,7 +8,13 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
+interface PortfolioItem {
+  id: string;
+  user_id: string;
+  media_url: string;
+  media_type: string;
+  created_at?: string;
+}
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -81,9 +87,10 @@ export default function EditProfileScreen() {
       console.log("[Portfolio] Item inserted", inserted);
       return inserted;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       console.log("[Portfolio] Invalidating queries");
-      queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+      queryClient.refetchQueries({ queryKey: ["portfolio", currentUserId] });
     },
     onError: (error: any) => {
       console.error("[Portfolio] Upload error", error);
@@ -96,8 +103,10 @@ export default function EditProfileScreen() {
       if (!currentUserId) throw new Error("Must be logged in");
       await sbDelete("portfolio_items", { id: itemId });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+    onSuccess: async () => {
+      console.log("[Portfolio] Delete success, invalidating queries");
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+      queryClient.refetchQueries({ queryKey: ["portfolio", currentUserId] });
     },
     onError: (error: any) => {
       console.error("[Portfolio] Delete error", error);
