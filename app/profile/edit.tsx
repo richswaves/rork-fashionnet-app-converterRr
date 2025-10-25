@@ -3,10 +3,12 @@ import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text,
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { getSupabase } from "@/integrations/supabase/client";
+import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -44,6 +46,66 @@ export default function EditProfileScreen() {
     twitter?: string;
     tiktok?: string;
   }>((profile as any)?.social_links ?? {});
+
+  const queryClient = useQueryClient();
+  const currentUserId = profile?.user_id;
+
+  const { data: portfolioItems = [] } = useQuery<PortfolioItem[]>({
+    queryKey: ["portfolio", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const items = await sbSelect<PortfolioItem>("portfolio_items", {
+        select: "*",
+        query: { user_id: `eq.${currentUserId}` },
+        order: { column: "created_at", ascending: false },
+      });
+      return items;
+    },
+    enabled: !!currentUserId,
+  });
+
+  const [uploadingPortfolio, setUploadingPortfolio] = useState<boolean>(false);
+
+  const addPortfolioMutation = useMutation({
+    mutationFn: async (asset: ImagePicker.ImagePickerAsset) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      console.log("[Portfolio] Uploading asset", asset.uri);
+      const url = await uploadToSupabase(asset, "portfolio");
+      console.log("[Portfolio] Asset uploaded to", url);
+      const item: Record<string, any> = {
+        user_id: currentUserId,
+        media_url: url,
+        media_type: "image",
+        width: asset.width,
+        height: asset.height,
+      };
+      const inserted = await sbInsert("portfolio_items", item);
+      console.log("[Portfolio] Item inserted", inserted);
+      return inserted;
+    },
+    onSuccess: () => {
+      console.log("[Portfolio] Invalidating queries");
+      queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+    },
+    onError: (error: any) => {
+      console.error("[Portfolio] Upload error", error);
+      Alert.alert("Error", "Failed to upload portfolio item");
+    },
+  });
+
+  const deletePortfolioMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("portfolio_items", { id: itemId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+    },
+    onError: (error: any) => {
+      console.error("[Portfolio] Delete error", error);
+      Alert.alert("Error", "Failed to delete portfolio item");
+    },
+  });
 
   const canSave = useMemo<boolean>(() => {
     return (
@@ -106,22 +168,22 @@ export default function EditProfileScreen() {
     }
   }
 
-  async function pickFromLibrary(): Promise<ImagePicker.ImagePickerAsset | null> {
+  async function pickFromLibrary(allowsEditing = true): Promise<ImagePicker.ImagePickerAsset | null> {
     const ok = await ensureMediaPermission();
     if (!ok) return null;
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.9,
       selectionLimit: 1,
-      allowsEditing: true,
+      allowsEditing,
       base64: true,
-      aspect: [1, 1],
+      aspect: allowsEditing ? [1, 1] : undefined,
     });
     if (res.canceled || !res.assets || res.assets.length === 0) return null;
     return res.assets[0] ?? null;
   }
 
-  async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset, folder: "avatars" | "banners") {
+  async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset, folder: "avatars" | "banners" | "portfolio") {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured");
 
@@ -310,6 +372,43 @@ export default function EditProfileScreen() {
     }
   }
 
+  async function onAddPortfolio() {
+    try {
+      console.log("[Portfolio] Starting picker");
+      setUploadingPortfolio(true);
+      const asset = await pickFromLibrary(false);
+      if (!asset) {
+        console.log("[Portfolio] No asset selected");
+        setUploadingPortfolio(false);
+        return;
+      }
+      console.log("[Portfolio] Asset selected, uploading");
+      await addPortfolioMutation.mutateAsync(asset);
+      console.log("[Portfolio] Upload complete");
+      setUploadingPortfolio(false);
+    } catch (e: any) {
+      console.error("[Portfolio] Error", e);
+      setUploadingPortfolio(false);
+      const msg = typeof e?.message === "string" ? e.message : "Failed to add portfolio item";
+      Alert.alert("Error", msg);
+    }
+  }
+
+  async function onDeletePortfolio(itemId: string) {
+    Alert.alert(
+      "Delete Portfolio Item",
+      "Are you sure you want to delete this item?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deletePortfolioMutation.mutate(itemId),
+        },
+      ]
+    );
+  }
+
   return (
     <View style={styles.container} testID="edit-profile-screen">
       <Stack.Screen options={{ headerShown: false }} />
@@ -405,10 +504,44 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.cardUpload}>
-          <View style={styles.dashed} />
-          <Text style={styles.uploadTitle}>Add portfolio photos</Text>
-          <Text style={styles.uploadSubtitle}>Coming soon</Text>
+        <View style={styles.portfolioSection}>
+          <View style={styles.portfolioHeader}>
+            <Text style={styles.portfolioTitle}>Portfolio</Text>
+            <Pressable 
+              onPress={onAddPortfolio} 
+              style={styles.addPortfolioBtn}
+              disabled={uploadingPortfolio || addPortfolioMutation.isPending}
+              testID="add-portfolio-btn"
+            >
+              {uploadingPortfolio || addPortfolioMutation.isPending ? (
+                <Loader2 color="#E5E7EB" size={18} />
+              ) : (
+                <Plus color="#E5E7EB" size={18} />
+              )}
+            </Pressable>
+          </View>
+          {portfolioItems.length === 0 ? (
+            <Pressable onPress={onAddPortfolio} style={styles.cardUpload}>
+              <View style={styles.dashed} />
+              <Text style={styles.uploadTitle}>Add portfolio photos</Text>
+              <Text style={styles.uploadSubtitle}>Tap to upload</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.portfolioGrid}>
+              {portfolioItems.map((item) => (
+                <View key={item.id} style={styles.portfolioItemWrap}>
+                  <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                  <Pressable
+                    onPress={() => onDeletePortfolio(item.id)}
+                    style={styles.deletePortfolioBtn}
+                    testID={`delete-portfolio-${item.id}`}
+                  >
+                    <Trash2 color="#FFF" size={14} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         <View style={styles.actions}>
@@ -493,10 +626,18 @@ const styles = StyleSheet.create({
   socialBtn: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
   bioWrap: { marginTop: 18, maxWidth: 360, width: "100%", alignItems: "center" },
   bioText: { color: "#E5E7EB", fontSize: 14, textAlign: "center" as const },
-  cardUpload: { marginTop: 24, marginHorizontal: 16, backgroundColor: "#111318", borderRadius: 16, padding: 16, alignItems: "center" },
+  portfolioSection: { marginTop: 24, marginHorizontal: 16 },
+  portfolioHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  portfolioTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
+  addPortfolioBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#14141C", borderWidth: 1, borderColor: "#23232B", alignItems: "center", justifyContent: "center" },
+  cardUpload: { backgroundColor: "#111318", borderRadius: 16, padding: 16, alignItems: "center" },
   dashed: { width: "100%", height: 90, borderRadius: 12, borderStyle: "dashed", borderWidth: 2, borderColor: "#2C2C33" },
   uploadTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginTop: 12 },
   uploadSubtitle: { color: "#9CA3AF", fontSize: 12, marginTop: 2 },
+  portfolioGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  portfolioItemWrap: { width: "31%", aspectRatio: 1, borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C" },
+  portfolioImage: { width: "100%", height: "100%" },
+  deletePortfolioBtn: { position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center" },
   actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 24, paddingHorizontal: 16 },
   cancelBtn: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#2C2C33", backgroundColor: "#121218", flexDirection: "row", alignItems: "center", gap: 8 },
   cancelText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },

@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
+import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
@@ -58,6 +59,7 @@ export default function UserProfileScreen() {
   const queryClient = useQueryClient();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [opportunitiesExpanded, setOpportunitiesExpanded] = useState<boolean>(true);
+  const [portfolioExpanded, setPortfolioExpanded] = useState<boolean>(true);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
     queryKey: ["profile", userId],
@@ -156,6 +158,20 @@ export default function UserProfileScreen() {
         limit: 1000,
       });
       return rows.length;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: portfolioItems = [] } = useQuery<PortfolioItem[]>({
+    queryKey: ["portfolio", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const items = await sbSelect<PortfolioItem>("portfolio_items", {
+        select: "*",
+        query: { user_id: `eq.${userId}` },
+        order: { column: "created_at", ascending: false },
+      });
+      return items;
     },
     enabled: !!userId,
   });
@@ -603,6 +619,32 @@ export default function UserProfileScreen() {
             <Text style={styles.emptyText}>No opportunities yet.</Text>
           ) : null}
         </View>
+
+        {portfolioItems.length > 0 && (
+          <View style={styles.section} testID="profile-portfolio-section">
+            <Pressable 
+              onPress={() => setPortfolioExpanded(prev => !prev)}
+              style={styles.sectionHeader}
+              testID="portfolio-toggle"
+            >
+              <Text style={styles.sectionTitle}>Portfolio</Text>
+              {portfolioExpanded ? (
+                <ChevronUp color="#9CA3AF" size={24} />
+              ) : (
+                <ChevronDown color="#9CA3AF" size={24} />
+              )}
+            </Pressable>
+            {portfolioExpanded && (
+              <View style={styles.portfolioGrid}>
+                {portfolioItems.map((item) => (
+                  <View key={item.id} style={styles.portfolioItemWrap}>
+                    <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
         </View>
       </ScrollView>
     </View>
@@ -714,5 +756,8 @@ const styles = StyleSheet.create({
   },
   oppActionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   oppActionTextActive: { color: "#4CB963", fontWeight: "800" },
-  emptyText: { color: "#9CA3AF", fontSize: 14 }
+  emptyText: { color: "#9CA3AF", fontSize: 14 },
+  portfolioGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
+  portfolioItemWrap: { width: "31.5%", aspectRatio: 1, borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C" },
+  portfolioImage: { width: "100%", height: "100%" },
 });
