@@ -852,13 +852,38 @@ export default function CreateOpportunityScreen() {
                 />
               </View>
 
-              {!!title && (
-                <View style={styles.previewBody}>
-                  <Text numberOfLines={3} style={styles.previewCaption}>
-                    {title}
-                  </Text>
+              <View style={styles.previewBody}>
+                {!!title && (
+                  <Text numberOfLines={2} style={styles.previewCaption}>{title}</Text>
+                )}
+                {!!description && (
+                  <Text numberOfLines={3} style={styles.previewDescription}>{description}</Text>
+                )}
+                <View style={styles.previewMetaRow}>
+                  {!!needType && (
+                    <View style={styles.previewMetaBadge}>
+                      <Text style={styles.previewMetaBadgeText}>{needType}</Text>
+                    </View>
+                  )}
+                  {!!location && (
+                    <Text style={styles.previewMetaText}>📍 {location}</Text>
+                  )}
                 </View>
-              )}
+                {!!budget && (
+                  <View style={styles.previewPriceRow}>
+                    <Text style={styles.previewPriceLabel}>Compensation:</Text>
+                    <Text style={styles.previewPriceValue}>{budget}</Text>
+                  </View>
+                )}
+                {requirements.length > 0 && (
+                  <View style={styles.previewRequirementsSection}>
+                    <Text style={styles.previewRequirementsTitle}>Requirements:</Text>
+                    {requirements.map((req, idx) => (
+                      <Text key={idx} style={styles.previewRequirementItem}>• {req}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
 
               <View style={styles.previewFooterRow}>
                 <View style={styles.previewUpvote}>
@@ -1220,6 +1245,70 @@ const styles = StyleSheet.create({
     color: "#E5E7EB",
     fontSize: 18,
     fontWeight: "900",
+    marginBottom: 6,
+  },
+  previewDescription: {
+    color: "#D1D5DB",
+    fontSize: 14,
+    fontWeight: "400",
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  previewMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 6,
+    flexWrap: "wrap",
+  },
+  previewMetaBadge: {
+    backgroundColor: "#1E40AF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  previewMetaBadgeText: {
+    color: "#BFDBFE",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  previewMetaText: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  previewPriceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+  },
+  previewPriceLabel: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  previewPriceValue: {
+    color: "#10B981",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  previewRequirementsSection: {
+    marginTop: 8,
+    gap: 4,
+  },
+  previewRequirementsTitle: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  previewRequirementItem: {
+    color: "#D1D5DB",
+    fontSize: 13,
+    fontWeight: "400",
+    lineHeight: 18,
   },
   previewFooterRow: {
     flexDirection: "row",
