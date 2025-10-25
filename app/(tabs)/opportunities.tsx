@@ -564,11 +564,16 @@ export default function OpportunitiesScreen() {
                   </Pressable>
                 )}
                 {(() => {
-                  const hasInstagram = item.profiles?.social_links?.instagram && item.profiles.social_links.instagram.trim();
-                  const hasTwitter = item.profiles?.social_links?.twitter && item.profiles.social_links.twitter.trim();
-                  const hasYoutube = item.profiles?.social_links?.youtube && item.profiles.social_links.youtube.trim();
-                  const hasTiktok = item.profiles?.social_links?.tiktok && item.profiles.social_links.tiktok.trim();
+                  const profile = item.profiles as ProfileRow | undefined;
+                  console.log(`[OpportunityCard] Checking social links for ${profile?.username}:`, profile?.social_links);
+                  
+                  const hasInstagram = profile?.social_links?.instagram && profile.social_links.instagram.trim();
+                  const hasTwitter = profile?.social_links?.twitter && profile.social_links.twitter.trim();
+                  const hasYoutube = profile?.social_links?.youtube && profile.social_links.youtube.trim();
+                  const hasTiktok = profile?.social_links?.tiktok && profile.social_links.tiktok.trim();
                   const hasAnySocial = hasInstagram || hasTwitter || hasYoutube || hasTiktok;
+                  
+                  console.log(`[OpportunityCard] Social presence for ${profile?.username}:`, { hasInstagram, hasTwitter, hasYoutube, hasTiktok, hasAnySocial });
                   
                   if (!hasAnySocial) return null;
                   
@@ -577,8 +582,9 @@ export default function OpportunitiesScreen() {
                       {hasInstagram && (
                         <Pressable
                           onPress={() => {
-                            const url = item.profiles?.social_links?.instagram ?? "";
+                            const url = profile?.social_links?.instagram ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
+                            console.log(`[OpportunityCard] Opening Instagram:`, fullUrl);
                             if (Platform.OS === "web") {
                               window.open(fullUrl, "_blank");
                             } else {
@@ -594,7 +600,7 @@ export default function OpportunitiesScreen() {
                       {hasYoutube && (
                         <Pressable
                           onPress={() => {
-                            const url = item.profiles?.social_links?.youtube ?? "";
+                            const url = profile?.social_links?.youtube ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://youtube.com/@${url.replace(/^@/, "")}`;
                             if (Platform.OS === "web") {
                               window.open(fullUrl, "_blank");
@@ -611,7 +617,7 @@ export default function OpportunitiesScreen() {
                       {hasTwitter && (
                         <Pressable
                           onPress={() => {
-                            const url = item.profiles?.social_links?.twitter ?? "";
+                            const url = profile?.social_links?.twitter ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://twitter.com/${url.replace(/^@/, "")}`;
                             if (Platform.OS === "web") {
                               window.open(fullUrl, "_blank");
@@ -628,7 +634,7 @@ export default function OpportunitiesScreen() {
                       {hasTiktok && (
                         <Pressable
                           onPress={() => {
-                            const url = item.profiles?.social_links?.tiktok ?? "";
+                            const url = profile?.social_links?.tiktok ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://tiktok.com/@${url.replace(/^@/, "")}`;
                             if (Platform.OS === "web") {
                               window.open(fullUrl, "_blank");
