@@ -355,7 +355,7 @@ export default function OpportunitiesScreen() {
           <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
             <Bell color="#E5E7EB" size={20} />
           </Pressable>
-          <Pressable onPress={() => console.log("create post")} style={styles.createBtn} testID="opp-top-create">
+          <Pressable onPress={() => router.push("/create-opportunity")} style={styles.createBtn} testID="opp-top-create">
             <Plus color="#0B0B0F" size={20} strokeWidth={3} />
           </Pressable>
         </View>
