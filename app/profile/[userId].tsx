@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -635,13 +636,7 @@ export default function UserProfileScreen() {
               )}
             </Pressable>
             {portfolioExpanded && (
-              <View style={styles.portfolioGrid}>
-                {portfolioItems.map((item) => (
-                  <View key={item.id} style={styles.portfolioItemWrap}>
-                    <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
-                  </View>
-                ))}
-              </View>
+              <MasonryPortfolio items={portfolioItems} />
             )}
           </View>
         )}
@@ -757,7 +752,116 @@ const styles = StyleSheet.create({
   oppActionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   oppActionTextActive: { color: "#4CB963", fontWeight: "800" },
   emptyText: { color: "#9CA3AF", fontSize: 14 },
-  portfolioGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
-  portfolioItemWrap: { width: "31.5%", aspectRatio: 1, borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C" },
+  portfolioMasonry: { marginTop: 8, flexDirection: "row", gap: 6 },
+  portfolioColumn: { flex: 1, gap: 6 },
+  portfolioItemWrap: { borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C", position: "relative" },
   portfolioImage: { width: "100%", height: "100%" },
+  portfolioVideo: { width: "100%", height: "100%" },
+  videoOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    backgroundColor: "rgba(0,0,0,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.9)",
+  },
+  videoDuration: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  videoDurationText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
 });
+
+function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
+  const screenWidth = Dimensions.get("window").width;
+  const padding = 16;
+  const gap = 6;
+  const numColumns = 2;
+  const columnWidth = (screenWidth - padding * 2 - gap * (numColumns - 1)) / numColumns;
+
+  const columns: PortfolioItem[][] = useMemo(() => {
+    const cols: PortfolioItem[][] = Array.from({ length: numColumns }, () => []);
+    const columnHeights: number[] = Array(numColumns).fill(0);
+
+    items.forEach((item) => {
+      const aspectRatio = item.width && item.height ? item.width / item.height : 1;
+      const itemHeight = columnWidth / aspectRatio;
+      
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      cols[shortestColumnIndex].push(item);
+      columnHeights[shortestColumnIndex] += itemHeight + gap;
+    });
+
+    return cols;
+  }, [items, columnWidth]);
+
+  function formatDuration(seconds?: number): string {
+    if (!seconds) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  return (
+    <View style={styles.portfolioMasonry}>
+      {columns.map((column, colIndex) => (
+        <View key={colIndex} style={styles.portfolioColumn}>
+          {column.map((item) => {
+            const aspectRatio = item.width && item.height ? item.width / item.height : 1;
+            const itemHeight = columnWidth / aspectRatio;
+
+            return (
+              <View key={item.id} style={[styles.portfolioItemWrap, { height: itemHeight }]}>
+                {item.media_type === "video" ? (
+                  <>
+                    <Video
+                      source={{ uri: item.media_url }}
+                      style={styles.portfolioVideo}
+                      resizeMode={ResizeMode.COVER}
+                      shouldPlay={false}
+                      isLooping={false}
+                      useNativeControls={false}
+                    />
+                    <View style={styles.videoOverlay}>
+                      <View style={styles.playIcon}>
+                        <Play color="#FFFFFF" size={24} fill="#FFFFFF" />
+                      </View>
+                    </View>
+                    {item.duration && (
+                      <View style={styles.videoDuration}>
+                        <Text style={styles.videoDurationText}>{formatDuration(item.duration)}</Text>
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                )}
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}

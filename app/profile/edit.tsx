@@ -1,20 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Dimensions } from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-interface PortfolioItem {
-  id: string;
-  user_id: string;
-  media_url: string;
-  media_type: string;
-  created_at?: string;
-}
+import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -75,14 +70,23 @@ export default function EditProfileScreen() {
   const addPortfolioMutation = useMutation({
     mutationFn: async (asset: ImagePicker.ImagePickerAsset) => {
       if (!currentUserId) throw new Error("Must be logged in");
-      console.log("[Portfolio] Uploading asset", asset.uri);
+      console.log("[Portfolio] Uploading asset", asset.uri, asset.type);
       const url = await uploadToSupabase(asset, "portfolio");
       console.log("[Portfolio] Asset uploaded to", url);
+      
+      const isVideo = asset.type === "video" || (asset as any).mimeType?.startsWith("video/");
       const item: Record<string, any> = {
         user_id: currentUserId,
         media_url: url,
-        media_type: "image",
+        media_type: isVideo ? "video" : "image",
+        width: asset.width,
+        height: asset.height,
       };
+      
+      if (isVideo && asset.duration) {
+        item.duration = Math.floor(asset.duration / 1000);
+      }
+      
       const inserted = await sbInsert("portfolio_items", item);
       console.log("[Portfolio] Item inserted", inserted);
       return inserted;
@@ -175,11 +179,11 @@ export default function EditProfileScreen() {
     }
   }
 
-  async function pickFromLibrary(allowsEditing = true): Promise<ImagePicker.ImagePickerAsset | null> {
+  async function pickFromLibrary(allowsEditing = true, mediaTypes: ImagePicker.MediaTypeOptions = ImagePicker.MediaTypeOptions.Images): Promise<ImagePicker.ImagePickerAsset | null> {
     const ok = await ensureMediaPermission();
     if (!ok) return null;
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes,
       quality: 0.9,
       selectionLimit: 1,
       allowsEditing,
@@ -383,7 +387,7 @@ export default function EditProfileScreen() {
     try {
       console.log("[Portfolio] Starting picker");
       setUploadingPortfolio(true);
-      const asset = await pickFromLibrary(false);
+      const asset = await pickFromLibrary(false, ImagePicker.MediaTypeOptions.All);
       if (!asset) {
         console.log("[Portfolio] No asset selected");
         setUploadingPortfolio(false);
@@ -534,20 +538,7 @@ export default function EditProfileScreen() {
               <Text style={styles.uploadSubtitle}>Tap to upload</Text>
             </Pressable>
           ) : (
-            <View style={styles.portfolioGrid}>
-              {portfolioItems.map((item) => (
-                <View key={item.id} style={styles.portfolioItemWrap}>
-                  <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
-                  <Pressable
-                    onPress={() => onDeletePortfolio(item.id)}
-                    style={styles.deletePortfolioBtn}
-                    testID={`delete-portfolio-${item.id}`}
-                  >
-                    <Trash2 color="#FFF" size={14} />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
+            <MasonryPortfolio items={portfolioItems} onDelete={onDeletePortfolio} />
           )}
         </View>
 
@@ -641,10 +632,46 @@ const styles = StyleSheet.create({
   dashed: { width: "100%", height: 90, borderRadius: 12, borderStyle: "dashed", borderWidth: 2, borderColor: "#2C2C33" },
   uploadTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginTop: 12 },
   uploadSubtitle: { color: "#9CA3AF", fontSize: 12, marginTop: 2 },
-  portfolioGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  portfolioItemWrap: { width: "31%", aspectRatio: 1, borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C" },
+  portfolioMasonry: { marginTop: 8, flexDirection: "row", gap: 6 },
+  portfolioColumn: { flex: 1, gap: 6 },
+  portfolioItemWrap: { borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C", position: "relative" },
   portfolioImage: { width: "100%", height: "100%" },
-  deletePortfolioBtn: { position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center" },
+  portfolioVideo: { width: "100%", height: "100%" },
+  videoOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    backgroundColor: "rgba(0,0,0,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.9)",
+  },
+  videoDuration: {
+    position: "absolute",
+    bottom: 6,
+    left: 6,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  videoDurationText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  deletePortfolioBtn: { position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", zIndex: 10 },
   actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 24, paddingHorizontal: 16 },
   cancelBtn: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#2C2C33", backgroundColor: "#121218", flexDirection: "row", alignItems: "center", gap: 8 },
   cancelText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
@@ -659,3 +686,83 @@ const styles = StyleSheet.create({
   modalInput: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginTop: 6 },
   modalActions: { flexDirection: "row", justifyContent: "space-between", marginTop: 14 },
 });
+
+function MasonryPortfolio({ items, onDelete }: { items: PortfolioItem[]; onDelete: (id: string) => void }) {
+  const screenWidth = Dimensions.get("window").width;
+  const padding = 16;
+  const gap = 6;
+  const numColumns = 2;
+  const columnWidth = (screenWidth - padding * 2 - gap * (numColumns - 1)) / numColumns;
+
+  const columns: PortfolioItem[][] = useMemo(() => {
+    const cols: PortfolioItem[][] = Array.from({ length: numColumns }, () => []);
+    const columnHeights: number[] = Array(numColumns).fill(0);
+
+    items.forEach((item) => {
+      const aspectRatio = item.width && item.height ? item.width / item.height : 1;
+      const itemHeight = columnWidth / aspectRatio;
+      
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      cols[shortestColumnIndex].push(item);
+      columnHeights[shortestColumnIndex] += itemHeight + gap;
+    });
+
+    return cols;
+  }, [items, columnWidth]);
+
+  function formatDuration(seconds?: number): string {
+    if (!seconds) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  return (
+    <View style={styles.portfolioMasonry}>
+      {columns.map((column, colIndex) => (
+        <View key={colIndex} style={styles.portfolioColumn}>
+          {column.map((item) => {
+            const aspectRatio = item.width && item.height ? item.width / item.height : 1;
+            const itemHeight = columnWidth / aspectRatio;
+
+            return (
+              <View key={item.id} style={[styles.portfolioItemWrap, { height: itemHeight }]}>
+                {item.media_type === "video" ? (
+                  <>
+                    <Video
+                      source={{ uri: item.media_url }}
+                      style={styles.portfolioVideo}
+                      resizeMode={ResizeMode.COVER}
+                      shouldPlay={false}
+                      isLooping={false}
+                      useNativeControls={false}
+                    />
+                    <View style={styles.videoOverlay}>
+                      <View style={styles.playIcon}>
+                        <Play color="#FFFFFF" size={20} fill="#FFFFFF" />
+                      </View>
+                    </View>
+                    {item.duration && (
+                      <View style={styles.videoDuration}>
+                        <Text style={styles.videoDurationText}>{formatDuration(item.duration)}</Text>
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                )}
+                <Pressable
+                  onPress={() => onDelete(item.id)}
+                  style={styles.deletePortfolioBtn}
+                  testID={`delete-portfolio-${item.id}`}
+                >
+                  <Trash2 color="#FFF" size={14} />
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
