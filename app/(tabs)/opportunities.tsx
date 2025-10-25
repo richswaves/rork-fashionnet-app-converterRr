@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users, Plus } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -355,8 +355,8 @@ export default function OpportunitiesScreen() {
           <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
             <Bell color="#E5E7EB" size={20} />
           </Pressable>
-          <Pressable onPress={() => console.log("share")} style={styles.iconBtn} testID="opp-top-share">
-            <Send color="#E5E7EB" size={20} />
+          <Pressable onPress={() => console.log("create post")} style={styles.createBtn} testID="opp-top-create">
+            <Plus color="#0B0B0F" size={20} strokeWidth={3} />
           </Pressable>
         </View>
       </View>
@@ -661,8 +661,17 @@ const styles = StyleSheet.create({
   topProfile: { flexDirection: "row", alignItems: "center", gap: 10 as const },
   topAvatar: { width: 28, height: 28, borderRadius: 14 },
   topName: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" },
-  topIcons: { flexDirection: "row", alignItems: "center" },
+  topIcons: { flexDirection: "row", alignItems: "center", gap: 4 as const },
   iconBtn: { padding: 8, borderRadius: 999 },
+  createBtn: { 
+    padding: 8, 
+    borderRadius: 999, 
+    backgroundColor: "#E5E7EB",
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   header: {
     paddingHorizontal: 12,
