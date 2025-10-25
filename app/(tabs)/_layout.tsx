@@ -37,7 +37,7 @@ export default function TabLayout() {
           title: "Create",
           tabBarIcon: ({ color, size }) => (
             <View style={styles.createButton}>
-              <Plus color="#FFFFFF" size={size ?? 24} />
+              <Plus color="#000000" size={size ?? 24} />
             </View>
           ),
         }}
@@ -68,7 +68,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   createButton: {
-    backgroundColor: "#10B981",
+    backgroundColor: "#FFFFFF",
     width: 48,
     height: 48,
     borderRadius: 24,
