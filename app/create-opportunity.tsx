@@ -925,7 +925,7 @@ export default function CreateOpportunityScreen() {
                 {paymentType === "paid" && (priceMin.trim() !== "" || priceMax.trim() !== "") && (
                   <View style={styles.previewPriceRow}>
                     <Text style={styles.previewPriceValue}>
-                      {`Paid ${[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ")}`.trim()}
+                      ${[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ")}
                     </Text>
                   </View>
                 )}
