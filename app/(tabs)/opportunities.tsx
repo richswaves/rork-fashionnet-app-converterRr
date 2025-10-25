@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -325,6 +325,18 @@ export default function OpportunitiesScreen() {
           />
           <Text style={styles.topName}>{resolvedProfile.displayName}</Text>
         </Pressable>
+
+        <View style={styles.topIcons}>
+          <Pressable onPress={() => console.log("search")} style={styles.iconBtn} testID="opp-top-search">
+            <Search color="#E5E7EB" size={20} />
+          </Pressable>
+          <Pressable onPress={() => console.log("bell")} style={styles.iconBtn} testID="opp-top-bell">
+            <Bell color="#E5E7EB" size={20} />
+          </Pressable>
+          <Pressable onPress={() => console.log("share")} style={styles.iconBtn} testID="opp-top-share">
+            <Send color="#E5E7EB" size={20} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.header}>
@@ -607,9 +619,8 @@ const ROLE_SECTIONS: { title?: string; options: { label: string; value: string }
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
   topBar: {
-    paddingHorizontal: 12,
-    paddingTop: 6,
-    paddingBottom: 2,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -617,6 +628,8 @@ const styles = StyleSheet.create({
   topProfile: { flexDirection: "row", alignItems: "center", gap: 10 as const },
   topAvatar: { width: 28, height: 28, borderRadius: 14 },
   topName: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" },
+  topIcons: { flexDirection: "row", alignItems: "center" },
+  iconBtn: { padding: 8, borderRadius: 999 },
 
   header: {
     paddingHorizontal: 12,
