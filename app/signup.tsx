@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { getSupabase, sbInsert, sbUpsert } from "@/integrations/supabase/client";
+import { getSupabase, sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
@@ -136,6 +136,10 @@ export default function SignupScreen() {
   const [fullName, setFullName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
+  const [dateOfBirth, setDateOfBirth] = useState<string>("");
+  const [cityLocation, setCityLocation] = useState<string>("");
+  const [notifOptIn, setNotifOptIn] = useState<boolean>(false);
+
   const [userType, setUserType] = useState<"creative" | "business" | undefined>(undefined);
   const [role, setRole] = useState<string | undefined>(undefined);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
@@ -205,6 +209,7 @@ export default function SignupScreen() {
         await updateProfileAsync({
           user_id: userId,
           full_name: fullName.trim() || undefined,
+          location: cityLocation.trim() || undefined,
           account_status: "pending",
           is_profile_updated: true,
           profession: role,
@@ -235,6 +240,28 @@ export default function SignupScreen() {
             answer: a,
           } as any);
         }
+        if (cityLocation.trim().length > 0) {
+          await sbInsert("onboarding_responses", {
+            user_id: userId,
+            role,
+            question: "Location",
+            answer: [cityLocation.trim()],
+          } as any);
+        }
+        if (dateOfBirth.trim().length > 0) {
+          await sbInsert("onboarding_responses", {
+            user_id: userId,
+            role,
+            question: "Date of birth",
+            answer: [dateOfBirth.trim()],
+          } as any);
+        }
+        await sbInsert("onboarding_responses", {
+          user_id: userId,
+          role,
+          question: "Notifications opt-in",
+          answer: [notifOptIn ? "enabled" : "disabled"],
+        } as any);
       } catch (e) {
         console.log("Failed inserting onboarding responses", e);
       }
@@ -297,6 +324,39 @@ export default function SignupScreen() {
             onChangeText={setPassword}
             style={styles.input}
           />
+          <View style={styles.row}>
+            <TextInput
+              testID="signup-dob"
+              placeholder="Date of birth (YYYY-MM-DD)"
+              placeholderTextColor="#9CA3AF"
+              value={dateOfBirth}
+              onChangeText={setDateOfBirth}
+              style={[styles.input, styles.inputHalf]}
+              autoCorrect={false}
+            />
+            <TextInput
+              testID="signup-location"
+              placeholder="City, Country"
+              placeholderTextColor="#9CA3AF"
+              value={cityLocation}
+              onChangeText={setCityLocation}
+              style={[styles.input, styles.inputHalf]}
+              autoCorrect={false}
+            />
+          </View>
+          <View style={[styles.row, { alignItems: "center" }]}>
+            <Text style={styles.helperText}>Enable notifications</Text>
+            <Switch
+              testID="signup-notif"
+              value={notifOptIn}
+              onValueChange={async (v) => {
+                setNotifOptIn(v);
+                if (v) {
+                  console.log("Notifications preference enabled; permissions will be requested later in-app settings");
+                }
+              }}
+            />
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -414,4 +474,5 @@ const styles = StyleSheet.create({
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
   primaryBtnText: { color: "#111827", fontSize: 17, fontWeight: "700" as const },
+  helperText: { color: "#9CA3AF", flex: 1, fontWeight: "600" as const },
 });
