@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Plus, Trash2, MoreVertical, LogOut } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Plus, Trash2, MoreVertical, LogOut, Twitter, Youtube } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -583,23 +583,99 @@ export default function OpportunitiesScreen() {
                     <MoreVertical color="#9CA3AF" size={20} />
                   </Pressable>
                 )}
-                {item.profiles?.instagram_website && item.profiles.instagram_website !== "https://www.instagram.com" && (
+                {((item.profiles?.instagram_website && item.profiles.instagram_website !== "https://www.instagram.com") ||
+                  item.profiles?.social_links?.instagram ||
+                  item.profiles?.social_links?.twitter ||
+                  item.profiles?.social_links?.youtube ||
+                  item.profiles?.social_links?.tiktok) && (
                   <View style={styles.socialIcons}>
-                    <Pressable
-                      onPress={() => {
-                        const url = item.profiles?.instagram_website ?? "";
-                        const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
-                        if (Platform.OS === "web") {
-                          window.open(fullUrl, "_blank");
-                        } else {
-                          Linking.openURL(fullUrl).catch(() => {});
-                        }
-                      }}
-                      style={styles.socialIconBtn}
-                      testID={`social-instagram-${item.id}`}
-                    >
-                      <Instagram color="#C13584" size={16} />
-                    </Pressable>
+                    {(item.profiles?.instagram_website && item.profiles.instagram_website !== "https://www.instagram.com") && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.instagram_website ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-instagram-${item.id}`}
+                      >
+                        <Instagram color="#C13584" size={16} />
+                      </Pressable>
+                    )}
+                    {item.profiles?.social_links?.instagram && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.social_links?.instagram ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-instagram-link-${item.id}`}
+                      >
+                        <Instagram color="#C13584" size={16} />
+                      </Pressable>
+                    )}
+                    {item.profiles?.social_links?.youtube && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.social_links?.youtube ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://youtube.com/@${url.replace(/^@/, "")}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-youtube-${item.id}`}
+                      >
+                        <Youtube color="#FF0000" size={16} />
+                      </Pressable>
+                    )}
+                    {item.profiles?.social_links?.twitter && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.social_links?.twitter ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://twitter.com/${url.replace(/^@/, "")}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-twitter-${item.id}`}
+                      >
+                        <Twitter color="#1DA1F2" size={16} />
+                      </Pressable>
+                    )}
+                    {item.profiles?.social_links?.tiktok && (
+                      <Pressable
+                        onPress={() => {
+                          const url = item.profiles?.social_links?.tiktok ?? "";
+                          const fullUrl = url.startsWith("http") ? url : `https://tiktok.com/@${url.replace(/^@/, "")}`;
+                          if (Platform.OS === "web") {
+                            window.open(fullUrl, "_blank");
+                          } else {
+                            Linking.openURL(fullUrl).catch(() => {});
+                          }
+                        }}
+                        style={styles.socialIconBtn}
+                        testID={`social-tiktok-${item.id}`}
+                      >
+                        <View style={styles.tiktokIcon}>
+                          <Text style={styles.tiktokIconText}>♪</Text>
+                        </View>
+                      </Pressable>
+                    )}
                   </View>
                 )}
               </Pressable>
@@ -1134,5 +1210,16 @@ const styles = StyleSheet.create({
   locationChipTextActive: {
     color: "#4CB963",
     fontWeight: "800",
+  },
+  tiktokIcon: {
+    width: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tiktokIconText: {
+    color: "#000000",
+    fontSize: 14,
+    fontWeight: "900",
   },
 });
