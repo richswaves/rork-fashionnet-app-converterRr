@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, Dimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, Pressable } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
@@ -7,11 +7,8 @@ import { sbSelect } from "@/integrations/supabase/client";
 import type { PortfolioItemWithProfile } from "@/integrations/supabase/portfolio-types";
 import { LinearGradient } from "expo-linear-gradient";
 
-const { width } = Dimensions.get("window");
-const COLUMN_COUNT = 2;
 const GAP = 12;
 const PADDING = 16;
-const ITEM_WIDTH = (width - PADDING * 2 - GAP * (COLUMN_COUNT - 1)) / COLUMN_COUNT;
 
 export default function PortfolioScreen() {
   const insets = useSafeAreaInsets();
@@ -80,17 +77,10 @@ export default function PortfolioScreen() {
         ) : (
           <View style={styles.masonryWrap}>
             <View style={styles.column}>
-              {column1.map((item) => {
-                const aspectRatio =
-                  item.width && item.height && item.height > 0
-                    ? item.width / item.height
-                    : 1;
-                const itemHeight = ITEM_WIDTH / aspectRatio;
-
-                return (
+              {column1.map((item) => (
                   <Pressable
                     key={item.id}
-                    style={[styles.item, { height: itemHeight }]}
+                    style={styles.item}
                     onPress={() => {
                       if (item.profiles?.user_id) {
                         navigateToProfile(item.profiles.user_id);
@@ -125,22 +115,14 @@ export default function PortfolioScreen() {
                       )}
                     </LinearGradient>
                   </Pressable>
-                );
-              })}
+                ))}
             </View>
 
             <View style={styles.column}>
-              {column2.map((item) => {
-                const aspectRatio =
-                  item.width && item.height && item.height > 0
-                    ? item.width / item.height
-                    : 1;
-                const itemHeight = ITEM_WIDTH / aspectRatio;
-
-                return (
+              {column2.map((item) => (
                   <Pressable
                     key={item.id}
-                    style={[styles.item, { height: itemHeight }]}
+                    style={styles.item}
                     onPress={() => {
                       if (item.profiles?.user_id) {
                         navigateToProfile(item.profiles.user_id);
@@ -175,8 +157,7 @@ export default function PortfolioScreen() {
                       )}
                     </LinearGradient>
                   </Pressable>
-                );
-              })}
+                ))}
             </View>
           </View>
         )}
@@ -233,6 +214,7 @@ const styles = StyleSheet.create({
     gap: GAP,
   },
   item: {
+    aspectRatio: 1,
     borderRadius: 16,
     overflow: "hidden",
     backgroundColor: "#14141C",

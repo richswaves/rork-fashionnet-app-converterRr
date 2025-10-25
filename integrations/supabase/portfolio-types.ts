@@ -6,8 +6,6 @@ export interface PortfolioItem {
   media_url: string;
   media_type: 'image' | 'video';
   thumbnail_url?: string;
-  width?: number;
-  height?: number;
   tags?: string[];
   created_at: string;
   updated_at?: string;

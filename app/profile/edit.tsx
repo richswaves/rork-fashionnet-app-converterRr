@@ -76,8 +76,6 @@ export default function EditProfileScreen() {
         user_id: currentUserId,
         media_url: url,
         media_type: "image",
-        width: asset.width,
-        height: asset.height,
       };
       const inserted = await sbInsert("portfolio_items", item);
       console.log("[Portfolio] Item inserted", inserted);
