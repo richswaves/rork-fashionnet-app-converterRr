@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,9 +16,43 @@ import { getSupabase } from "@/integrations/supabase/client";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 
+const words = ["create", "community", "collaboration"];
+
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [displayedText, setDisplayedText] = useState<string>("");
+  const [wordIndex, setWordIndex] = useState<number>(0);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const currentWord = words[wordIndex];
+    const typingSpeed = isDeleting ? 80 : 150;
+    const pauseBeforeDelete = 2000;
+    const pauseBeforeType = 500;
+
+    const timer = setTimeout(
+      () => {
+        if (!isDeleting && displayedText === currentWord) {
+          setTimeout(() => setIsDeleting(true), pauseBeforeDelete);
+        } else if (isDeleting && displayedText === "") {
+          setIsDeleting(false);
+          setWordIndex((prev) => (prev + 1) % words.length);
+        } else if (isDeleting) {
+          setDisplayedText(currentWord.substring(0, displayedText.length - 1));
+        } else {
+          setDisplayedText(currentWord.substring(0, displayedText.length + 1));
+        }
+      },
+      !isDeleting && displayedText === currentWord
+        ? pauseBeforeDelete
+        : isDeleting && displayedText === ""
+        ? pauseBeforeType
+        : typingSpeed
+    );
+
+    return () => clearTimeout(timer);
+  }, [displayedText, isDeleting, wordIndex]);
 
   const handleAppleLogin = async () => {
     Alert.alert("Coming Soon", "Apple sign-in will be available soon.");
@@ -76,7 +110,7 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>
-            Let&apos;s brainstorm<Text style={styles.dot}>●</Text>
+            {displayedText}<Text style={styles.cursor}>|</Text>
           </Text>
         </View>
 
@@ -172,7 +206,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     lineHeight: 56,
   },
-  dot: {
+  cursor: {
     color: "#FFFFFF",
     fontSize: 48,
   },
