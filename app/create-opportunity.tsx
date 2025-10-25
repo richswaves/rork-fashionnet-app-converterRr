@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -496,6 +496,9 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
+      const parsedMin = paymentType === "paid" && priceMin.trim() !== "" ? Number(priceMin.replace(/[^0-9.]/g, "")) : null;
+      const parsedMax = paymentType === "paid" && priceMax.trim() !== "" ? Number(priceMax.replace(/[^0-9.]/g, "")) : null;
+
       const opportunityData = {
         title: title.trim(),
         type: needType,
@@ -504,7 +507,8 @@ export default function CreateOpportunityScreen() {
         image_url: imageUrl || null,
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
-        company: resolvedProfile.displayName || "Unknown",
+        price_min: paymentType === "paid" ? parsedMin : null,
+        price_max: paymentType === "paid" ? parsedMax : null,
       } as Record<string, unknown>;
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
@@ -921,7 +925,7 @@ export default function CreateOpportunityScreen() {
                 {paymentType === "paid" && (priceMin.trim() !== "" || priceMax.trim() !== "") && (
                   <View style={styles.previewPriceRow}>
                     <Text style={styles.previewPriceValue}>
-                      ${[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ")}
+                      {`Paid ${[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ")}`.trim()}
                     </Text>
                   </View>
                 )}
