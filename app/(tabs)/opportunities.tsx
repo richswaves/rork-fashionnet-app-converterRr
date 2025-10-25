@@ -31,6 +31,9 @@ interface OpportunityRow {
   created_at?: string;
   user_id?: string;
   profiles?: ProfileRow;
+  description?: string | null;
+  price_min?: number | null;
+  price_max?: number | null;
 }
 
 const VIEW_OPTIONS = [
@@ -525,11 +528,38 @@ export default function OpportunitiesScreen() {
                 <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
               </View>
 
-              {!!title && (
-                <View style={styles.body}>
-                  <Text numberOfLines={3} style={styles.caption}>{title}</Text>
+              <View style={styles.body}>
+                {!!title && (
+                  <Text numberOfLines={2} style={styles.caption}>{title}</Text>
+                )}
+                {!!item.description && (
+                  <Text numberOfLines={3} style={styles.description}>{item.description}</Text>
+                )}
+                <View style={styles.metaRow}>
+                  {!!item.type && (
+                    <View style={styles.metaBadge}>
+                      <Text style={styles.metaBadgeText}>{item.type}</Text>
+                    </View>
+                  )}
+                  {!!item.location && (
+                    <Text style={styles.metaText}>📍 {item.location}</Text>
+                  )}
                 </View>
-              )}
+                {(item.price_min || item.price_max) && (
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Compensation:</Text>
+                    <Text style={styles.priceValue}>
+                      {item.price_min && item.price_max
+                        ? `${item.price_min.toLocaleString()} - ${item.price_max.toLocaleString()}`
+                        : item.price_min
+                        ? `From ${item.price_min.toLocaleString()}`
+                        : item.price_max
+                        ? `Up to ${item.price_max.toLocaleString()}`
+                        : ""}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
               <View style={styles.footerRow}>
                 <Pressable style={styles.upvote} onPress={() => toggleUpvote(item.id)} testID={`upvote-${item.id}`}>
@@ -797,7 +827,20 @@ const styles = StyleSheet.create({
   mediaWrap: { paddingHorizontal: 8, paddingTop: 6 },
   cover: { width: "100%", height: 320, borderRadius: 14 },
   body: { paddingHorizontal: 12, paddingVertical: 10 },
-  caption: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
+  caption: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 6 },
+  description: { color: "#D1D5DB", fontSize: 14, fontWeight: "400", lineHeight: 20, marginBottom: 8 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" },
+  metaBadge: { 
+    backgroundColor: "#1E40AF", 
+    paddingHorizontal: 10, 
+    paddingVertical: 4, 
+    borderRadius: 6 
+  },
+  metaBadgeText: { color: "#BFDBFE", fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
+  metaText: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  priceLabel: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
+  priceValue: { color: "#10B981", fontSize: 14, fontWeight: "800" },
   footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, marginTop: 4, marginBottom: 10 },
   upvote: { flexDirection: "row", alignItems: "center", gap: 6 as const },
   upvoteText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
