@@ -64,6 +64,7 @@ export default function CreateOpportunityScreen() {
         location: location.trim() || null,
         user_id: currentUserId,
         company: resolvedProfile.displayName || "Company",
+        image_url: imageUrl || null,
       };
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
