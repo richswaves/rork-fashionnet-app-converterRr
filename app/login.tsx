@@ -17,7 +17,7 @@ import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import * as Haptics from "expo-haptics";
 
-const words = ["create", "community", "collaboration"];
+const words = ["create", "community", "collab"];
 
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,7 +28,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     const currentWord = words[wordIndex];
-    const typingSpeed = isDeleting ? 80 : 150;
+    const typingSpeed = isDeleting ? 40 : 75;
     const pauseBeforeDelete = 2000;
     const pauseBeforeType = 500;
 
@@ -113,6 +113,7 @@ export default function LoginScreen() {
 
       <View style={styles.content}>
         <View style={styles.header}>
+          <Text style={styles.brandTitle}>thebrxnd</Text>
           <Text style={styles.title}>
             {displayedText}<Text style={styles.cursor}>|</Text>
           </Text>
@@ -203,6 +204,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  brandTitle: {
+    fontSize: 52,
+    fontWeight: "900" as const,
+    color: "#FFFFFF",
+    letterSpacing: 4,
+    textAlign: "center" as const,
+    marginBottom: 40,
+    textTransform: "uppercase" as const,
   },
   title: {
     fontSize: 48,
