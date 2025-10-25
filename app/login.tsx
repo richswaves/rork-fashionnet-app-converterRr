@@ -8,11 +8,15 @@ import {
   Platform,
   Alert,
   Image,
+  TextInput,
+  KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { getSupabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/contexts/ProfileContext";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import * as Haptics from "expo-haptics";
@@ -21,10 +25,14 @@ const words = ["create", "community", "collab"];
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useProfile();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [displayedText, setDisplayedText] = useState<string>("");
   const [wordIndex, setWordIndex] = useState<number>(0);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [showLoginForm, setShowLoginForm] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
   useEffect(() => {
     const currentWord = words[wordIndex];
@@ -98,8 +106,103 @@ export default function LoginScreen() {
   };
 
   const handleLogin = () => {
-    Alert.alert("Coming Soon", "Email/password login will be available soon.");
+    setShowLoginForm(true);
   };
+
+  const handleLoginSubmit = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await login(trimmedEmail, trimmedPassword);
+      router.replace("/(tabs)" as any);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      const msg = typeof error?.message === "string" ? error.message : "Failed to log in";
+      Alert.alert("Login Failed", msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToMain = () => {
+    setShowLoginForm(false);
+    setEmail("");
+    setPassword("");
+  };
+
+  if (showLoginForm) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={styles.formContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={{ gap: 24 }}>
+              <TouchableOpacity onPress={handleBackToMain} style={styles.backButton}>
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.formTitle}>Log in to your account</Text>
+
+              <View style={{ gap: 16 }}>
+                <TextInput
+                  testID="login-email"
+                  placeholder="Email"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={email}
+                  onChangeText={setEmail}
+                  style={styles.input}
+                />
+                <TextInput
+                  testID="login-password"
+                  placeholder="Password"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                  style={styles.input}
+                  onSubmitEditing={handleLoginSubmit}
+                  returnKeyType="go"
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              testID="login-submit"
+              style={[styles.submitButton, { opacity: isLoading ? 0.6 : 1 }]}
+              onPress={handleLoginSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#000000" />
+              ) : (
+                <Text style={styles.submitButtonText}>Log in</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -263,5 +366,46 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600" as const,
     color: "#FFFFFF",
+  },
+  formContent: {
+    flex: 1,
+    padding: 20,
+    gap: 24,
+    justifyContent: "space-between",
+  },
+  backButton: {
+    paddingVertical: 8,
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  formTitle: {
+    color: "#FFFFFF",
+    fontSize: 32,
+    fontWeight: "700" as const,
+  },
+  input: {
+    backgroundColor: "#1A1A1A",
+    borderColor: "#2A2A2A",
+    borderWidth: 1,
+    color: "#FFFFFF",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 16,
+    alignItems: "center",
+    borderRadius: 16,
+  },
+  submitButtonText: {
+    color: "#000000",
+    fontSize: 17,
+    fontWeight: "600" as const,
   },
 });
