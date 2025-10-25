@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  FlatList,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,13 +45,14 @@ export default function CreateOpportunityScreen() {
   const [needType, setNeedType] = useState("");
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState("");
-  const [company, setCompany] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
   const [newRequirement, setNewRequirement] = useState("");
   const [showNeedDropdown, setShowNeedDropdown] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -67,7 +69,6 @@ export default function CreateOpportunityScreen() {
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
         budget: budget.trim() || null,
-        company: company.trim() || null,
       };
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
@@ -92,6 +93,36 @@ export default function CreateOpportunityScreen() {
       setNewRequirement("");
     }
   };
+
+  useEffect(() => {
+    const fetchLocationSuggestions = async () => {
+      if (location.length < 3) {
+        setLocationSuggestions([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            location
+          )}&limit=5`,
+          {
+            headers: {
+              "User-Agent": "FashionNetworkApp/1.0",
+            },
+          }
+        );
+        const data = await response.json();
+        setLocationSuggestions(data);
+        setShowLocationDropdown(data.length > 0);
+      } catch (error) {
+        console.error("[LocationAutocomplete] Error:", error);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchLocationSuggestions, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [location]);
 
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -190,12 +221,35 @@ export default function CreateOpportunityScreen() {
             <Text style={styles.label}>Location</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. 123 Main St, New York"
+              placeholder="e.g. New York, NY"
               placeholderTextColor="#6B7280"
               value={location}
               onChangeText={setLocation}
               testID="input-location"
             />
+            {showLocationDropdown && locationSuggestions.length > 0 && (
+              <View style={styles.dropdownMenu}>
+                <FlatList
+                  data={locationSuggestions}
+                  keyExtractor={(item) => item.place_id.toString()}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setLocation(item.display_name);
+                        setShowLocationDropdown(false);
+                        setLocationSuggestions([]);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText} numberOfLines={2}>
+                        {item.display_name}
+                      </Text>
+                    </Pressable>
+                  )}
+                  style={styles.dropdownScroll}
+                />
+              </View>
+            )}
           </View>
         </View>
 
@@ -207,16 +261,6 @@ export default function CreateOpportunityScreen() {
           value={budget}
           onChangeText={setBudget}
           testID="input-budget"
-        />
-
-        <Text style={styles.label}>Company</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Fashion Brand Co."
-          placeholderTextColor="#6B7280"
-          value={company}
-          onChangeText={setCompany}
-          testID="input-company"
         />
 
         <Text style={styles.label}>Description</Text>
