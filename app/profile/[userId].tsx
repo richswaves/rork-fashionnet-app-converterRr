@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play } from "lucide-react-native";
@@ -66,6 +66,8 @@ export default function UserProfileScreen() {
   const opportunitiesAnimOpacity = useRef(new Animated.Value(1)).current;
   const portfolioAnimHeight = useRef(new Animated.Value(1)).current;
   const portfolioAnimOpacity = useRef(new Animated.Value(1)).current;
+
+  const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -695,12 +697,49 @@ export default function UserProfileScreen() {
                 }
               ]}
             >
-              <MasonryPortfolio items={portfolioItems} />
+              <MasonryPortfolio items={portfolioItems} onItemPress={setSelectedItem} />
             </Animated.View>
           </View>
         )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={!!selectedItem}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedItem(null)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setSelectedItem(null)}
+        >
+          <View style={styles.modalContent}>
+            {selectedItem?.media_type === "video" ? (
+              <Video
+                source={{ uri: selectedItem.media_url }}
+                style={styles.modalMedia}
+                resizeMode={ResizeMode.CONTAIN}
+                shouldPlay
+                isLooping
+                useNativeControls
+              />
+            ) : selectedItem ? (
+              <Image
+                source={{ uri: selectedItem.media_url }}
+                style={styles.modalMedia}
+                resizeMode="contain"
+              />
+            ) : null}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedItem(null)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -851,9 +890,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalMedia: {
+    width: "100%",
+    height: "100%",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.9)",
+  },
+  closeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "700",
+  },
 });
 
-function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
+function MasonryPortfolio({ items, onItemPress }: { items: PortfolioItem[]; onItemPress: (item: PortfolioItem) => void }) {
   const screenWidth = Dimensions.get("window").width;
   const padding = 16;
   const gap = 6;
@@ -898,7 +971,11 @@ function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
             const itemHeight = columnWidth / aspectRatio;
 
             return (
-              <View key={item.id} style={[styles.portfolioItemWrap, { height: itemHeight }]}>
+              <Pressable
+                key={item.id}
+                style={[styles.portfolioItemWrap, { height: itemHeight }]}
+                onPress={() => onItemPress(item)}
+              >
                 {item.media_type === "video" ? (
                   <>
                     <Video
@@ -923,7 +1000,7 @@ function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
                 ) : (
                   <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
                 )}
-              </View>
+              </Pressable>
             );
           })}
         </View>
