@@ -102,6 +102,20 @@ export default function UserProfileScreen() {
     enabled: !!currentUserId,
   });
 
+  const { data: approvedIds } = useQuery<Set<string>>({
+    queryKey: ["approved-ids", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return new Set<string>();
+      const apps = await sbSelect<{ opportunity_id: string; status?: string }>("applications", {
+        select: "opportunity_id,status",
+        query: { applicant_id: `eq.${currentUserId}`, status: `eq.approved` },
+        limit: 1000,
+      });
+      return new Set(apps.map((a) => a.opportunity_id));
+    },
+    enabled: !!currentUserId,
+  });
+
   const { data: savedIds } = useQuery<Set<string>>({
     queryKey: ["saved-ids", currentUserId],
     queryFn: async () => {
@@ -419,12 +433,12 @@ export default function UserProfileScreen() {
                                 applyMutation.mutate(opp.id);
                               }
                             }}
-                            disabled={applyMutation.isPending || unapplyMutation.isPending}
+                            disabled={applyMutation.isPending || unapplyMutation.isPending || approvedIds?.has(opp.id)}
                             testID={`apply-${opp.id}`}
                           >
                             <CheckCircle2 color={appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
                             <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {appliedIds?.has(opp.id) ? "Applied" : "Apply"}
+                              {approvedIds?.has(opp.id) ? "Approved" : appliedIds?.has(opp.id) ? "Applied" : "Apply"}
                             </Text>
                           </Pressable>
                           <Pressable
