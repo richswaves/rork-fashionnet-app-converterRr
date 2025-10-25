@@ -15,6 +15,7 @@ import { X } from "lucide-react-native";
 import { getSupabase } from "@/integrations/supabase/client";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import * as Haptics from "expo-haptics";
 
 const words = ["create", "community", "collaboration"];
 
@@ -42,6 +43,9 @@ export default function LoginScreen() {
           setDisplayedText(currentWord.substring(0, displayedText.length - 1));
         } else {
           setDisplayedText(currentWord.substring(0, displayedText.length + 1));
+          if (Platform.OS !== 'web') {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }
         }
       },
       !isDeleting && displayedText === currentWord
@@ -198,13 +202,14 @@ const styles = StyleSheet.create({
   header: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   title: {
     fontSize: 48,
     fontWeight: "700" as const,
     color: "#FFFFFF",
     lineHeight: 56,
+    textAlign: "center" as const,
   },
   cursor: {
     color: "#FFFFFF",
