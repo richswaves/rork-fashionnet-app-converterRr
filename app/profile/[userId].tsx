@@ -279,11 +279,27 @@ export default function UserProfileScreen() {
           {userOpps && userOpps.length > 0 ? (
             <View style={styles.oppList}>
               {userOpps.map((opp) => {
+                console.log(`[Profile] Opp ${opp.id} images:`, { 
+                  cover_image: opp.cover_image, 
+                  image_url: opp.image_url, 
+                  images: opp.images, 
+                  media: opp.media 
+                });
+                
                 const fromArray = Array.isArray(opp.images)
                   ? (opp.images[0] && (typeof opp.images[0] === "string" ? opp.images[0] : opp.images[0]?.url))
                   : undefined;
                 const fromMedia = Array.isArray(opp.media) ? opp.media[0]?.url : undefined;
-                const imageUri = (opp.cover_image ?? opp.image_url ?? fromArray ?? fromMedia ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60") as string;
+                
+                const imageUri = (
+                  opp.cover_image ?? 
+                  opp.image_url ?? 
+                  fromArray ?? 
+                  fromMedia ?? 
+                  "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60"
+                ) as string;
+                
+                console.log(`[Profile] Using imageUri for opp ${opp.id}:`, imageUri);
                 return (
                   <View key={opp.id} style={styles.oppCard} testID={`opp-${opp.id}`}>
                     <Image source={{ uri: imageUri }} style={styles.oppImage} resizeMode="cover" />
