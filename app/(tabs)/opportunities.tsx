@@ -713,15 +713,27 @@ export default function OpportunitiesScreen() {
 
           <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetScrollContent}>
             <Text style={styles.fieldLabel}>Location</Text>
-            <View style={styles.textFieldWrap}>
-              <TextInput
-                placeholder="Enter city name"
-                placeholderTextColor="#6B7280"
-                value={city ?? ""}
-                onChangeText={(t) => setCity(t.length ? t : null)}
-                style={styles.textField}
-                testID="input-city"
-              />
+            <View style={styles.locationChips}>
+              {LOCATION_OPTIONS.map((loc) => (
+                <Pressable
+                  key={loc.value}
+                  style={[
+                    styles.locationChip,
+                    city === loc.value && styles.locationChipActive,
+                  ]}
+                  onPress={() => setCity(city === loc.value ? null : loc.value)}
+                  testID={`location-${loc.value}`}
+                >
+                  <Text
+                    style={[
+                      styles.locationChipText,
+                      city === loc.value && styles.locationChipTextActive,
+                    ]}
+                  >
+                    {loc.label}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
 
             <Text style={styles.fieldLabel}>Seeking a</Text>
@@ -785,6 +797,19 @@ export default function OpportunitiesScreen() {
     </View>
   );
 }
+
+const LOCATION_OPTIONS = [
+  { label: "New York", value: "new york" },
+  { label: "Los Angeles", value: "los angeles" },
+  { label: "Chicago", value: "chicago" },
+  { label: "Miami", value: "miami" },
+  { label: "San Francisco", value: "san francisco" },
+  { label: "Austin", value: "austin" },
+  { label: "Seattle", value: "seattle" },
+  { label: "Boston", value: "boston" },
+  { label: "Denver", value: "denver" },
+  { label: "Atlanta", value: "atlanta" },
+];
 
 const ROLE_SECTIONS: { title?: string; options: { label: string; value: string }[] }[] = [
   {
@@ -1042,5 +1067,32 @@ const styles = StyleSheet.create({
     color: "#EF4444",
     fontSize: 14,
     fontWeight: "700",
+  },
+  locationChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8 as const,
+    marginBottom: 8,
+  },
+  locationChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#14141C",
+    borderWidth: 1.5,
+    borderColor: "#23232B",
+  },
+  locationChipActive: {
+    backgroundColor: "#1E3A2E",
+    borderColor: "#4CB963",
+  },
+  locationChipText: {
+    color: "#D1D5DB",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  locationChipTextActive: {
+    color: "#4CB963",
+    fontWeight: "800",
   },
 });
