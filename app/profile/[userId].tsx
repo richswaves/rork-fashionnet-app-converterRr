@@ -189,7 +189,8 @@ export default function UserProfileScreen() {
             <ArrowLeft color="#E5E7EB" size={22} />
           </Pressable>
         </View>
-        <View style={styles.headerColumn}>
+        <View style={styles.inner}>
+          <View style={styles.headerColumn}>
           <Pressable
             onPress={() => {
               if (!isOwn) {
@@ -294,6 +295,7 @@ export default function UserProfileScreen() {
             <Text style={styles.emptyText}>No opportunities yet.</Text>
           )}
         </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -305,7 +307,8 @@ const styles = StyleSheet.create({
   cover: { width: "100%", height: 380 },
   coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 380 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32 },
+  scroll: { paddingBottom: 32 },
+  inner: { paddingHorizontal: 16 },
   headerColumn: { alignItems: "center", paddingTop: 12 },
   avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F" },
   avatarLarge: { width: 116, height: 116 },
