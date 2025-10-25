@@ -25,7 +25,7 @@ interface ProfileRow {
 interface FollowNotification {
   id: string;
   follower_id: string;
-  followed_id: string;
+  following_id: string;
   created_at: string;
   profiles?: ProfileRow;
 }
@@ -86,7 +86,7 @@ export default function NotificationsScreen() {
       if (!currentUserId) return [];
       const rows = await sbSelect<FollowNotification>("follows", {
         select: "*,profiles:follower_id(*)",
-        query: { followed_id: `eq.${currentUserId}` },
+        query: { following_id: `eq.${currentUserId}` },
         order: { column: "created_at", ascending: false },
         limit: 100,
       });

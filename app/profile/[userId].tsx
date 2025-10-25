@@ -121,7 +121,7 @@ export default function UserProfileScreen() {
       if (!currentUserId || !userId || currentUserId === userId) return false;
       const rows = await sbSelect<{ id: string }>("follows", {
         select: "id",
-        query: { follower_id: `eq.${currentUserId}`, followed_id: `eq.${userId}` },
+        query: { follower_id: `eq.${currentUserId}`, following_id: `eq.${userId}` },
         limit: 1,
       });
       return rows.length > 0;
@@ -194,7 +194,7 @@ export default function UserProfileScreen() {
       console.log(`[Follow] User ${currentUserId} following user ${userId}`);
       await sbInsert("follows", {
         follower_id: currentUserId,
-        followed_id: userId,
+        following_id: userId,
       });
     },
     onSuccess: () => {
@@ -216,7 +216,7 @@ export default function UserProfileScreen() {
       console.log(`[Follow] User ${currentUserId} unfollowing user ${userId}`);
       await sbDelete("follows", {
         follower_id: currentUserId,
-        followed_id: userId,
+        following_id: userId,
       });
     },
     onSuccess: () => {
