@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import GrainTexture from "@/components/GrainTexture";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
 
@@ -138,6 +139,8 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
+  const [dobDate, setDobDate] = useState<Date>(new Date(2000, 0, 1));
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [cityLocation, setCityLocation] = useState<string>("");
   const [notifOptIn, setNotifOptIn] = useState<boolean>(false);
   const [notifMethod, setNotifMethod] = useState<"sms" | "instagram" | undefined>(undefined);
@@ -398,15 +401,36 @@ export default function SignupScreen() {
             style={styles.input}
           />
           <View style={styles.row}>
-            <TextInput
+            <TouchableOpacity
               testID="signup-dob"
-              placeholder="Date of birth (YYYY-MM-DD)"
-              placeholderTextColor="#9CA3AF"
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-              style={[styles.input, styles.inputHalf]}
-              autoCorrect={false}
-            />
+              style={[styles.input, styles.inputHalf, { justifyContent: "center" }]}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={{ color: dateOfBirth ? "#FFFFFF" : "#9CA3AF" }}>
+                {dateOfBirth || "Date of birth"}
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={dobDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === "android") {
+                    setShowDatePicker(false);
+                  }
+                  if (selectedDate) {
+                    setDobDate(selectedDate);
+                    const year = selectedDate.getFullYear();
+                    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                    const day = String(selectedDate.getDate()).padStart(2, "0");
+                    setDateOfBirth(`${year}-${month}-${day}`);
+                  }
+                }}
+                maximumDate={new Date()}
+              />
+            )}
             <TextInput
               testID="signup-location"
               placeholder="City, Country"
@@ -417,6 +441,14 @@ export default function SignupScreen() {
               autoCorrect={false}
             />
           </View>
+          {showDatePicker && Platform.OS === "ios" && (
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={() => setShowDatePicker(false)}
+            >
+              <Text style={styles.secondaryBtnText}>Done</Text>
+            </TouchableOpacity>
+          )}
           <View style={[styles.row, { alignItems: "center" }]}>
             <Text style={styles.helperText}>enable post notifications</Text>
             <Switch
