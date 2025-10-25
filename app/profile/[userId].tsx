@@ -493,26 +493,26 @@ export default function UserProfileScreen() {
             }
             return (
               <View style={styles.socialRowCenter}>
-                {links.instagram ? (
+                {links.instagram && links.instagram.trim() && (
                   <Pressable onPress={() => open(links.instagram!.startsWith("http") ? links.instagram! : `https://instagram.com/${links.instagram!.replace(/^@/, "")}`)} style={[styles.socialIconBtn, { backgroundColor: "#C13584" }]} testID="social-instagram">
                     <Instagram color="#fff" size={20} />
                   </Pressable>
-                ) : null}
-                {links.youtube ? (
+                )}
+                {links.youtube && links.youtube.trim() && (
                   <Pressable onPress={() => open(links.youtube!)} style={[styles.socialIconBtn, { backgroundColor: "#FF0000" }]} testID="social-youtube">
                     <Youtube color="#fff" size={20} />
                   </Pressable>
-                ) : null}
-                {links.twitter ? (
+                )}
+                {links.twitter && links.twitter.trim() && (
                   <Pressable onPress={() => open(links.twitter!)} style={[styles.socialIconBtn, { backgroundColor: "#1DA1F2" }]} testID="social-twitter">
                     <Twitter color="#fff" size={20} />
                   </Pressable>
-                ) : null}
-                {links.tiktok ? (
+                )}
+                {links.tiktok && links.tiktok.trim() && (
                   <Pressable onPress={() => open(links.tiktok!)} style={[styles.socialIconBtn, { backgroundColor: "#000000" }]} testID="social-tiktok">
                     <Music2 color="#fff" size={20} />
                   </Pressable>
-                ) : null}
+                )}
               </View>
             );
           })()}
