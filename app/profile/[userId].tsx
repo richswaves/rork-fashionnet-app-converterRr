@@ -46,6 +46,9 @@ interface OpportunityRow {
   media?: { url?: string | null; type?: string | null }[] | null;
   created_at?: string;
   user_id?: string;
+  description?: string | null;
+  budget?: string | null;
+  requirements?: string[] | null;
 }
 
 export default function UserProfileScreen() {
@@ -510,7 +513,41 @@ export default function UserProfileScreen() {
                     )}
                     <View style={styles.oppBody}>
                       <Text numberOfLines={2} style={styles.oppTitle}>{opp.title ?? "Untitled"}</Text>
-                      {!!opp.location && <Text numberOfLines={1} style={styles.oppMeta}>{opp.location}</Text>}
+                      {!!opp.description && (
+                        <Text numberOfLines={3} style={styles.oppDescription}>{opp.description}</Text>
+                      )}
+                      <View style={styles.oppMetaRow}>
+                        {!!opp.type && (
+                          <View style={styles.oppTypeBadge}>
+                            <Text style={styles.oppTypeBadgeText}>{opp.type}</Text>
+                          </View>
+                        )}
+                        {!!opp.location && (
+                          <Text numberOfLines={1} style={styles.oppMeta}>📍 {opp.location}</Text>
+                        )}
+                      </View>
+                      {!!opp.budget && (
+                        <View style={styles.oppBudgetRow}>
+                          <View style={opp.budget.toLowerCase().includes('unpaid') ? styles.oppUnpaidBadge : styles.oppPaidBadge}>
+                            <Text style={opp.budget.toLowerCase().includes('unpaid') ? styles.oppUnpaidBadgeText : styles.oppPaidBadgeText}>
+                              {opp.budget.toLowerCase().includes('unpaid') ? opp.budget : (opp.budget.split(' ').map((part, idx) => {
+                                if (idx === 0) return part;
+                                if (part === '-') return part;
+                                const num = part.replace(/[^0-9,]/g, '');
+                                return num ? `${num}` : part;
+                              }).join(' '))}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                      {opp.requirements && opp.requirements.length > 0 && (
+                        <View style={styles.oppRequirements}>
+                          <Text style={styles.oppRequirementsTitle}>Requirements:</Text>
+                          {opp.requirements.map((req, idx) => (
+                            <Text key={idx} style={styles.oppRequirementItem}>• {req}</Text>
+                          ))}
+                        </View>
+                      )}
                       {!isOwnPost && (
                         <View style={styles.oppActions}>
                           <Pressable
@@ -604,8 +641,45 @@ const styles = StyleSheet.create({
   oppCard: { backgroundColor: "#121218", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
   oppImage: { width: "100%", height: 180 },
   oppBody: { padding: 12 },
-  oppTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800" },
-  oppMeta: { color: "#9CA3AF", fontSize: 12, fontWeight: "700", marginTop: 2 },
+  oppTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800", marginBottom: 6 },
+  oppDescription: { color: "#D1D5DB", fontSize: 14, fontWeight: "400", lineHeight: 20, marginBottom: 8 },
+  oppMetaRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" },
+  oppTypeBadge: { 
+    backgroundColor: "#1E40AF", 
+    paddingHorizontal: 10, 
+    paddingVertical: 4, 
+    borderRadius: 6 
+  },
+  oppTypeBadgeText: { color: "#BFDBFE", fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
+  oppMeta: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
+  oppBudgetRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2, marginBottom: 8 },
+  oppPaidBadge: {
+    backgroundColor: "#065F46",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  oppPaidBadgeText: {
+    color: "#6EE7B7",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  oppUnpaidBadge: {
+    backgroundColor: "#7C2D12",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  oppUnpaidBadgeText: {
+    color: "#FCA5A5",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  oppRequirements: { marginTop: 4, gap: 4, marginBottom: 4 },
+  oppRequirementsTitle: { color: "#9CA3AF", fontSize: 12, fontWeight: "700", marginBottom: 4 },
+  oppRequirementItem: { color: "#D1D5DB", fontSize: 13, fontWeight: "400", lineHeight: 18 },
   oppActions: { flexDirection: "row", gap: 10 as const, marginTop: 12 },
   oppActionBtn: { 
     flex: 1, 
