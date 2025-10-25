@@ -629,7 +629,7 @@ export default function MessagesScreen() {
         <TextInput
           style={styles.input}
           placeholder="Type a message..."
-          placeholderTextColor="#6B7280"
+          placeholderTextColor="#9CA3AF"
           value={newMessage}
           onChangeText={setNewMessage}
           multiline
@@ -641,9 +641,9 @@ export default function MessagesScreen() {
           disabled={!newMessage.trim() || sendingMessage}
         >
           {sendingMessage ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color="#000" />
           ) : (
-            <Send size={20} color="#fff" />
+            <Send size={20} color="#000" />
           )}
         </TouchableOpacity>
       </View>
@@ -872,12 +872,12 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#1F2937",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     paddingHorizontal: 20,
     paddingVertical: 12,
     fontSize: 16,
-    color: "#fff",
+    color: "#000000",
     maxHeight: 100,
     marginRight: 12,
   },
@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#6366f1",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },
