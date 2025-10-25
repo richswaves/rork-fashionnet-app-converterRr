@@ -10,8 +10,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { X } from "lucide-react-native";
+
 import { getSupabase } from "@/integrations/supabase/client";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
@@ -24,7 +23,6 @@ export default function LoginScreen() {
   const [displayedText, setDisplayedText] = useState<string>("");
   const [wordIndex, setWordIndex] = useState<number>(0);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const router = useRouter();
 
   useEffect(() => {
     const currentWord = words[wordIndex];
@@ -97,20 +95,8 @@ export default function LoginScreen() {
     Alert.alert("Coming Soon", "Email/password login will be available soon.");
   };
 
-  const handleClose = () => {
-    if (router.canGoBack()) {
-      router.back();
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-        <View style={styles.closeIconContainer}>
-          <X size={24} color="#FFFFFF" />
-        </View>
-      </TouchableOpacity>
-
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>
@@ -177,20 +163,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000000",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    zIndex: 10,
-  },
-  closeIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#333333",
-    alignItems: "center",
-    justifyContent: "center",
   },
   content: {
     flex: 1,
