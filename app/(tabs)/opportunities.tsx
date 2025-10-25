@@ -503,7 +503,7 @@ export default function OpportunitiesScreen() {
         renderItem={({ item }) => {
           const title = item.title ?? "";
           const display = getDisplayForProfile(item.profiles);
-          const imageUri = (item.cover_image ?? (item as any).image_url ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60");
+          const imageUri = item.cover_image ?? (item as any).image_url;
           const upvotes = 0;
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
@@ -592,9 +592,11 @@ export default function OpportunitiesScreen() {
                 </View>
               )}
 
-              <View style={styles.mediaWrap}>
-                <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
-              </View>
+              {imageUri && (
+                <View style={styles.mediaWrap}>
+                  <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
+                </View>
+              )}
 
               <View style={styles.body}>
                 {!!title && (
