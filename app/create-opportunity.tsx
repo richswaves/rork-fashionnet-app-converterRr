@@ -496,8 +496,17 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
-      const parsedMin = paymentType === "paid" && priceMin.trim() !== "" ? Number(priceMin.replace(/[^0-9.]/g, "")) : null;
-      const parsedMax = paymentType === "paid" && priceMax.trim() !== "" ? Number(priceMax.replace(/[^0-9.]/g, "")) : null;
+      let budgetString = "";
+      if (paymentType === "unpaid") {
+        budgetString = "Unpaid";
+      } else if (paymentType === "paid") {
+        const parsedMin = priceMin.trim() !== "" ? Number(priceMin.replace(/[^0-9.]/g, "")) : null;
+        const parsedMax = priceMax.trim() !== "" ? Number(priceMax.replace(/[^0-9.]/g, "")) : null;
+        const parts = [];
+        if (parsedMin) parts.push(parsedMin.toLocaleString());
+        if (parsedMax) parts.push(parsedMax.toLocaleString());
+        budgetString = parts.length > 0 ? `Paid ${parts.join(" - ")}` : "Paid";
+      }
 
       const opportunityData = {
         title: title.trim(),
@@ -507,8 +516,7 @@ export default function CreateOpportunityScreen() {
         image_url: imageUrl || null,
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
-        price_min: paymentType === "paid" ? parsedMin : null,
-        price_max: paymentType === "paid" ? parsedMax : null,
+        budget: budgetString || null,
       } as Record<string, unknown>;
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
