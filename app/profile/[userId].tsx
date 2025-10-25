@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2 } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -54,6 +54,7 @@ export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [following, setFollowing] = useState<boolean>(false);
+  const [opportunitiesExpanded, setOpportunitiesExpanded] = useState<boolean>(true);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
     queryKey: ["profile", userId],
@@ -275,8 +276,19 @@ export default function UserProfileScreen() {
         )}
 
         <View style={styles.section} testID="profile-opportunities-section">
-          <Text style={styles.sectionTitle}>Opportunities</Text>
-          {userOpps && userOpps.length > 0 ? (
+          <Pressable 
+            onPress={() => setOpportunitiesExpanded(prev => !prev)}
+            style={styles.sectionHeader}
+            testID="opportunities-toggle"
+          >
+            <Text style={styles.sectionTitle}>Opportunities</Text>
+            {opportunitiesExpanded ? (
+              <ChevronUp color="#9CA3AF" size={24} />
+            ) : (
+              <ChevronDown color="#9CA3AF" size={24} />
+            )}
+          </Pressable>
+          {opportunitiesExpanded && userOpps && userOpps.length > 0 ? (
             <View style={styles.oppList}>
               {userOpps.map((opp) => {
                 console.log(`[Profile] Opp ${opp.id} images:`, { 
@@ -311,9 +323,9 @@ export default function UserProfileScreen() {
                 );
               })}
             </View>
-          ) : (
+          ) : opportunitiesExpanded ? (
             <Text style={styles.emptyText}>No opportunities yet.</Text>
-          )}
+          ) : null}
         </View>
         </View>
       </ScrollView>
@@ -347,7 +359,8 @@ const styles = StyleSheet.create({
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
   statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" },
   section: { marginTop: 20 },
-  sectionTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 10 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  sectionTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
   oppList: { gap: 12 },
   oppCard: { backgroundColor: "#121218", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
   oppImage: { width: "100%", height: 180 },
