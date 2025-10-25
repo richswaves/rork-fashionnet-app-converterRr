@@ -152,9 +152,9 @@ export default function UserProfileScreen() {
       <View style={styles.coverWrap}>
         <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)", "#0B0B0F"]}
-          locations={[0, 0.55, 1]}
-          start={{ x: 0.5, y: 0.15 }}
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.55)", "#0B0B0F"]}
+          locations={[0, 0.6, 1]}
+          start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.coverFade}
         />
@@ -255,18 +255,18 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  coverWrap: { width: "100%", height: 360, backgroundColor: "#111318" },
-  cover: { width: "100%", height: 360 },
-  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 300 },
+  coverWrap: { width: "100%", height: 380, backgroundColor: "#111318" },
+  cover: { width: "100%", height: 380 },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 340 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -28 },
-  headerColumn: { alignItems: "center" },
-  avatarWrapLarge: { width: 112, height: 112, borderRadius: 56, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F" },
-  avatarLarge: { width: 112, height: 112 },
-  usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 10 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: 8 },
+  headerColumn: { alignItems: "center", paddingTop: 12 },
+  avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F" },
+  avatarLarge: { width: 116, height: 116 },
+  usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 12 },
   locationRowCenter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   locationText: { color: "#9CA3AF", fontSize: 13, maxWidth: 220 },
-  statsAndFollow: { flexDirection: "row", alignItems: "center", gap: 24, marginTop: 12 },
+  statsAndFollow: { flexDirection: "row", alignItems: "center", gap: 24, marginTop: 14 },
   followPill: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 22, borderWidth: 1, borderColor: "#FFFFFF", backgroundColor: "transparent" },
   followPillActive: { backgroundColor: "#E5E7EB", borderColor: "#E5E7EB" },
   followPillText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
