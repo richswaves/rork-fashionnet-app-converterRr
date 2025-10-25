@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users, Plus, Trash2, MoreVertical } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users, Plus, Trash2, MoreVertical, LogOut } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -181,7 +181,7 @@ export default function OpportunitiesScreen() {
   const [searchVisible, setSearchVisible] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
-  const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
+  const { currentUserId, resolvedProfile, getDisplayForProfile, logout } = useProfile();
   const router = useRouter();
 
   const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
@@ -432,6 +432,23 @@ export default function OpportunitiesScreen() {
           </Pressable>
           <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
             <Bell color="#E5E7EB" size={20} />
+          </Pressable>
+          <Pressable 
+            onPress={async () => {
+              if (Platform.OS === "web") {
+                if (confirm("Are you sure you want to log out?")) {
+                  await logout();
+                  router.replace("/login");
+                }
+              } else {
+                await logout();
+                router.replace("/login");
+              }
+            }} 
+            style={styles.iconBtn} 
+            testID="opp-top-logout"
+          >
+            <LogOut color="#EF4444" size={20} />
           </Pressable>
           <Pressable onPress={() => router.push("/create-opportunity")} style={styles.createBtn} testID="opp-top-create">
             <Plus color="#0B0B0F" size={20} strokeWidth={3} />
