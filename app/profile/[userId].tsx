@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2 } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -54,6 +54,7 @@ export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [following, setFollowing] = useState<boolean>(false);
+  const [oppsExpanded, setOppsExpanded] = useState<boolean>(true);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
     queryKey: ["profile", userId],
@@ -275,10 +276,18 @@ export default function UserProfileScreen() {
         )}
 
         <View style={styles.section} testID="profile-opportunities-section">
-          <Text style={styles.sectionTitle}>Opportunities</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Opportunities</Text>
+            {userOpps && userOpps.length > 2 && (
+              <Pressable onPress={() => setOppsExpanded(prev => !prev)} style={styles.collapseBtn} testID="collapse-opps-btn">
+                <Text style={styles.collapseBtnText}>{oppsExpanded ? "Collapse" : "Expand"}</Text>
+                {oppsExpanded ? <ChevronUp color="#9CA3AF" size={16} /> : <ChevronDown color="#9CA3AF" size={16} />}
+              </Pressable>
+            )}
+          </View>
           {userOpps && userOpps.length > 0 ? (
             <View style={styles.oppList}>
-              {userOpps.map((opp) => {
+              {(oppsExpanded ? userOpps : userOpps.slice(0, 2)).map((opp) => {
                 console.log(`[Profile] Opp ${opp.id} images:`, { 
                   cover_image: opp.cover_image, 
                   image_url: opp.image_url, 
@@ -347,7 +356,10 @@ const styles = StyleSheet.create({
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
   statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" },
   section: { marginTop: 20 },
-  sectionTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 10 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  sectionTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
+  collapseBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: "#1A1A22" },
+  collapseBtnText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700" },
   oppList: { gap: 12 },
   oppCard: { backgroundColor: "#121218", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
   oppImage: { width: "100%", height: 180 },
