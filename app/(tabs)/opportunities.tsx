@@ -231,7 +231,6 @@ export default function OpportunitiesScreen() {
       <View style={styles.topBar}>
         <Pressable style={styles.topProfile} testID="opp-top-profile" onPress={() => router.push("/profile/edit") }>
           <Image
-            key={resolvedProfile.avatarUrl}
             source={{ uri: resolvedProfile.avatarUrl }}
             style={styles.topAvatar}
           />
@@ -295,7 +294,7 @@ export default function OpportunitiesScreen() {
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
               <Pressable style={styles.postHeader} onPress={() => { const uid = item.profiles?.user_id ?? item.user_id; if (uid) { router.push({ pathname: "/profile/[userId]", params: { userId: uid } }); } }} testID={`opp-user-${item.profiles?.user_id ?? item.user_id}`}>
-                <Image source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
+                <Image key={item.profiles?.user_id ?? item.user_id} source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
                   <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
                   <Text numberOfLines={1} style={styles.postTime}>{formatRelativeTime(item.created_at)}</Text>
