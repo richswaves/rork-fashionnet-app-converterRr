@@ -229,6 +229,7 @@ export default function OpportunitiesScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["approved-ids", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
     },
   });
@@ -472,10 +473,18 @@ export default function OpportunitiesScreen() {
                 {(item.user_id !== currentUserId) && (
                   <View style={styles.actionButtons}>
                     <Pressable
-                      style={[styles.actionBtn, appliedIds?.has(item.id) && styles.actionBtnActive]}
+                      style={[
+                        styles.actionBtn, 
+                        appliedIds?.has(item.id) && styles.actionBtnActive,
+                        approvedIds?.has(item.id) && styles.actionBtnApproved
+                      ]}
                       onPress={() => {
                         if (!currentUserId) {
                           console.log("Must be logged in to apply");
+                          return;
+                        }
+                        if (approvedIds?.has(item.id)) {
+                          console.log("Cannot unapply from approved application");
                           return;
                         }
                         if (appliedIds?.has(item.id)) {
@@ -487,8 +496,11 @@ export default function OpportunitiesScreen() {
                       disabled={applyMutation.isPending || unapplyMutation.isPending || approvedIds?.has(item.id)}
                       testID={`apply-${item.id}`}
                     >
-                      <CheckCircle2 color={appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
-                      <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
+                      <CheckCircle2 color={approvedIds?.has(item.id) || appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
+                      <Text style={[
+                        styles.actionText, 
+                        (appliedIds?.has(item.id) || approvedIds?.has(item.id)) && styles.actionTextActive
+                      ]}>
                         {approvedIds?.has(item.id) ? "Approved" : appliedIds?.has(item.id) ? "Applied" : "Apply"}
                       </Text>
                     </Pressable>
@@ -740,6 +752,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     shadowColor: "#4CB963",
     shadowOpacity: 0.25,
+  },
+  actionBtnApproved: { 
+    backgroundColor: "#1A1A24", 
+    borderColor: "#4CB963",
+    borderWidth: 2,
+    shadowColor: "#4CB963",
+    shadowOpacity: 0.3,
   },
   actionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   actionTextActive: { color: "#4CB963", fontWeight: "800" },

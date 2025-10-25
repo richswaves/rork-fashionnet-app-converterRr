@@ -155,6 +155,7 @@ export default function UserProfileScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["approved-ids", currentUserId] });
     },
   });
 
@@ -421,10 +422,18 @@ export default function UserProfileScreen() {
                       {!isOwnPost && (
                         <View style={styles.oppActions}>
                           <Pressable
-                            style={[styles.oppActionBtn, appliedIds?.has(opp.id) && styles.oppActionBtnApplied]}
+                            style={[
+                              styles.oppActionBtn, 
+                              appliedIds?.has(opp.id) && styles.oppActionBtnApplied,
+                              approvedIds?.has(opp.id) && styles.oppActionBtnApprovedProfile
+                            ]}
                             onPress={() => {
                               if (!currentUserId) {
                                 Alert.alert("Login Required", "You must be logged in to apply");
+                                return;
+                              }
+                              if (approvedIds?.has(opp.id)) {
+                                Alert.alert("Already Approved", "You cannot unapply from an approved application");
                                 return;
                               }
                               if (appliedIds?.has(opp.id)) {
@@ -436,8 +445,8 @@ export default function UserProfileScreen() {
                             disabled={applyMutation.isPending || unapplyMutation.isPending || approvedIds?.has(opp.id)}
                             testID={`apply-${opp.id}`}
                           >
-                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
-                            <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
+                            <CheckCircle2 color={approvedIds?.has(opp.id) || appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
+                            <Text style={[styles.oppActionText, (appliedIds?.has(opp.id) || approvedIds?.has(opp.id)) && styles.oppActionTextActive]}>
                               {approvedIds?.has(opp.id) ? "Approved" : appliedIds?.has(opp.id) ? "Applied" : "Apply"}
                             </Text>
                           </Pressable>
@@ -538,6 +547,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     shadowColor: "#4CB963",
     shadowOpacity: 0.25,
+  },
+  oppActionBtnApprovedProfile: { 
+    backgroundColor: "#1A1A24", 
+    borderColor: "#4CB963",
+    borderWidth: 2,
+    shadowColor: "#4CB963",
+    shadowOpacity: 0.3,
   },
   oppActionBtnSaved: { 
     backgroundColor: "#F59E0B", 
