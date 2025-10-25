@@ -54,7 +54,6 @@ export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
-  const [following, setFollowing] = useState<boolean>(false);
   const [opportunitiesExpanded, setOpportunitiesExpanded] = useState<boolean>(true);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
@@ -116,6 +115,20 @@ export default function UserProfileScreen() {
     enabled: !!currentUserId,
   });
 
+  const { data: isFollowing } = useQuery<boolean>({
+    queryKey: ["is-following", currentUserId, userId],
+    queryFn: async () => {
+      if (!currentUserId || !userId || currentUserId === userId) return false;
+      const rows = await sbSelect<{ id: string }>("follows", {
+        select: "id",
+        query: { follower_id: `eq.${currentUserId}`, followed_id: `eq.${userId}` },
+        limit: 1,
+      });
+      return rows.length > 0;
+    },
+    enabled: !!currentUserId && !!userId && currentUserId !== userId,
+  });
+
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
@@ -169,6 +182,50 @@ export default function UserProfileScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
+    },
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (!userId) throw new Error("No user to follow");
+      if (currentUserId === userId) throw new Error("Cannot follow yourself");
+      
+      console.log(`[Follow] User ${currentUserId} following user ${userId}`);
+      await sbInsert("follows", {
+        follower_id: currentUserId,
+        followed_id: userId,
+      });
+    },
+    onSuccess: () => {
+      console.log("[Follow] Successfully followed user");
+      queryClient.invalidateQueries({ queryKey: ["is-following", currentUserId, userId] });
+      queryClient.invalidateQueries({ queryKey: ["notifications-follows", userId] });
+    },
+    onError: (error) => {
+      console.error("[Follow] Error following user:", error);
+      Alert.alert("Error", "Failed to follow user");
+    },
+  });
+
+  const unfollowMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (!userId) throw new Error("No user to unfollow");
+      
+      console.log(`[Follow] User ${currentUserId} unfollowing user ${userId}`);
+      await sbDelete("follows", {
+        follower_id: currentUserId,
+        followed_id: userId,
+      });
+    },
+    onSuccess: () => {
+      console.log("[Follow] Successfully unfollowed user");
+      queryClient.invalidateQueries({ queryKey: ["is-following", currentUserId, userId] });
+    },
+    onError: (error) => {
+      console.error("[Follow] Error unfollowing user:", error);
+      Alert.alert("Error", "Failed to unfollow user");
     },
   });
 
@@ -308,13 +365,28 @@ export default function UserProfileScreen() {
               <Text style={styles.statValue}>0</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
-            <Pressable
-              onPress={() => setFollowing((s) => !s)}
-              style={[styles.followPill, following && styles.followPillActive]}
-              testID="follow-btn"
-            >
-              <Text style={[styles.followPillText, following && styles.followPillTextActive]}>{following ? "Following" : "Follow"}</Text>
-            </Pressable>
+            {!isOwn && (
+              <Pressable
+                onPress={() => {
+                  if (!currentUserId) {
+                    Alert.alert("Login Required", "You must be logged in to follow users");
+                    return;
+                  }
+                  if (isFollowing) {
+                    unfollowMutation.mutate();
+                  } else {
+                    followMutation.mutate();
+                  }
+                }}
+                style={[styles.followPill, isFollowing && styles.followPillActive]}
+                disabled={followMutation.isPending || unfollowMutation.isPending}
+                testID="follow-btn"
+              >
+                <Text style={[styles.followPillText, isFollowing && styles.followPillTextActive]}>
+                  {isFollowing ? "Following" : "Follow"}
+                </Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
