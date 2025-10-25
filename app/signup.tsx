@@ -139,6 +139,9 @@ export default function SignupScreen() {
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
   const [cityLocation, setCityLocation] = useState<string>("");
   const [notifOptIn, setNotifOptIn] = useState<boolean>(false);
+  const [notifMethod, setNotifMethod] = useState<"sms" | "instagram" | undefined>(undefined);
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [instagramLink, setInstagramLink] = useState<string>("");
 
   const [userType, setUserType] = useState<"creative" | "business" | undefined>(undefined);
   const [role, setRole] = useState<string | undefined>(undefined);
@@ -176,8 +179,9 @@ export default function SignupScreen() {
   const canSubmit = useMemo(() => {
     const baseValid = email.trim().length > 3 && password.trim().length >= 6;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
-    return baseValid && onboardingValid;
-  }, [email, password, userType, role, availableQuestions, answers]);
+    const notifValid = !notifOptIn || (notifMethod === "sms" ? phoneNumber.trim().length >= 7 : notifMethod === "instagram" ? instagramLink.trim().length > 0 : false);
+    return baseValid && onboardingValid && notifValid;
+  }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink]);
 
   const onSubmit = async () => {
     const supabase = getSupabase();
@@ -262,6 +266,30 @@ export default function SignupScreen() {
           question: "Notifications opt-in",
           answer: [notifOptIn ? "enabled" : "disabled"],
         } as any);
+        if (notifOptIn && notifMethod) {
+          await sbInsert("onboarding_responses", {
+            user_id: userId,
+            role,
+            question: "Notifications channel",
+            answer: [notifMethod],
+          } as any);
+          if (notifMethod === "sms" && phoneNumber.trim().length > 0) {
+            await sbInsert("onboarding_responses", {
+              user_id: userId,
+              role,
+              question: "Phone number for notifications",
+              answer: [phoneNumber.trim()],
+            } as any);
+          }
+          if (notifMethod === "instagram" && instagramLink.trim().length > 0) {
+            await sbInsert("onboarding_responses", {
+              user_id: userId,
+              role,
+              question: "Instagram for notifications",
+              answer: [instagramLink.trim()],
+            } as any);
+          }
+        }
       } catch (e) {
         console.log("Failed inserting onboarding responses", e);
       }
@@ -345,19 +373,73 @@ export default function SignupScreen() {
             />
           </View>
           <View style={[styles.row, { alignItems: "center" }]}>
-            <Text style={styles.helperText}>enable opportunity post notifiacations</Text>
+            <Text style={styles.helperText}>enable post notifications</Text>
             <Switch
               testID="signup-notif"
               value={notifOptIn}
               onValueChange={async (v) => {
                 setNotifOptIn(v);
+                if (!v) {
+                  setNotifMethod(undefined);
+                  setPhoneNumber("");
+                  setInstagramLink("");
+                }
                 if (v) {
-                  console.log("Notifications preference enabled; permissions will be requested later in-app settings");
+                  console.log("Notifications preference enabled; select a channel");
                 }
               }}
             />
           </View>
         </View>
+
+        {notifOptIn && (
+          <View style={[styles.card, { marginTop: -4 }]}> 
+            <Text style={styles.sectionTitle}>Choose how you want to be notified</Text>
+            <View style={styles.rowWrap}>
+              {(["sms", "instagram"] as const).map((m) => {
+                const selected = notifMethod === m;
+                return (
+                  <TouchableOpacity
+                    key={m}
+                    testID={`signup-notif-${m}`}
+                    style={[styles.pill, selected && styles.pillActive]}
+                    onPress={() => setNotifMethod(m)}
+                  >
+                    <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                      {m === "sms" ? "SMS" : "Instagram DMs"}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {notifMethod === "sms" && (
+              <TextInput
+                testID="signup-phone"
+                placeholder="Phone number"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="phone-pad"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                style={[styles.input, { marginTop: 10 }]}
+              />
+            )}
+            {notifMethod === "instagram" && (
+              <TextInput
+                testID="signup-ig"
+                placeholder="Instagram profile link (https://instagram.com/username)"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={instagramLink}
+                onChangeText={setInstagramLink}
+                style={[styles.input, { marginTop: 10 }]}
+              />
+            )}
+            {!notifMethod && (
+              <Text style={{ color: "#9CA3AF", marginTop: 6 }}>Select a notification channel</Text>
+            )}
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>You are joining as</Text>
