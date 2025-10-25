@@ -156,12 +156,39 @@ export default function SignupScreen() {
   const [hairColor, setHairColor] = useState<string>("");
   const [eyeColor, setEyeColor] = useState<string>("");
 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1);
+
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   const availableQuestions = useMemo<ChoiceQuestion[]>(() => {
     if (!role) return [];
     return roleQuestions[role] ?? [];
   }, [role]);
+
+  const totalSteps = useMemo(() => {
+    let count = 1;
+    if (userType) count++;
+    if (role) {
+      count++;
+      count += availableQuestions.length;
+      if (role === "model") count++;
+    }
+    return count;
+  }, [userType, role, availableQuestions]);
+
+  const currentStep = useMemo(() => {
+    let step = 1;
+    if (userType) step++;
+    if (role) {
+      step++;
+      if (currentQuestionIndex >= 0) step += currentQuestionIndex + 1;
+    }
+    return step;
+  }, [userType, role, currentQuestionIndex]);
+
+  const progress = useMemo(() => {
+    return totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
+  }, [currentStep, totalSteps]);
 
   const toggleAnswer = useCallback((qid: string, option: string, multiple?: boolean) => {
     setAnswers((prev) => {
@@ -176,12 +203,25 @@ export default function SignupScreen() {
     });
   }, []);
 
+  const handleContinueQuestion = useCallback(() => {
+    if (currentQuestionIndex < availableQuestions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  }, [currentQuestionIndex, availableQuestions]);
+
+  const isCurrentQuestionAnswered = useMemo(() => {
+    if (currentQuestionIndex < 0 || currentQuestionIndex >= availableQuestions.length) return false;
+    const q = availableQuestions[currentQuestionIndex];
+    return (answers[q.id] ?? []).length > 0;
+  }, [currentQuestionIndex, availableQuestions, answers]);
+
   const canSubmit = useMemo(() => {
     const baseValid = email.trim().length > 3 && password.trim().length >= 6;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
     const notifValid = !notifOptIn || (notifMethod === "sms" ? phoneNumber.trim().length >= 7 : notifMethod === "instagram" ? instagramLink.trim().length > 0 : false);
-    return baseValid && onboardingValid && notifValid;
-  }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink]);
+    const allQuestionsAnswered = currentQuestionIndex >= availableQuestions.length - 1 && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
+    return baseValid && onboardingValid && notifValid && allQuestionsAnswered;
+  }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink, currentQuestionIndex]);
 
   const onSubmit = async () => {
     const supabase = getSupabase();
@@ -319,6 +359,9 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <View style={styles.progressBarContainer}>
+        <View style={[styles.progressBar, { width: `${progress}%` }]} />
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={{ gap: 16 }}>
           <Text style={styles.title}>account application</Text>
@@ -465,7 +508,14 @@ export default function SignupScreen() {
             <Text style={styles.sectionTitle}>Select your role</Text>
             <View style={styles.grid}>
               {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => setRole(r)}>
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.roleItem, role === r && styles.roleItemActive]}
+                  onPress={() => {
+                    setRole(r);
+                    setCurrentQuestionIndex(0);
+                  }}
+                >
                   <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
                 </TouchableOpacity>
               ))}
@@ -473,11 +523,12 @@ export default function SignupScreen() {
           </View>
         )}
 
-        {!!role && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Tell us more</Text>
-            {availableQuestions.map((q) => (
-              <View key={q.id} style={{ marginBottom: 12 }}>
+        {!!role && currentQuestionIndex >= 0 && currentQuestionIndex < availableQuestions.length && (() => {
+          const q = availableQuestions[currentQuestionIndex];
+          return (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Tell us more</Text>
+              <View style={{ marginBottom: 12 }}>
                 <Text style={styles.prompt}>{q.prompt}</Text>
                 <View style={styles.rowWrap}>
                   {q.options.map((opt) => {
@@ -495,11 +546,20 @@ export default function SignupScreen() {
                   })}
                 </View>
               </View>
-            ))}
-          </View>
-        )}
+              {isCurrentQuestionAnswered && currentQuestionIndex < availableQuestions.length - 1 && (
+                <TouchableOpacity
+                  testID="signup-continue"
+                  style={styles.secondaryBtn}
+                  onPress={handleContinueQuestion}
+                >
+                  <Text style={styles.secondaryBtnText}>Continue</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        })()}
 
-        {role === "model" && (
+        {role === "model" && currentQuestionIndex >= availableQuestions.length - 1 && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0) && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
             <View style={styles.row}>
@@ -521,14 +581,16 @@ export default function SignupScreen() {
           </View>
         )}
 
-        <TouchableOpacity
-          testID="signup-submit"
-          style={[styles.primaryBtn, { opacity: loading || !canSubmit ? 0.6 : 1 }]}
-          onPress={onSubmit}
-          disabled={loading || !canSubmit}
-        >
-          <Text style={styles.primaryBtnText}>{loading ? "Creating..." : "Create account"}</Text>
-        </TouchableOpacity>
+        {canSubmit && (
+          <TouchableOpacity
+            testID="signup-submit"
+            style={[styles.primaryBtn, { opacity: loading ? 0.6 : 1 }]}
+            onPress={onSubmit}
+            disabled={loading}
+          >
+            <Text style={styles.primaryBtnText}>{loading ? "Creating..." : "Create account"}</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -557,4 +619,8 @@ const styles = StyleSheet.create({
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
   primaryBtnText: { color: "#111827", fontSize: 17, fontWeight: "700" as const },
   helperText: { color: "#9CA3AF", flex: 1, fontWeight: "600" as const },
+  progressBarContainer: { height: 4, backgroundColor: "#1F2937", width: "100%" },
+  progressBar: { height: "100%", backgroundColor: "#FFFFFF", borderRadius: 2 },
+  secondaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, alignItems: "center", borderRadius: 12, marginTop: 6 },
+  secondaryBtnText: { color: "#111827", fontSize: 15, fontWeight: "700" as const },
 });
