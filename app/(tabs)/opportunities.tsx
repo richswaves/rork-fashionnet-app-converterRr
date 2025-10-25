@@ -455,50 +455,52 @@ export default function OpportunitiesScreen() {
                   <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
                   <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
                 </Pressable>
-                <View style={styles.actionButtons}>
-                  <Pressable
-                    style={[styles.actionBtn, appliedIds?.has(item.id) && styles.actionBtnActive]}
-                    onPress={() => {
-                      if (!currentUserId) {
-                        console.log("Must be logged in to apply");
-                        return;
-                      }
-                      if (appliedIds?.has(item.id)) {
-                        unapplyMutation.mutate(item.id);
-                      } else {
-                        applyMutation.mutate(item.id);
-                      }
-                    }}
-                    disabled={applyMutation.isPending || unapplyMutation.isPending}
-                    testID={`apply-${item.id}`}
-                  >
-                    <CheckCircle2 color={appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
-                    <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
-                      {appliedIds?.has(item.id) ? "Applied" : "Apply"}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.actionBtn, savedIds?.has(item.id) && styles.actionBtnActive]}
-                    onPress={() => {
-                      if (!currentUserId) {
-                        console.log("Must be logged in to save");
-                        return;
-                      }
-                      if (savedIds?.has(item.id)) {
-                        unsaveMutation.mutate(item.id);
-                      } else {
-                        saveMutation.mutate(item.id);
-                      }
-                    }}
-                    disabled={saveMutation.isPending || unsaveMutation.isPending}
-                    testID={`save-${item.id}`}
-                  >
-                    <Bookmark color={savedIds?.has(item.id) ? "#F59E0B" : "#E5E7EB"} size={16} fill={savedIds?.has(item.id) ? "#F59E0B" : "transparent"} />
-                    <Text style={[styles.actionText, savedIds?.has(item.id) && styles.actionTextSaved]}>
-                      {savedIds?.has(item.id) ? "Saved" : "Save"}
-                    </Text>
-                  </Pressable>
-                </View>
+                {(item.user_id !== currentUserId) && (
+                  <View style={styles.actionButtons}>
+                    <Pressable
+                      style={[styles.actionBtn, appliedIds?.has(item.id) && styles.actionBtnActive]}
+                      onPress={() => {
+                        if (!currentUserId) {
+                          console.log("Must be logged in to apply");
+                          return;
+                        }
+                        if (appliedIds?.has(item.id)) {
+                          unapplyMutation.mutate(item.id);
+                        } else {
+                          applyMutation.mutate(item.id);
+                        }
+                      }}
+                      disabled={applyMutation.isPending || unapplyMutation.isPending}
+                      testID={`apply-${item.id}`}
+                    >
+                      <CheckCircle2 color={appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
+                      <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
+                        {appliedIds?.has(item.id) ? "Applied" : "Apply"}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.actionBtn, savedIds?.has(item.id) && styles.actionBtnActive]}
+                      onPress={() => {
+                        if (!currentUserId) {
+                          console.log("Must be logged in to save");
+                          return;
+                        }
+                        if (savedIds?.has(item.id)) {
+                          unsaveMutation.mutate(item.id);
+                        } else {
+                          saveMutation.mutate(item.id);
+                        }
+                      }}
+                      disabled={saveMutation.isPending || unsaveMutation.isPending}
+                      testID={`save-${item.id}`}
+                    >
+                      <Bookmark color={savedIds?.has(item.id) ? "#F59E0B" : "#E5E7EB"} size={16} fill={savedIds?.has(item.id) ? "#F59E0B" : "transparent"} />
+                      <Text style={[styles.actionText, savedIds?.has(item.id) && styles.actionTextSaved]}>
+                        {savedIds?.has(item.id) ? "Saved" : "Save"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
             </View>
           );
