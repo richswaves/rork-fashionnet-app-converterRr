@@ -34,6 +34,7 @@ interface OpportunityRow {
   description?: string | null;
   price_min?: number | null;
   price_max?: number | null;
+  requirements?: string[] | null;
 }
 
 const VIEW_OPTIONS = [
@@ -549,14 +550,22 @@ export default function OpportunitiesScreen() {
                   <View style={styles.priceRow}>
                     <Text style={styles.priceLabel}>Compensation:</Text>
                     <Text style={styles.priceValue}>
-                      {item.price_min && item.price_max
+                      ${item.price_min && item.price_max
                         ? `${item.price_min.toLocaleString()} - ${item.price_max.toLocaleString()}`
                         : item.price_min
-                        ? `From ${item.price_min.toLocaleString()}`
+                        ? `${item.price_min.toLocaleString()}+`
                         : item.price_max
                         ? `Up to ${item.price_max.toLocaleString()}`
                         : ""}
                     </Text>
+                  </View>
+                )}
+                {item.requirements && item.requirements.length > 0 && (
+                  <View style={styles.requirementsSection}>
+                    <Text style={styles.requirementsTitle}>Requirements:</Text>
+                    {item.requirements.map((req, idx) => (
+                      <Text key={idx} style={styles.requirementItem}>• {req}</Text>
+                    ))}
                   </View>
                 )}
               </View>
@@ -838,9 +847,12 @@ const styles = StyleSheet.create({
   },
   metaBadgeText: { color: "#BFDBFE", fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
   metaText: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
-  priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   priceLabel: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
   priceValue: { color: "#10B981", fontSize: 14, fontWeight: "800" },
+  requirementsSection: { marginTop: 8, gap: 4 },
+  requirementsTitle: { color: "#9CA3AF", fontSize: 12, fontWeight: "700", marginBottom: 4 },
+  requirementItem: { color: "#D1D5DB", fontSize: 13, fontWeight: "400", lineHeight: 18 },
   footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, marginTop: 4, marginBottom: 10 },
   upvote: { flexDirection: "row", alignItems: "center", gap: 6 as const },
   upvoteText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },

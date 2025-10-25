@@ -58,6 +58,9 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
+      const priceMinNum = priceFrom.trim() ? parseInt(priceFrom.trim(), 10) : null;
+      const priceMaxNum = priceTo.trim() ? parseInt(priceTo.trim(), 10) : null;
+
       const opportunityData = {
         title: title.trim(),
         type: needType,
@@ -67,6 +70,8 @@ export default function CreateOpportunityScreen() {
         image_url: imageUrl || null,
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
+        price_min: priceMinNum,
+        price_max: priceMaxNum,
       };
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
