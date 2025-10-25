@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRouter } from "expo-router";
-import { LogIn, AlertTriangle } from "lucide-react-native";
+import { AlertTriangle } from "lucide-react-native";
 import { sbSelect, getSupabase } from "@/integrations/supabase/client";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
@@ -108,9 +108,11 @@ export default function LoginScreen() {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <LogIn size={40} color="#8B5CF6" strokeWidth={2} />
-            </View>
+            <Image
+              source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/h4pde2oatr513vougr9pr" }}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
           </View>
@@ -206,14 +208,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 48,
   },
-  iconContainer: {
-    width: 80,
+  logo: {
+    width: 200,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: "#1F1F28",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,
