@@ -594,11 +594,7 @@ export default function MessagesScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={insets.top}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.chatHeader}>
         <TouchableOpacity
           style={styles.backButton}
@@ -616,38 +612,44 @@ export default function MessagesScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.messagesList, { paddingBottom: insets.bottom + 80 }]}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
-
-      <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          placeholderTextColor="#9CA3AF"
-          value={newMessage}
-          onChangeText={setNewMessage}
-          multiline
-          maxLength={1000}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={insets.top}
+      >
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
-        <TouchableOpacity
-          style={[styles.sendButton, (!newMessage.trim() || sendingMessage) && styles.sendButtonDisabled]}
-          onPress={sendMessage}
-          disabled={!newMessage.trim() || sendingMessage}
-        >
-          {sendingMessage ? (
-            <ActivityIndicator size="small" color="#000" />
-          ) : (
-            <Send size={20} color="#000" />
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type a message..."
+            placeholderTextColor="#9CA3AF"
+            value={newMessage}
+            onChangeText={setNewMessage}
+            multiline
+            maxLength={1000}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, (!newMessage.trim() || sendingMessage) && styles.sendButtonDisabled]}
+            onPress={sendMessage}
+            disabled={!newMessage.trim() || sendingMessage}
+          >
+            {sendingMessage ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Send size={20} color="#000" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -806,6 +808,7 @@ const styles = StyleSheet.create({
   messagesList: {
     paddingHorizontal: 20,
     paddingTop: 16,
+    paddingBottom: 16,
   },
   messageWrapper: {
     flexDirection: "row",
@@ -858,10 +861,6 @@ const styles = StyleSheet.create({
     color: "#E0E7FF",
   },
   inputContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 16,
