@@ -178,6 +178,7 @@ export default function OpportunitiesScreen() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [searchVisible, setSearchVisible] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
@@ -426,7 +427,7 @@ export default function OpportunitiesScreen() {
         </Pressable>
 
         <View style={styles.topIcons}>
-          <Pressable onPress={() => console.log("search")} style={styles.iconBtn} testID="opp-top-search">
+          <Pressable onPress={() => setSearchVisible((s) => !s)} style={styles.iconBtn} testID="opp-top-search">
             <Search color="#E5E7EB" size={20} />
           </Pressable>
           <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
@@ -462,17 +463,19 @@ export default function OpportunitiesScreen() {
         </Pressable>
       </View>
 
-      <View style={styles.searchRow}>
-        <Search color="#9CA3AF" size={16} />
-        <TextInput
-          placeholder="Search title, company, or location"
-          placeholderTextColor="#6B7280"
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          testID="opp-search-input"
-        />
-      </View>
+      {searchVisible && (
+        <View style={styles.searchRow}>
+          <Search color="#9CA3AF" size={16} />
+          <TextInput
+            placeholder="Search title, company, or location"
+            placeholderTextColor="#6B7280"
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            testID="opp-search-input"
+          />
+        </View>
+      )}
 
       {isLoading && (
         <View style={styles.loaderRow} testID="opps-loading">
