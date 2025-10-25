@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Compass, Users, MessageCircle, Image as ImageIcon } from "lucide-react-native";
+import { Compass, Users, MessageCircle } from "lucide-react-native";
 import React from "react";
 
 import Colors from "@/constants/colors";
@@ -40,13 +40,6 @@ export default function TabLayout() {
         options={{
           title: "Messages",
           tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size ?? 20} />,
-        }}
-      />
-      <Tabs.Screen
-        name="portfolio"
-        options={{
-          title: "Portfolio",
-          tabBarIcon: ({ color, size }) => <ImageIcon color={color} size={size ?? 20} />,
         }}
       />
     </Tabs>
