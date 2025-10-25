@@ -330,7 +330,7 @@ export default function OpportunitiesScreen() {
           <Pressable onPress={() => console.log("search")} style={styles.iconBtn} testID="opp-top-search">
             <Search color="#E5E7EB" size={20} />
           </Pressable>
-          <Pressable onPress={() => console.log("bell")} style={styles.iconBtn} testID="opp-top-bell">
+          <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
             <Bell color="#E5E7EB" size={20} />
           </Pressable>
           <Pressable onPress={() => console.log("share")} style={styles.iconBtn} testID="opp-top-share">
