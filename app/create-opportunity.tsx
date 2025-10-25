@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -478,7 +478,9 @@ export default function CreateOpportunityScreen() {
   const [title, setTitle] = useState("");
   const [needType, setNeedType] = useState("");
   const [location, setLocation] = useState("");
-  const [budget, setBudget] = useState("");
+  const [paymentType, setPaymentType] = useState<"paid" | "unpaid" | "">("");
+  const [priceMin, setPriceMin] = useState<string>("");
+  const [priceMax, setPriceMax] = useState<string>("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -494,6 +496,9 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
+      const parsedMin = paymentType === "paid" && priceMin.trim() !== "" ? Number(priceMin.replace(/[^0-9.]/g, "")) : null;
+      const parsedMax = paymentType === "paid" && priceMax.trim() !== "" ? Number(priceMax.replace(/[^0-9.]/g, "")) : null;
+
       const opportunityData = {
         title: title.trim(),
         type: needType,
@@ -502,8 +507,9 @@ export default function CreateOpportunityScreen() {
         image_url: imageUrl || null,
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
-        budget: budget.trim() || null,
-      };
+        price_min: paymentType === "paid" ? parsedMin : null,
+        price_max: paymentType === "paid" ? parsedMax : null,
+      } as Record<string, unknown>;
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
       const result = await sbInsert("opportunities", opportunityData);
@@ -580,6 +586,10 @@ export default function CreateOpportunityScreen() {
     }
     if (!needType) {
       alert("Please select a need type");
+      return;
+    }
+    if (paymentType === "paid" && priceMin.trim() === "" && priceMax.trim() === "") {
+      alert("Please enter a price range (min and/or max)");
       return;
     }
     createMutation.mutate();
@@ -684,14 +694,52 @@ export default function CreateOpportunityScreen() {
         </View>
 
         <Text style={styles.label}>Budget</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. $1,000 - $5,000 or Negotiable"
-          placeholderTextColor="#6B7280"
-          value={budget}
-          onChangeText={setBudget}
-          testID="input-budget"
-        />
+        <View style={styles.payToggleRow}>
+          <Pressable
+            style={[styles.payToggleBtn, paymentType === "paid" && styles.payToggleBtnActive]}
+            onPress={() => setPaymentType("paid")}
+            testID="budget-paid"
+          >
+            <Text style={[styles.payToggleText, paymentType === "paid" && styles.payToggleTextActive]}>Paid</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.payToggleBtn, paymentType === "unpaid" && styles.payToggleBtnActive]}
+            onPress={() => {
+              setPaymentType("unpaid");
+              setPriceMin("");
+              setPriceMax("");
+            }}
+            testID="budget-unpaid"
+          >
+            <Text style={[styles.payToggleText, paymentType === "unpaid" && styles.payToggleTextActive]}>Unpaid</Text>
+          </Pressable>
+        </View>
+        {paymentType === "paid" && (
+          <View style={styles.row}>
+            <View style={styles.halfField}>
+              <TextInput
+                style={styles.input}
+                placeholder="Min $"
+                inputMode="numeric"
+                placeholderTextColor="#6B7280"
+                value={priceMin}
+                onChangeText={setPriceMin}
+                testID="input-price-min"
+              />
+            </View>
+            <View style={styles.halfField}>
+              <TextInput
+                style={styles.input}
+                placeholder="Max $"
+                inputMode="numeric"
+                placeholderTextColor="#6B7280"
+                value={priceMax}
+                onChangeText={setPriceMax}
+                testID="input-price-max"
+              />
+            </View>
+          </View>
+        )}
 
         <Text style={styles.label}>Description</Text>
         <TextInput
@@ -869,10 +917,16 @@ export default function CreateOpportunityScreen() {
                     <Text style={styles.previewMetaText}>📍 {location}</Text>
                   )}
                 </View>
-                {!!budget && (
+                {paymentType === "unpaid" && (
                   <View style={styles.previewPriceRow}>
                     <Text style={styles.previewPriceLabel}>Compensation:</Text>
-                    <Text style={styles.previewPriceValue}>{budget}</Text>
+                    <Text style={styles.previewPriceValue}>Unpaid</Text>
+                  </View>
+                )}
+                {paymentType === "paid" && (priceMin.trim() !== "" || priceMax.trim() !== "") && (
+                  <View style={styles.previewPriceRow}>
+                    <Text style={styles.previewPriceLabel}>Compensation:</Text>
+                    <Text style={styles.previewPriceValue}>{[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ") || "Paid"}</Text>
                   </View>
                 )}
                 {requirements.length > 0 && (
@@ -1293,6 +1347,32 @@ const styles = StyleSheet.create({
     color: "#10B981",
     fontSize: 14,
     fontWeight: "800",
+  },
+  payToggleRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  payToggleBtn: {
+    flex: 1,
+    backgroundColor: "#14141C",
+    borderColor: "#23232B",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  payToggleBtnActive: {
+    backgroundColor: "#1A1A24",
+    borderColor: "#4CB963",
+    borderWidth: 2,
+  },
+  payToggleText: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  payToggleTextActive: {
+    color: "#4CB963",
   },
   previewRequirementsSection: {
     marginTop: 8,
