@@ -152,19 +152,16 @@ export default function UserProfileScreen() {
       <View style={styles.coverWrap}>
         <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)", "#0B0B0F"]}
-          locations={[0, 0.55, 1]}
-          start={{ x: 0.5, y: 0.15 }}
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.4)", "#0B0B0F"]}
+          locations={[0, 0.5, 0.82, 1]}
+          start={{ x: 0.5, y: 0.1 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.coverFade}
         />
         <Pressable testID="back" onPress={() => router.back()} style={[styles.backBtn, { top: 12 + insets.top }]}>
           <ArrowLeft color="#E5E7EB" size={22} />
         </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]}>
-        <View style={styles.headerColumn}>
+        <View style={styles.avatarFloating}>
           <Pressable
             onPress={() => {
               if (!isOwn) {
@@ -180,6 +177,11 @@ export default function UserProfileScreen() {
           >
             <Image source={{ uri: display.avatarUrl }} style={styles.avatarLarge} />
           </Pressable>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]}>
+        <View style={styles.headerColumn}>
           <Text style={styles.usernameXL}>{display.displayName}</Text>
           {!!data?.location && (
             <View style={styles.locationRowCenter}>
@@ -257,13 +259,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
   coverWrap: { width: "100%", height: 360, backgroundColor: "#111318" },
   cover: { width: "100%", height: 360 },
-  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 300 },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 320 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -28 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -20 },
   headerColumn: { alignItems: "center" },
-  avatarWrapLarge: { width: 112, height: 112, borderRadius: 56, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F" },
-  avatarLarge: { width: 112, height: 112 },
-  usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 10 },
+  avatarFloating: { position: "absolute", bottom: -56, left: 0, right: 0, alignItems: "center" },
+  avatarWrapLarge: { width: 112, height: 112, borderRadius: 56, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#111318" },
+  avatarLarge: { width: 112, height: 112, borderRadius: 56 },
+  usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 66 },
   locationRowCenter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   locationText: { color: "#9CA3AF", fontSize: 13, maxWidth: 220 },
   statsAndFollow: { flexDirection: "row", alignItems: "center", gap: 24, marginTop: 12 },
