@@ -614,8 +614,8 @@ export default function MessagesScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={insets.top}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 60 : 0}
       >
         <FlatList
           ref={flatListRef}
@@ -624,9 +624,10 @@ export default function MessagesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
         />
 
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
           <TextInput
             style={styles.input}
             placeholder="Type a message..."
