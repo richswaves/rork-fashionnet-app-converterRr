@@ -66,8 +66,6 @@ export default function CreateOpportunityScreen() {
         company: resolvedProfile.displayName || "Company",
         image_url: imageUrl || null,
         description: description.trim() || null,
-        price_from: priceFrom ? parseInt(priceFrom, 10) : null,
-        price_to: priceTo ? parseInt(priceTo, 10) : null,
         requirements: requirements.length > 0 ? requirements : null,
       };
 
