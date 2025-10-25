@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -35,6 +35,7 @@ interface OpportunityRow {
 
 const VIEW_OPTIONS = [
   { key: "all" as const, label: "All Opportunities", Icon: Layers },
+  { key: "following" as const, label: "Following", Icon: Users },
   { key: "applied" as const, label: "Applied", Icon: CheckCircle2 },
   { key: "posted" as const, label: "Posted by Me", Icon: Send },
   { key: "saved" as const, label: "Saved", Icon: Bookmark },
@@ -258,6 +259,24 @@ export default function OpportunitiesScreen() {
             select: "*,profiles:user_id(*)",
             order: { column: "created_at", ascending: false },
             limit: 50,
+          });
+          return rows;
+        }
+        case "following": {
+          if (!currentUserId) return [];
+          const follows = await sbSelect<{ following_id: string }>("follows", {
+            select: "following_id",
+            query: { follower_id: `eq.${currentUserId}` },
+            limit: 500,
+          });
+          const followingIds = follows.map((f) => f.following_id).filter(Boolean);
+          if (followingIds.length === 0) return [];
+          const idList = `in.(${followingIds.join(",")})`;
+          const rows = await sbSelect<OpportunityRow>("opportunities", {
+            select: "*,profiles:user_id(*)",
+            query: { user_id: idList },
+            order: { column: "created_at", ascending: false },
+            limit: 200,
           });
           return rows;
         }
