@@ -345,7 +345,7 @@ export default function SignupScreen() {
             />
           </View>
           <View style={[styles.row, { alignItems: "center" }]}>
-            <Text style={styles.helperText}>Enable notifications</Text>
+            <Text style={styles.helperText}>enable opportunity post notifiacations</Text>
             <Switch
               testID="signup-notif"
               value={notifOptIn}
