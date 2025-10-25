@@ -472,7 +472,7 @@ export default function OpportunitiesScreen() {
                     disabled={applyMutation.isPending || unapplyMutation.isPending}
                     testID={`apply-${item.id}`}
                   >
-                    <CheckCircle2 color={appliedIds?.has(item.id) ? "#10B981" : "#E5E7EB"} size={16} />
+                    <CheckCircle2 color={appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
                     <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
                       {appliedIds?.has(item.id) ? "Applied" : "Apply"}
                     </Text>
@@ -719,13 +719,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   actionBtnActive: { 
-    backgroundColor: "#4CB963", 
-    borderColor: "#3EA653",
+    backgroundColor: "#1A1A24", 
+    borderColor: "#4CB963",
+    borderWidth: 2,
     shadowColor: "#4CB963",
     shadowOpacity: 0.25,
   },
   actionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
-  actionTextActive: { color: "#FFFFFF", fontWeight: "800" },
+  actionTextActive: { color: "#4CB963", fontWeight: "800" },
   actionTextSaved: { color: "#FFFFFF", fontWeight: "800" },
   loaderRow: { paddingVertical: 10, alignItems: "center" },
   errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },

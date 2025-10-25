@@ -422,7 +422,7 @@ export default function UserProfileScreen() {
                             disabled={applyMutation.isPending || unapplyMutation.isPending}
                             testID={`apply-${opp.id}`}
                           >
-                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} />
+                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
                             <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
                               {appliedIds?.has(opp.id) ? "Applied" : "Apply"}
                             </Text>
@@ -519,8 +519,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   oppActionBtnApplied: { 
-    backgroundColor: "#4CB963", 
-    borderColor: "#3EA653",
+    backgroundColor: "#1A1A24", 
+    borderColor: "#4CB963",
+    borderWidth: 2,
     shadowColor: "#4CB963",
     shadowOpacity: 0.25,
   },
@@ -531,6 +532,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
   },
   oppActionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
-  oppActionTextActive: { color: "#FFFFFF", fontWeight: "800" },
+  oppActionTextActive: { color: "#4CB963", fontWeight: "800" },
   emptyText: { color: "#9CA3AF", fontSize: 14 }
 });
