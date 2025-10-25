@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, usePathname } from "expo-router";
 import { Compass, Users, MessageCircle, Plus } from "lucide-react-native";
 import React from "react";
 import { View, StyleSheet } from "react-native";
@@ -7,6 +7,8 @@ import Colors from "@/constants/colors";
 
 export default function TabLayout() {
   const router = useRouter();
+  const pathname = usePathname();
+  const isOpportunitiesRoute = pathname === '/' || pathname.startsWith('/opportunities');
 
   return (
     <Tabs
@@ -36,9 +38,11 @@ export default function TabLayout() {
         options={{
           title: "Create",
           tabBarIcon: ({ color, size }) => (
-            <View style={styles.createButton}>
-              <Plus color="#FFFFFF" size={size ?? 24} />
-            </View>
+            isOpportunitiesRoute ? (
+              <View style={styles.createButton}>
+                <Plus color="#000000" size={size ?? 24} />
+              </View>
+            ) : null
           ),
         }}
         listeners={{
@@ -68,7 +72,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   createButton: {
-    backgroundColor: "#10B981",
+    backgroundColor: "#FFFFFF",
     width: 48,
     height: 48,
     borderRadius: 24,
