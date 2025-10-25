@@ -43,8 +43,7 @@ export default function CreateOpportunityScreen() {
   const [title, setTitle] = useState("");
   const [needType, setNeedType] = useState("");
   const [location, setLocation] = useState("");
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
+  const [budget, setBudget] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -58,20 +57,15 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
-      const priceMinNum = priceFrom.trim() ? parseInt(priceFrom.trim(), 10) : null;
-      const priceMaxNum = priceTo.trim() ? parseInt(priceTo.trim(), 10) : null;
-
       const opportunityData = {
         title: title.trim(),
         type: needType,
         location: location.trim() || null,
         user_id: currentUserId,
-        company: resolvedProfile.displayName || "Company",
         image_url: imageUrl || null,
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
-        price_min: priceMinNum,
-        price_max: priceMaxNum,
+        budget: budget.trim() || null,
       };
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
@@ -203,33 +197,15 @@ export default function CreateOpportunityScreen() {
           </View>
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Text style={styles.label}>From</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="1000"
-              placeholderTextColor="#6B7280"
-              value={priceFrom}
-              onChangeText={setPriceFrom}
-              keyboardType="numeric"
-              testID="input-from"
-            />
-          </View>
-
-          <View style={styles.halfField}>
-            <Text style={styles.label}>To</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="5000"
-              placeholderTextColor="#6B7280"
-              value={priceTo}
-              onChangeText={setPriceTo}
-              keyboardType="numeric"
-              testID="input-to"
-            />
-          </View>
-        </View>
+        <Text style={styles.label}>Budget</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. $1,000 - $5,000 or Negotiable"
+          placeholderTextColor="#6B7280"
+          value={budget}
+          onChangeText={setBudget}
+          testID="input-budget"
+        />
 
         <Text style={styles.label}>Description</Text>
         <TextInput
