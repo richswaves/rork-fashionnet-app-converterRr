@@ -32,8 +32,7 @@ interface OpportunityRow {
   user_id?: string;
   profiles?: ProfileRow;
   description?: string | null;
-  price_min?: number | null;
-  price_max?: number | null;
+  compensation?: string | null;
   requirements?: string[] | null;
 }
 
@@ -546,18 +545,13 @@ export default function OpportunitiesScreen() {
                     <Text style={styles.metaText}>📍 {item.location}</Text>
                   )}
                 </View>
-                <View style={styles.priceRow}>
-                  {item.price_min || item.price_max ? (
+                {item.compensation && (
+                  <View style={styles.priceRow}>
                     <Text style={styles.priceValue}>
-                      {`Paid ${[
-                        item.price_min ? `${item.price_min.toLocaleString()}` : "",
-                        item.price_max ? `${item.price_max.toLocaleString()}` : "",
-                      ].filter(Boolean).join(" - ")}`.trim()}
+                      {item.compensation === "Unpaid" ? item.compensation : `${item.compensation}`}
                     </Text>
-                  ) : (
-                    <Text style={styles.priceValue}>Unpaid</Text>
-                  )}
-                </View>
+                  </View>
+                )}
                 {item.requirements && item.requirements.length > 0 && (
                   <View style={styles.requirementsSection}>
                     <Text style={styles.requirementsTitle}>Requirements:</Text>
