@@ -496,18 +496,6 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
-      let compensation = "";
-      if (paymentType === "unpaid") {
-        compensation = "Unpaid";
-      } else if (paymentType === "paid") {
-        const minVal = priceMin.trim() ? Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString() : "";
-        const maxVal = priceMax.trim() ? Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString() : "";
-        const parts = [minVal, maxVal].filter(Boolean);
-        if (parts.length > 0) {
-          compensation = `${parts.join(" - ")}`;
-        }
-      }
-
       const opportunityData = {
         title: title.trim(),
         type: needType,
@@ -517,7 +505,6 @@ export default function CreateOpportunityScreen() {
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
         company: resolvedProfile.displayName || "Unknown",
-        compensation: compensation || null,
       } as Record<string, unknown>;
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
