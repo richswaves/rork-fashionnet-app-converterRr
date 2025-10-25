@@ -204,7 +204,7 @@ export default function UserProfileScreen() {
             accessibilityRole="button"
             accessibilityLabel={isOwn ? "Change profile picture" : undefined}
           >
-            <Image source={{ uri: display.avatarUrl }} style={styles.avatarLarge} />
+            <Image key={`${userId}-${display.avatarUrl}`} source={{ uri: display.avatarUrl }} style={styles.avatarLarge} />
           </Pressable>
           <Text style={styles.usernameXL}>{display.displayName}</Text>
           {!!data?.location && (
