@@ -479,45 +479,44 @@ export default function UserProfileScreen() {
               </Pressable>
             )}
           </View>
-        </View>
-
-        {(() => {
-          const links = data?.social_links ?? {};
-          const hasAny = !!(links.instagram || links.youtube || links.twitter || links.tiktok);
-          if (!hasAny) return null;
-          function open(url: string) {
-            const full = url.startsWith("http") ? url : url.includes(".") ? `https://${url}` : url;
-            if (Platform.OS === "web") {
-              window.open(full, "_blank");
-            } else {
-              Linking.openURL(full).catch(() => {});
+          {(() => {
+            const links = data?.social_links ?? {};
+            const hasAny = !!(links.instagram || links.youtube || links.twitter || links.tiktok);
+            if (!hasAny) return null;
+            function open(url: string) {
+              const full = url.startsWith("http") ? url : url.includes(".") ? `https://${url}` : url;
+              if (Platform.OS === "web") {
+                window.open(full, "_blank");
+              } else {
+                Linking.openURL(full).catch(() => {});
+              }
             }
-          }
-          return (
-            <View style={styles.socialRowCenter}>
-              {links.instagram ? (
-                <Pressable onPress={() => open(links.instagram!.startsWith("http") ? links.instagram! : `https://instagram.com/${links.instagram!.replace(/^@/, "")}`)} style={[styles.socialIconBtn, { backgroundColor: "#C13584" }]} testID="social-instagram">
-                  <Instagram color="#fff" size={20} />
-                </Pressable>
-              ) : null}
-              {links.youtube ? (
-                <Pressable onPress={() => open(links.youtube!)} style={[styles.socialIconBtn, { backgroundColor: "#FF0000" }]} testID="social-youtube">
-                  <Youtube color="#fff" size={20} />
-                </Pressable>
-              ) : null}
-              {links.twitter ? (
-                <Pressable onPress={() => open(links.twitter!)} style={[styles.socialIconBtn, { backgroundColor: "#1DA1F2" }]} testID="social-twitter">
-                  <Twitter color="#fff" size={20} />
-                </Pressable>
-              ) : null}
-              {links.tiktok ? (
-                <Pressable onPress={() => open(links.tiktok!)} style={[styles.socialIconBtn, { backgroundColor: "#000000" }]} testID="social-tiktok">
-                  <Music2 color="#fff" size={20} />
-                </Pressable>
-              ) : null}
-            </View>
-          );
-        })()}
+            return (
+              <View style={styles.socialRowCenter}>
+                {links.instagram ? (
+                  <Pressable onPress={() => open(links.instagram!.startsWith("http") ? links.instagram! : `https://instagram.com/${links.instagram!.replace(/^@/, "")}`)} style={[styles.socialIconBtn, { backgroundColor: "#C13584" }]} testID="social-instagram">
+                    <Instagram color="#fff" size={20} />
+                  </Pressable>
+                ) : null}
+                {links.youtube ? (
+                  <Pressable onPress={() => open(links.youtube!)} style={[styles.socialIconBtn, { backgroundColor: "#FF0000" }]} testID="social-youtube">
+                    <Youtube color="#fff" size={20} />
+                  </Pressable>
+                ) : null}
+                {links.twitter ? (
+                  <Pressable onPress={() => open(links.twitter!)} style={[styles.socialIconBtn, { backgroundColor: "#1DA1F2" }]} testID="social-twitter">
+                    <Twitter color="#fff" size={20} />
+                  </Pressable>
+                ) : null}
+                {links.tiktok ? (
+                  <Pressable onPress={() => open(links.tiktok!)} style={[styles.socialIconBtn, { backgroundColor: "#000000" }]} testID="social-tiktok">
+                    <Music2 color="#fff" size={20} />
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          })()}
+        </View>
 
         {!!data?.bio && (
           <Text style={styles.bio}>{data.bio}</Text>
@@ -764,7 +763,7 @@ const styles = StyleSheet.create({
   followPillText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
   followPillTextActive: { color: "#0B0B0F" },
   bio: { color: "#E5E7EB", fontSize: 14, marginTop: 16, lineHeight: 20, textAlign: "center" },
-  socialRowCenter: { flexDirection: "row", justifyContent: "center", gap: 14, marginTop: 16 },
+  socialRowCenter: { flexDirection: "row", justifyContent: "center", gap: 14, marginTop: 12 },
   socialIconBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   statItem: { alignItems: "center" },
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
