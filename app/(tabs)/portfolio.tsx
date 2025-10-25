@@ -18,7 +18,7 @@ export default function PortfolioScreen() {
     queryKey: ["all-portfolio"],
     queryFn: async () => {
       const items = await sbSelect<PortfolioItemWithProfile>("portfolio_items", {
-        select: "*, profiles:user_id(user_id, full_name, username, profile_picture)",
+        select: "*, profiles!portfolio_items_user_id_fkey(user_id, full_name, username, profile_picture)",
         order: { column: "created_at", ascending: false },
         limit: 100,
       });
