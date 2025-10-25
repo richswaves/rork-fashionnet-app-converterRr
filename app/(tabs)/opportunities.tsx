@@ -544,12 +544,12 @@ export default function OpportunitiesScreen() {
                   {!!item.location && (
                     <Text style={styles.metaText}>📍 {item.location}</Text>
                   )}
+                  {item.budget && (
+                    <View style={item.budget.toLowerCase().includes('unpaid') ? styles.unpaidBadge : styles.paidBadge}>
+                      <Text style={item.budget.toLowerCase().includes('unpaid') ? styles.unpaidBadgeText : styles.paidBadgeText}>{item.budget}</Text>
+                    </View>
+                  )}
                 </View>
-                {item.budget && (
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceValue}>{item.budget}</Text>
-                  </View>
-                )}
                 {item.requirements && item.requirements.length > 0 && (
                   <View style={styles.requirementsSection}>
                     <Text style={styles.requirementsTitle}>Requirements:</Text>
@@ -837,6 +837,30 @@ const styles = StyleSheet.create({
   },
   metaBadgeText: { color: "#BFDBFE", fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
   metaText: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
+  paidBadge: {
+    backgroundColor: "#065F46",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  paidBadgeText: {
+    color: "#6EE7B7",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  unpaidBadge: {
+    backgroundColor: "#7C2D12",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  unpaidBadgeText: {
+    color: "#FCA5A5",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
   priceRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   priceLabel: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
   priceValue: { color: "#10B981", fontSize: 14, fontWeight: "800" },
