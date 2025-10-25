@@ -79,8 +79,6 @@ export default function EditProfileScreen() {
         user_id: currentUserId,
         media_url: url,
         media_type: isVideo ? "video" : "image",
-        width: asset.width,
-        height: asset.height,
       };
       
       if (isVideo && asset.duration) {
@@ -699,7 +697,7 @@ function MasonryPortfolio({ items, onDelete }: { items: PortfolioItem[]; onDelet
     const columnHeights: number[] = Array(numColumns).fill(0);
 
     items.forEach((item) => {
-      const aspectRatio = item.width && item.height ? item.width / item.height : 1;
+      const aspectRatio = 1;
       const itemHeight = columnWidth / aspectRatio;
       
       const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
@@ -722,7 +720,7 @@ function MasonryPortfolio({ items, onDelete }: { items: PortfolioItem[]; onDelet
       {columns.map((column, colIndex) => (
         <View key={colIndex} style={styles.portfolioColumn}>
           {column.map((item) => {
-            const aspectRatio = item.width && item.height ? item.width / item.height : 1;
+            const aspectRatio = 1;
             const itemHeight = columnWidth / aspectRatio;
 
             return (

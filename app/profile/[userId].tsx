@@ -811,9 +811,7 @@ function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
     }
 
     items.forEach((item) => {
-      const aspectRatio = (item.width && item.height && item.width > 0 && item.height > 0) 
-        ? item.width / item.height 
-        : 1;
+      const aspectRatio = 1;
       const itemHeight = columnWidth / aspectRatio;
       
       const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
@@ -836,9 +834,7 @@ function MasonryPortfolio({ items }: { items: PortfolioItem[] }) {
       {columns.map((column, colIndex) => (
         <View key={colIndex} style={styles.portfolioColumn}>
           {column.map((item) => {
-            const aspectRatio = (item.width && item.height && item.width > 0 && item.height > 0) 
-              ? item.width / item.height 
-              : 1;
+            const aspectRatio = 1;
             const itemHeight = columnWidth / aspectRatio;
 
             return (
