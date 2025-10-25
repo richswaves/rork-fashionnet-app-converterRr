@@ -293,7 +293,7 @@ export default function SignupScreen() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={{ gap: 16 }}>
-          <Text style={styles.title}>Create your account</Text>
+          <Text style={styles.title}>account application</Text>
           <TextInput
             testID="signup-fullname"
             placeholder="Full name"
