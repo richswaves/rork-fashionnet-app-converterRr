@@ -129,6 +129,34 @@ export default function UserProfileScreen() {
     enabled: !!currentUserId && !!userId && currentUserId !== userId,
   });
 
+  const { data: followerCount } = useQuery<number>({
+    queryKey: ["follower-count", userId],
+    queryFn: async () => {
+      if (!userId) return 0;
+      const rows = await sbSelect<{ id: string }>("follows", {
+        select: "id",
+        query: { following_id: `eq.${userId}` },
+        limit: 1000,
+      });
+      return rows.length;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: followingCount } = useQuery<number>({
+    queryKey: ["following-count", userId],
+    queryFn: async () => {
+      if (!userId) return 0;
+      const rows = await sbSelect<{ id: string }>("follows", {
+        select: "id",
+        query: { follower_id: `eq.${userId}` },
+        limit: 1000,
+      });
+      return rows.length;
+    },
+    enabled: !!userId,
+  });
+
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
@@ -200,6 +228,8 @@ export default function UserProfileScreen() {
     onSuccess: () => {
       console.log("[Follow] Successfully followed user");
       queryClient.invalidateQueries({ queryKey: ["is-following", currentUserId, userId] });
+      queryClient.invalidateQueries({ queryKey: ["follower-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["following-count", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["notifications-follows", userId] });
     },
     onError: (error) => {
@@ -222,6 +252,8 @@ export default function UserProfileScreen() {
     onSuccess: () => {
       console.log("[Follow] Successfully unfollowed user");
       queryClient.invalidateQueries({ queryKey: ["is-following", currentUserId, userId] });
+      queryClient.invalidateQueries({ queryKey: ["follower-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["following-count", currentUserId] });
     },
     onError: (error) => {
       console.error("[Follow] Error unfollowing user:", error);
@@ -358,11 +390,11 @@ export default function UserProfileScreen() {
           )}
           <View style={styles.statsAndFollow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{followerCount ?? 0}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{followingCount ?? 0}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
             {!isOwn && (
