@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MapPin, ArrowLeft, Instagram, Youtube } from "lucide-react-native";
+import { MapPin, ArrowLeft, Instagram, Youtube, Twitter, Music2 } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,6 +34,17 @@ interface ProfileRow {
   } | null;
 }
 
+interface OpportunityRow {
+  id: string;
+  title?: string;
+  company?: string | null;
+  location?: string | null;
+  type?: string | null;
+  cover_image?: string | null;
+  created_at?: string;
+  user_id?: string;
+}
+
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
@@ -56,6 +67,21 @@ export default function UserProfileScreen() {
   });
 
   const display = useMemo(() => getDisplayForProfile(data ?? undefined), [data, getDisplayForProfile]);
+
+  const { data: userOpps } = useQuery<OpportunityRow[]>({
+    queryKey: ["profile-opportunities", userId],
+    queryFn: async () => {
+      if (!userId) return [] as OpportunityRow[];
+      const rows = await sbSelect<OpportunityRow>("opportunities", {
+        select: "*",
+        query: { user_id: `eq.${userId}` },
+        order: { column: "created_at", ascending: false },
+        limit: 50,
+      });
+      return rows;
+    },
+    enabled: !!userId,
+  });
 
   const coverCandidates: (string | undefined)[] = [
     data?.profile_customization?.backgroundImage,
@@ -163,7 +189,7 @@ export default function UserProfileScreen() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]} testID="profile-scroll">
         <View style={styles.headerColumn}>
           <Pressable
             onPress={() => {
@@ -206,48 +232,69 @@ export default function UserProfileScreen() {
           </View>
         </View>
 
-        {data?.social_links && (data.social_links.instagram || data.social_links.youtube) && (
-          <View style={styles.socialRowCenter}>
-            {data.social_links.instagram && (
-              <Pressable
-                onPress={() => {
-                  const url = data.social_links?.instagram ?? "";
-                  const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
-                  if (Platform.OS === "web") {
-                    window.open(fullUrl, "_blank");
-                  } else {
-                    Linking.openURL(fullUrl).catch(() => {});
-                  }
-                }}
-                style={styles.socialIconBtn}
-                testID="social-instagram"
-              >
-                <Instagram color="#fff" size={24} />
-              </Pressable>
-            )}
-            {data.social_links.youtube && (
-              <Pressable
-                onPress={() => {
-                  const url = data.social_links?.youtube ?? "";
-                  const fullUrl = url.startsWith("http") ? url : `https://youtube.com/${url}`;
-                  if (Platform.OS === "web") {
-                    window.open(fullUrl, "_blank");
-                  } else {
-                    Linking.openURL(fullUrl).catch(() => {});
-                  }
-                }}
-                style={styles.socialIconBtn}
-                testID="social-youtube"
-              >
-                <Youtube color="#fff" size={24} />
-              </Pressable>
-            )}
-          </View>
-        )}
+        {(() => {
+          const links = data?.social_links ?? {};
+          const hasAny = !!(links.instagram || links.youtube || links.twitter || links.tiktok);
+          if (!hasAny) return null;
+          function open(url: string) {
+            const full = url.startsWith("http") ? url : url.includes(".") ? `https://${url}` : url;
+            if (Platform.OS === "web") {
+              window.open(full, "_blank");
+            } else {
+              Linking.openURL(full).catch(() => {});
+            }
+          }
+          return (
+            <View style={styles.socialRowCenter}>
+              {links.instagram ? (
+                <Pressable onPress={() => open(links.instagram!.startsWith("http") ? links.instagram! : `https://instagram.com/${links.instagram!.replace(/^@/, "")}`)} style={[styles.socialIconBtn, { backgroundColor: "#C13584" }]} testID="social-instagram">
+                  <Instagram color="#fff" size={20} />
+                </Pressable>
+              ) : null}
+              {links.youtube ? (
+                <Pressable onPress={() => open(links.youtube!)} style={[styles.socialIconBtn, { backgroundColor: "#FF0000" }]} testID="social-youtube">
+                  <Youtube color="#fff" size={20} />
+                </Pressable>
+              ) : null}
+              {links.twitter ? (
+                <Pressable onPress={() => open(links.twitter!)} style={[styles.socialIconBtn, { backgroundColor: "#1DA1F2" }]} testID="social-twitter">
+                  <Twitter color="#fff" size={20} />
+                </Pressable>
+              ) : null}
+              {links.tiktok ? (
+                <Pressable onPress={() => open(links.tiktok!)} style={[styles.socialIconBtn, { backgroundColor: "#000000" }]} testID="social-tiktok">
+                  <Music2 color="#fff" size={20} />
+                </Pressable>
+              ) : null}
+            </View>
+          );
+        })()}
 
         {!!data?.bio && (
           <Text style={styles.bio}>{data.bio}</Text>
         )}
+
+        <View style={styles.section} testID="profile-opportunities-section">
+          <Text style={styles.sectionTitle}>Opportunities</Text>
+          {userOpps && userOpps.length > 0 ? (
+            <View style={styles.oppList}>
+              {userOpps.map((opp) => {
+                const imageUri = opp.cover_image ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60";
+                return (
+                  <View key={opp.id} style={styles.oppCard} testID={`opp-${opp.id}`}>
+                    <Image source={{ uri: imageUri }} style={styles.oppImage} resizeMode="cover" />
+                    <View style={styles.oppBody}>
+                      <Text numberOfLines={2} style={styles.oppTitle}>{opp.title ?? "Untitled"}</Text>
+                      {!!opp.location && <Text numberOfLines={1} style={styles.oppMeta}>{opp.location}</Text>}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.emptyText}>No opportunities yet.</Text>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -273,8 +320,17 @@ const styles = StyleSheet.create({
   followPillTextActive: { color: "#0B0B0F" },
   bio: { color: "#E5E7EB", fontSize: 14, marginTop: 16, lineHeight: 20, textAlign: "center" },
   socialRowCenter: { flexDirection: "row", justifyContent: "center", gap: 14, marginTop: 16 },
-  socialIconBtn: { width: 54, height: 54, borderRadius: 27, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  socialIconBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   statItem: { alignItems: "center" },
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
-  statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" }
+  statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" },
+  section: { marginTop: 20 },
+  sectionTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 10 },
+  oppList: { gap: 12 },
+  oppCard: { backgroundColor: "#121218", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
+  oppImage: { width: "100%", height: 180 },
+  oppBody: { padding: 12 },
+  oppTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800" },
+  oppMeta: { color: "#9CA3AF", fontSize: 12, fontWeight: "700", marginTop: 2 },
+  emptyText: { color: "#9CA3AF", fontSize: 14 }
 });
