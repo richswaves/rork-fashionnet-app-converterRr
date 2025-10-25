@@ -58,15 +58,19 @@ export default function CreateOpportunityScreen() {
       if (!title.trim()) throw new Error("Title is required");
       if (!needType) throw new Error("Need type is required");
 
-      await sbInsert("opportunities", {
+      const opportunityData = {
         title: title.trim(),
         type: needType,
         location: location.trim() || null,
         user_id: currentUserId,
         cover_image: imageUrl.trim() || null,
         company: null,
-        created_at: new Date().toISOString(),
-      });
+      };
+
+      console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
+      const result = await sbInsert("opportunities", opportunityData);
+      console.log("[CreateOpportunity] Insert result:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -74,6 +78,7 @@ export default function CreateOpportunityScreen() {
     },
     onError: (error) => {
       console.error("[CreateOpportunity] Error:", error);
+      console.error("[CreateOpportunity] Error message:", (error as any)?.message);
       alert("Failed to create opportunity. Please try again.");
     },
   });
