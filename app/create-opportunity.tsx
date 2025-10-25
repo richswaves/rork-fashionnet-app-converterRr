@@ -9,10 +9,11 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, ChevronDown, Eye, ImagePlus } from "lucide-react-native";
+import { X, ChevronDown, Eye, ImagePlus, ThumbsUp, Bookmark, CheckCircle2, Instagram, Youtube } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbInsert } from "@/integrations/supabase/client";
@@ -37,7 +38,7 @@ export default function CreateOpportunityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { currentUserId } = useProfile();
+  const { currentUserId, resolvedProfile, profile } = useProfile();
 
   const [title, setTitle] = useState("");
   const [needType, setNeedType] = useState("");
@@ -49,6 +50,7 @@ export default function CreateOpportunityScreen() {
   const [requirements, setRequirements] = useState<string[]>([]);
   const [newRequirement, setNewRequirement] = useState("");
   const [showNeedDropdown, setShowNeedDropdown] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -303,11 +305,107 @@ export default function CreateOpportunityScreen() {
           )}
         </Pressable>
 
-        <Pressable style={styles.previewBtn} testID="preview">
+        <Pressable
+          style={styles.previewBtn}
+          onPress={() => setShowPreview(true)}
+          testID="preview"
+        >
           <Eye color="#E5E7EB" size={18} />
           <Text style={styles.previewBtnText}>Preview</Text>
         </Pressable>
       </View>
+
+      <Modal
+        visible={showPreview}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPreview(false)}
+      >
+        <View style={[styles.previewContainer, { paddingTop: insets.top }]}>
+          <View style={styles.previewHeader}>
+            <Text style={styles.previewHeaderTitle}>Preview</Text>
+            <Pressable
+              onPress={() => setShowPreview(false)}
+              style={styles.previewCloseBtn}
+              testID="close-preview"
+            >
+              <X color="#E5E7EB" size={24} />
+            </Pressable>
+          </View>
+
+          <ScrollView style={styles.previewScroll}>
+            <View style={styles.previewCard}>
+              <View style={styles.previewPostHeader}>
+                <Image
+                  source={{ uri: resolvedProfile.avatarUrl }}
+                  style={styles.previewPostAvatar}
+                />
+                <View style={styles.previewPostHeaderInfo}>
+                  <Text numberOfLines={1} style={styles.previewPostUsername}>
+                    {resolvedProfile.displayName}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.previewPostTime}>
+                    Just now
+                  </Text>
+                </View>
+                {profile?.social_links &&
+                  (profile.social_links.instagram ||
+                    profile.social_links.youtube) && (
+                    <View style={styles.previewSocialIcons}>
+                      {profile.social_links.instagram && (
+                        <View style={styles.previewSocialIconBtn}>
+                          <Instagram color="#C13584" size={16} />
+                        </View>
+                      )}
+                      {profile.social_links.youtube && (
+                        <View style={styles.previewSocialIconBtn}>
+                          <Youtube color="#FF0000" size={16} />
+                        </View>
+                      )}
+                    </View>
+                  )}
+              </View>
+
+              <View style={styles.previewMediaWrap}>
+                <Image
+                  source={{
+                    uri:
+                      imageUrl ||
+                      "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60",
+                  }}
+                  style={styles.previewCover}
+                  resizeMode="cover"
+                />
+              </View>
+
+              {!!title && (
+                <View style={styles.previewBody}>
+                  <Text numberOfLines={3} style={styles.previewCaption}>
+                    {title}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.previewFooterRow}>
+                <View style={styles.previewUpvote}>
+                  <ThumbsUp color="#E5E7EB" size={16} />
+                  <Text style={styles.previewUpvoteText}>0</Text>
+                </View>
+                <View style={styles.previewActionButtons}>
+                  <View style={styles.previewActionBtn}>
+                    <CheckCircle2 color="#E5E7EB" size={16} />
+                    <Text style={styles.previewActionText}>Apply</Text>
+                  </View>
+                  <View style={styles.previewActionBtn}>
+                    <Bookmark color="#E5E7EB" size={16} />
+                    <Text style={styles.previewActionText}>Save</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -538,5 +636,139 @@ const styles = StyleSheet.create({
     color: "#E5E7EB",
     fontSize: 14,
     fontWeight: "600",
+  },
+  previewContainer: {
+    flex: 1,
+    backgroundColor: "#0B0B0F",
+  },
+  previewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#23232B",
+    position: "relative" as const,
+  },
+  previewHeaderTitle: {
+    color: "#E5E7EB",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  previewCloseBtn: {
+    position: "absolute" as const,
+    right: 16,
+    padding: 8,
+  },
+  previewScroll: {
+    flex: 1,
+  },
+  previewCard: {
+    backgroundColor: "#121218",
+    borderColor: "#23232B",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 16,
+    overflow: "hidden",
+    margin: 12,
+  },
+  previewPostHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+  },
+  previewSocialIcons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginLeft: "auto" as const,
+  },
+  previewSocialIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#14141C",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+  },
+  previewPostAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  previewPostHeaderInfo: {
+    flex: 1,
+  },
+  previewPostUsername: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  previewPostTime: {
+    color: "#9CA3AF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  previewMediaWrap: {
+    paddingHorizontal: 8,
+    paddingTop: 6,
+  },
+  previewCover: {
+    width: "100%",
+    height: 320,
+    borderRadius: 14,
+  },
+  previewBody: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  previewCaption: {
+    color: "#E5E7EB",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  previewFooterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  previewUpvote: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  previewUpvoteText: {
+    color: "#E5E7EB",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  previewActionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  previewActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#1A1A24",
+    borderWidth: 1.5,
+    borderColor: "#2A2A38",
+  },
+  previewActionText: {
+    color: "#D1D5DB",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });
