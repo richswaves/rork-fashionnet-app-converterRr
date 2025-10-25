@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
+import GrainTexture from "@/components/GrainTexture";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
 
@@ -359,6 +360,7 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <GrainTexture />
       <View style={styles.progressBarContainer}>
         <View style={[styles.progressBar, { width: `${progress}%` }]} />
       </View>
@@ -597,29 +599,29 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0B0B0F" },
+  container: { flex: 1, backgroundColor: "#000000" },
   content: { padding: 20, gap: 16 },
   title: { color: "#F9FAFB", fontSize: 28, fontWeight: "700" as const },
   sectionTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" as const, marginBottom: 10 },
-  card: { backgroundColor: "#0F172A", borderColor: "#1F2937", borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
+  card: { backgroundColor: "rgba(15, 15, 15, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
   row: { flexDirection: "row", gap: 10 },
   rowWrap: { flexDirection: "row", gap: 8, flexWrap: "wrap" as const },
   grid: { flexDirection: "row", flexWrap: "wrap" as const, gap: 8 },
-  pill: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: "#374151", backgroundColor: "#0B1220" },
+  pill: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: "#404040", backgroundColor: "rgba(20, 20, 20, 0.85)" },
   pillActive: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
   pillText: { color: "#D1D5DB", fontWeight: "600" as const },
   pillTextActive: { color: "#111827", fontWeight: "700" as const },
-  roleItem: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, backgroundColor: "#0B1220", borderWidth: 1, borderColor: "#1F2937" },
+  roleItem: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040" },
   roleItemActive: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
   roleText: { color: "#D1D5DB" },
   roleTextActive: { color: "#111827", fontWeight: "700" as const },
-  input: { backgroundColor: "#111827", borderColor: "#1F2937", borderWidth: 1, color: "#F9FAFB", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12 },
+  input: { backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1, color: "#FFFFFF", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12 },
   inputHalf: { flex: 1 },
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
   primaryBtnText: { color: "#111827", fontSize: 17, fontWeight: "700" as const },
   helperText: { color: "#9CA3AF", flex: 1, fontWeight: "600" as const },
-  progressBarContainer: { height: 4, backgroundColor: "#1F2937", width: "100%" },
+  progressBarContainer: { height: 4, backgroundColor: "#1A1A1A", width: "100%" },
   progressBar: { height: "100%", backgroundColor: "#FFFFFF", borderRadius: 2 },
   secondaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, alignItems: "center", borderRadius: 12, marginTop: 6 },
   secondaryBtnText: { color: "#111827", fontSize: 15, fontWeight: "700" as const },

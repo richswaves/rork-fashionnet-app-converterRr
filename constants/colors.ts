@@ -1,10 +1,10 @@
 const palette = {
-  bg: "#0B0B0F",
-  surface: "#121218",
-  border: "#23232B",
-  text: "#E5E7EB",
-  muted: "#9CA3AF",
-  accent: "#E5E7EB",
+  bg: "#000000",
+  surface: "#0A0A0A",
+  border: "#1A1A1A",
+  text: "#FFFFFF",
+  muted: "#808080",
+  accent: "#FFFFFF",
 };
 
 export default {

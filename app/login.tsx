@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import GrainTexture from "@/components/GrainTexture";
 
 import { getSupabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -145,6 +146,7 @@ export default function LoginScreen() {
   if (showLoginForm) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <GrainTexture />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
@@ -206,6 +208,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <GrainTexture />
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>
@@ -321,7 +324,7 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   googleButton: {
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "rgba(40, 40, 40, 0.85)",
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
@@ -329,6 +332,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    borderWidth: 1,
+    borderColor: "#404040",
   },
   googleIcon: {
     width: 20,
@@ -340,12 +345,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   signUpButton: {
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "rgba(40, 40, 40, 0.85)",
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#404040",
   },
   signUpButtonText: {
     fontSize: 17,
@@ -360,7 +367,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#404040",
   },
   loginButtonText: {
     fontSize: 17,
@@ -388,8 +395,8 @@ const styles = StyleSheet.create({
     fontWeight: "700" as const,
   },
   input: {
-    backgroundColor: "#1A1A1A",
-    borderColor: "#2A2A2A",
+    backgroundColor: "rgba(20, 20, 20, 0.85)",
+    borderColor: "#404040",
     borderWidth: 1,
     color: "#FFFFFF",
     paddingVertical: 16,

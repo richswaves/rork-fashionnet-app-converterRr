@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import GrainTexture from "@/components/GrainTexture";
 import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
@@ -418,6 +419,7 @@ export default function OpportunitiesScreen() {
 
   return (
     <View style={container} testID="opportunities-screen">
+      <GrainTexture />
       <View style={styles.topBar}>
         <Pressable style={styles.topProfile} testID="opp-top-profile" onPress={() => router.push("/profile/edit") }>
           <Image
@@ -928,7 +930,7 @@ const ROLE_SECTIONS: { title?: string; options: { label: string; value: string }
 ];
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0B0B0F" },
+  container: { flex: 1, backgroundColor: "#000000" },
   topBar: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -956,9 +958,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8 as const,
-    backgroundColor: "#121218",
-    borderColor: "#23232B",
-    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(15, 15, 15, 0.85)",
+    borderColor: "#404040",
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
@@ -968,23 +970,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8 as const,
-    backgroundColor: "#121218",
-    borderColor: "#23232B",
-    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(15, 15, 15, 0.85)",
+    borderColor: "#404040",
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
   filterText: { color: "#E5E7EB", fontSize: 13, fontWeight: "700" },
   filterBadge: { marginLeft: 6, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#4CB963", alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
-  filterBadgeText: { color: "#0B0B0F", fontSize: 11, fontWeight: "900" },
+  filterBadgeText: { color: "#000000", fontSize: 11, fontWeight: "900" },
   viewMenu: {
     marginHorizontal: 12,
     marginTop: 8,
-    backgroundColor: "#14141C",
+    backgroundColor: "rgba(20, 20, 20, 0.9)",
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#23232B",
+    borderWidth: 1,
+    borderColor: "#404040",
     overflow: "hidden",
   },
   viewItem: { flexDirection: "row", alignItems: "center", gap: 10 as const, paddingHorizontal: 12, paddingVertical: 12 },
@@ -992,16 +994,16 @@ const styles = StyleSheet.create({
   viewItemText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   list: { padding: 12, paddingBottom: 24 },
   card: {
-    backgroundColor: "#121218",
-    borderColor: "#23232B",
-    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(15, 15, 15, 0.9)",
+    borderColor: "#404040",
+    borderWidth: 1,
     borderRadius: 16,
     overflow: "hidden",
     marginBottom: 12,
   },
   postHeader: { flexDirection: "row", alignItems: "center", gap: 10 as const, paddingHorizontal: 12, paddingTop: 12 },
   socialIcons: { flexDirection: "row", alignItems: "center", gap: 8 as const, marginLeft: "auto" as const },
-  socialIconBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  socialIconBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(20, 20, 20, 0.85)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#404040" },
   postAvatar: { width: 32, height: 32, borderRadius: 16 },
   postHeaderInfo: { flex: 1 },
   postUsername: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
@@ -1090,35 +1092,35 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#0F0F15",
+    backgroundColor: "rgba(10, 10, 10, 0.95)",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: "#23232B",
+    borderTopWidth: 1,
+    borderColor: "#404040",
     maxHeight: Dimensions.get("window").height * 0.9,
   },
-  sheetHandle: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: "#23232B", marginBottom: 8 },
+  sheetHandle: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: "#404040", marginBottom: 8 },
   sheetTitle: { color: "#E5E7EB", fontSize: 18, fontWeight: "900", marginBottom: 12 },
   sheetScroll: { maxHeight: Dimensions.get("window").height * 0.9 - 100 },
   sheetScrollContent: { paddingBottom: 8 },
   fieldLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "800", marginTop: 6, marginBottom: 6, letterSpacing: 0.4 },
-  textFieldWrap: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 10 },
+  textFieldWrap: { backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 10 },
   textField: { color: "#E5E7EB", fontSize: 14, paddingHorizontal: 12, paddingVertical: 12 },
   sheetActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
-  resetBtn: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth },
+  resetBtn: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1 },
   resetText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700" },
   applyFiltersBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB" },
-  applyFiltersText: { color: "#0B0B0F", fontSize: 14, fontWeight: "900" },
+  applyFiltersText: { color: "#000000", fontSize: 14, fontWeight: "900" },
   searchRow: { flexDirection: "row", alignItems: "center", gap: 8 as const, paddingHorizontal: 12, paddingVertical: 8 },
-  searchInput: { flex: 1, backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, color: "#E5E7EB", paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
+  searchInput: { flex: 1, backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 10, color: "#E5E7EB", paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
   ddContainer: { marginBottom: 10 },
-  ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#14141C", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "rgba(20, 20, 20, 0.85)", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: "#404040" },
   ddLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
-  ddMenu: { marginTop: 8, backgroundColor: "#14141C", borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
-  ddMenuHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 10, borderBottomColor: "#23232B", borderBottomWidth: StyleSheet.hairlineWidth },
+  ddMenu: { marginTop: 8, backgroundColor: "rgba(20, 20, 20, 0.85)", borderRadius: 10, borderWidth: 1, borderColor: "#404040" },
+  ddMenuHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 10, borderBottomColor: "#404040", borderBottomWidth: 1 },
   ddMenuTitle: { color: "#E5E7EB", fontSize: 13, fontWeight: "800", letterSpacing: 0.4 },
   ddCollapseBtn: { padding: 6, borderRadius: 8 },
   ddScrollContent: { paddingBottom: 8 },
@@ -1132,10 +1134,10 @@ const styles = StyleSheet.create({
   actionMenu: {
     marginHorizontal: 12,
     marginTop: 8,
-    backgroundColor: "#14141C",
+    backgroundColor: "rgba(20, 20, 20, 0.85)",
     borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#23232B",
+    borderWidth: 1,
+    borderColor: "#404040",
     overflow: "hidden",
   },
   deleteBtn: {
@@ -1160,9 +1162,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: "#14141C",
+    backgroundColor: "rgba(20, 20, 20, 0.85)",
     borderWidth: 1.5,
-    borderColor: "#23232B",
+    borderColor: "#404040",
   },
   locationChipActive: {
     backgroundColor: "#1E3A2E",
