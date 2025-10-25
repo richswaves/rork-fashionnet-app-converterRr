@@ -3,8 +3,8 @@ import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platfor
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube } from "lucide-react-native";
-import { useQuery } from "@tanstack/react-query";
-import { sbSelect } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
@@ -147,6 +147,7 @@ function formatRelativeTime(iso?: string) {
 
 export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [city, setCity] = useState<string | null>(null);
@@ -159,6 +160,94 @@ export default function OpportunitiesScreen() {
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
+
+  const { data: appliedIds } = useQuery<Set<string>>({
+    queryKey: ["applied-ids", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return new Set<string>();
+      const apps = await sbSelect<{ opportunity_id: string }>("applications", {
+        select: "opportunity_id",
+        query: { applicant_id: `eq.${currentUserId}` },
+        limit: 1000,
+      });
+      return new Set(apps.map((a) => a.opportunity_id));
+    },
+    enabled: !!currentUserId,
+  });
+
+  const { data: savedIds } = useQuery<Set<string>>({
+    queryKey: ["saved-ids", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return new Set<string>();
+      const saves = await sbSelect<{ opportunity_id: string }>("saved_opportunities", {
+        select: "opportunity_id",
+        query: { user_id: `eq.${currentUserId}` },
+        limit: 1000,
+      });
+      return new Set(saves.map((s) => s.opportunity_id));
+    },
+    enabled: !!currentUserId,
+  });
+
+  const applyMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbInsert("applications", {
+        opportunity_id: opportunityId,
+        applicant_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+  });
+
+  const unapplyMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("applications", {
+        opportunity_id: opportunityId,
+        applicant_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbInsert("saved_opportunities", {
+        opportunity_id: opportunityId,
+        user_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("saved_opportunities", {
+        opportunity_id: opportunityId,
+        user_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+  });
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
@@ -354,6 +443,50 @@ export default function OpportunitiesScreen() {
                   <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
                   <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
                 </Pressable>
+                <View style={styles.actionButtons}>
+                  <Pressable
+                    style={[styles.actionBtn, appliedIds?.has(item.id) && styles.actionBtnActive]}
+                    onPress={() => {
+                      if (!currentUserId) {
+                        console.log("Must be logged in to apply");
+                        return;
+                      }
+                      if (appliedIds?.has(item.id)) {
+                        unapplyMutation.mutate(item.id);
+                      } else {
+                        applyMutation.mutate(item.id);
+                      }
+                    }}
+                    disabled={applyMutation.isPending || unapplyMutation.isPending}
+                    testID={`apply-${item.id}`}
+                  >
+                    <CheckCircle2 color={appliedIds?.has(item.id) ? "#10B981" : "#E5E7EB"} size={16} />
+                    <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
+                      {appliedIds?.has(item.id) ? "Applied" : "Apply"}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.actionBtn, savedIds?.has(item.id) && styles.actionBtnActive]}
+                    onPress={() => {
+                      if (!currentUserId) {
+                        console.log("Must be logged in to save");
+                        return;
+                      }
+                      if (savedIds?.has(item.id)) {
+                        unsaveMutation.mutate(item.id);
+                      } else {
+                        saveMutation.mutate(item.id);
+                      }
+                    }}
+                    disabled={saveMutation.isPending || unsaveMutation.isPending}
+                    testID={`save-${item.id}`}
+                  >
+                    <Bookmark color={savedIds?.has(item.id) ? "#F59E0B" : "#E5E7EB"} size={16} fill={savedIds?.has(item.id) ? "#F59E0B" : "transparent"} />
+                    <Text style={[styles.actionText, savedIds?.has(item.id) && styles.actionTextSaved]}>
+                      {savedIds?.has(item.id) ? "Saved" : "Save"}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           );
@@ -555,6 +688,12 @@ const styles = StyleSheet.create({
   upvote: { flexDirection: "row", alignItems: "center", gap: 6 as const },
   upvoteText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
   upvoteActive: { color: "#10B981" },
+  actionButtons: { flexDirection: "row", alignItems: "center", gap: 8 as const },
+  actionBtn: { flexDirection: "row", alignItems: "center", gap: 6 as const, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: "#14141C", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  actionBtnActive: { backgroundColor: "#10B981", borderColor: "#10B981" },
+  actionText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
+  actionTextActive: { color: "#FFFFFF" },
+  actionTextSaved: { color: "#F59E0B" },
   loaderRow: { paddingVertical: 10, alignItems: "center" },
   errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },
   backdrop: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)" },

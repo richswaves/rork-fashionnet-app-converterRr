@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp } from "lucide-react-native";
-import { useQuery } from "@tanstack/react-query";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark } from "lucide-react-native";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
-import { sbSelect, getSupabase } from "@/integrations/supabase/client";
+import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
@@ -52,6 +52,7 @@ export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
 
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [following, setFollowing] = useState<boolean>(false);
   const [opportunitiesExpanded, setOpportunitiesExpanded] = useState<boolean>(true);
@@ -85,6 +86,90 @@ export default function UserProfileScreen() {
       return rows;
     },
     enabled: !!userId,
+  });
+
+  const { data: appliedIds } = useQuery<Set<string>>({
+    queryKey: ["applied-ids", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return new Set<string>();
+      const apps = await sbSelect<{ opportunity_id: string }>("applications", {
+        select: "opportunity_id",
+        query: { applicant_id: `eq.${currentUserId}` },
+        limit: 1000,
+      });
+      return new Set(apps.map((a) => a.opportunity_id));
+    },
+    enabled: !!currentUserId,
+  });
+
+  const { data: savedIds } = useQuery<Set<string>>({
+    queryKey: ["saved-ids", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return new Set<string>();
+      const saves = await sbSelect<{ opportunity_id: string }>("saved_opportunities", {
+        select: "opportunity_id",
+        query: { user_id: `eq.${currentUserId}` },
+        limit: 1000,
+      });
+      return new Set(saves.map((s) => s.opportunity_id));
+    },
+    enabled: !!currentUserId,
+  });
+
+  const applyMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbInsert("applications", {
+        opportunity_id: opportunityId,
+        applicant_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+    },
+  });
+
+  const unapplyMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("applications", {
+        opportunity_id: opportunityId,
+        applicant_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbInsert("saved_opportunities", {
+        opportunity_id: opportunityId,
+        user_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("saved_opportunities", {
+        opportunity_id: opportunityId,
+        user_id: currentUserId,
+      });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
+    },
   });
 
   const coverCandidates: (string | undefined)[] = [
@@ -312,12 +397,59 @@ export default function UserProfileScreen() {
                 ) as string;
                 
                 console.log(`[Profile] Using imageUri for opp ${opp.id}:`, imageUri);
+                const isOwnPost = opp.user_id === currentUserId;
                 return (
                   <View key={opp.id} style={styles.oppCard} testID={`opp-${opp.id}`}>
                     <Image source={{ uri: imageUri }} style={styles.oppImage} resizeMode="cover" />
                     <View style={styles.oppBody}>
                       <Text numberOfLines={2} style={styles.oppTitle}>{opp.title ?? "Untitled"}</Text>
                       {!!opp.location && <Text numberOfLines={1} style={styles.oppMeta}>{opp.location}</Text>}
+                      {!isOwnPost && (
+                        <View style={styles.oppActions}>
+                          <Pressable
+                            style={[styles.oppActionBtn, appliedIds?.has(opp.id) && styles.oppActionBtnApplied]}
+                            onPress={() => {
+                              if (!currentUserId) {
+                                Alert.alert("Login Required", "You must be logged in to apply");
+                                return;
+                              }
+                              if (appliedIds?.has(opp.id)) {
+                                unapplyMutation.mutate(opp.id);
+                              } else {
+                                applyMutation.mutate(opp.id);
+                              }
+                            }}
+                            disabled={applyMutation.isPending || unapplyMutation.isPending}
+                            testID={`apply-${opp.id}`}
+                          >
+                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} />
+                            <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
+                              {appliedIds?.has(opp.id) ? "Applied" : "Apply"}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            style={[styles.oppActionBtn, savedIds?.has(opp.id) && styles.oppActionBtnSaved]}
+                            onPress={() => {
+                              if (!currentUserId) {
+                                Alert.alert("Login Required", "You must be logged in to save");
+                                return;
+                              }
+                              if (savedIds?.has(opp.id)) {
+                                unsaveMutation.mutate(opp.id);
+                              } else {
+                                saveMutation.mutate(opp.id);
+                              }
+                            }}
+                            disabled={saveMutation.isPending || unsaveMutation.isPending}
+                            testID={`save-${opp.id}`}
+                          >
+                            <Bookmark color={savedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedIds?.has(opp.id) ? "#FFFFFF" : "transparent"} />
+                            <Text style={[styles.oppActionText, savedIds?.has(opp.id) && styles.oppActionTextActive]}>
+                              {savedIds?.has(opp.id) ? "Saved" : "Save"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      )}
                     </View>
                   </View>
                 );
@@ -367,5 +499,11 @@ const styles = StyleSheet.create({
   oppBody: { padding: 12 },
   oppTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800" },
   oppMeta: { color: "#9CA3AF", fontSize: 12, fontWeight: "700", marginTop: 2 },
+  oppActions: { flexDirection: "row", gap: 8 as const, marginTop: 10 },
+  oppActionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 as const, paddingVertical: 8, borderRadius: 8, backgroundColor: "#14141C", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
+  oppActionBtnApplied: { backgroundColor: "#10B981", borderColor: "#10B981" },
+  oppActionBtnSaved: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
+  oppActionText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
+  oppActionTextActive: { color: "#FFFFFF" },
   emptyText: { color: "#9CA3AF", fontSize: 14 }
 });
