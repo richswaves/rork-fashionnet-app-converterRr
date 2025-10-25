@@ -301,7 +301,7 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  coverWrap: { width: "100%", height: 380, backgroundColor: "#111318", marginLeft: -16, marginRight: -16 },
+  coverWrap: { width: "100%", height: 380, backgroundColor: "#111318", marginHorizontal: -20 },
   cover: { width: "100%", height: 380 },
   coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 380 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
