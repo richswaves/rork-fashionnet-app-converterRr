@@ -77,7 +77,7 @@ export default function UserProfileScreen() {
       Animated.timing(opportunitiesAnimOpacity, {
         toValue: opportunitiesExpanded ? 1 : 0,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
   }, [opportunitiesExpanded]);
@@ -92,7 +92,7 @@ export default function UserProfileScreen() {
       Animated.timing(portfolioAnimOpacity, {
         toValue: portfolioExpanded ? 1 : 0,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
   }, [portfolioExpanded]);
