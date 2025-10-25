@@ -113,7 +113,6 @@ export default function LoginScreen() {
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.brandTitle}>thebrxnd</Text>
           <Text style={styles.title}>
             {displayedText}<Text style={styles.cursor}>|</Text>
           </Text>
@@ -197,22 +196,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 120,
+    paddingTop: 80,
     paddingBottom: 40,
   },
   header: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
-  },
-  brandTitle: {
-    fontSize: 52,
-    fontWeight: "900" as const,
-    color: "#FFFFFF",
-    letterSpacing: 4,
-    textAlign: "center" as const,
-    marginBottom: 40,
-    textTransform: "uppercase" as const,
+    paddingTop: 80,
   },
   title: {
     fontSize: 48,
