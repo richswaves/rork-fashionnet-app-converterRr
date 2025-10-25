@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MapPin, ArrowLeft, Instagram, Youtube, Twitter, Music2 } from "lucide-react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { MapPin, Instagram, Youtube, Twitter, Music2 } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,7 +47,7 @@ interface OpportunityRow {
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
-  const router = useRouter();
+
   const insets = useSafeAreaInsets();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [following, setFollowing] = useState<boolean>(false);
@@ -185,9 +185,6 @@ export default function UserProfileScreen() {
             end={{ x: 0.5, y: 1 }}
             style={styles.coverFade}
           />
-          <Pressable testID="back" onPress={() => router.back()} style={[styles.backBtn, { top: 12 + insets.top }]}>
-            <ArrowLeft color="#E5E7EB" size={22} />
-          </Pressable>
         </View>
         <View style={styles.inner}>
           <View style={styles.headerColumn}>
@@ -306,7 +303,7 @@ const styles = StyleSheet.create({
   coverWrap: { width: "100%", height: 380, backgroundColor: "#111318" },
   cover: { width: "100%", height: 380 },
   coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 380 },
-  backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
+
   scroll: { paddingBottom: 32 },
   inner: { paddingHorizontal: 16 },
   headerColumn: { alignItems: "center", paddingTop: 12 },
