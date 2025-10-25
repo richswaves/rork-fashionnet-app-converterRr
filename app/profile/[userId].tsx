@@ -41,6 +41,9 @@ interface OpportunityRow {
   location?: string | null;
   type?: string | null;
   cover_image?: string | null;
+  image_url?: string | null;
+  images?: (string | { url?: string | null })[] | null;
+  media?: { url?: string | null; type?: string | null }[] | null;
   created_at?: string;
   user_id?: string;
 }
@@ -276,7 +279,11 @@ export default function UserProfileScreen() {
           {userOpps && userOpps.length > 0 ? (
             <View style={styles.oppList}>
               {userOpps.map((opp) => {
-                const imageUri = opp.cover_image ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60";
+                const fromArray = Array.isArray(opp.images)
+                  ? (opp.images[0] && (typeof opp.images[0] === "string" ? opp.images[0] : opp.images[0]?.url))
+                  : undefined;
+                const fromMedia = Array.isArray(opp.media) ? opp.media[0]?.url : undefined;
+                const imageUri = (opp.cover_image ?? opp.image_url ?? fromArray ?? fromMedia ?? "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&auto=format&fit=crop&q=60") as string;
                 return (
                   <View key={opp.id} style={styles.oppCard} testID={`opp-${opp.id}`}>
                     <Image source={{ uri: imageUri }} style={styles.oppImage} resizeMode="cover" />
