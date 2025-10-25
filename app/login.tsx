@@ -126,7 +126,7 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       await login(trimmedEmail, trimmedPassword);
-      router.replace("/(tabs)" as any);
+      router.replace("/" as any);
     } catch (error: any) {
       console.error("Login error:", error);
       const msg = typeof error?.message === "string" ? error.message : "Failed to log in";
