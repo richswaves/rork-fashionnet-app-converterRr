@@ -144,9 +144,25 @@ function formatRelativeTime(iso?: string) {
     const m = date.getMonth() + 1;
     const d = date.getDate();
     return `${m}/${d}`;
-  } catch (e) {
+  } catch {
     return "";
   }
+}
+
+function formatBudget(budget: string): string {
+  if (budget.toLowerCase().includes('unpaid')) {
+    return budget;
+  }
+  const parts = budget.split(' ');
+  if (parts[0] === 'Paid' && parts.length > 1) {
+    const numbers = parts.slice(1).map(part => {
+      if (part === '-') return part;
+      const num = part.replace(/[^0-9,]/g, '');
+      return num ? `${num}` : part;
+    });
+    return `${parts[0]} ${numbers.join(' ')}`;
+  }
+  return budget;
 }
 
 export default function OpportunitiesScreen() {
@@ -548,7 +564,9 @@ export default function OpportunitiesScreen() {
                 {item.budget && (
                   <View style={styles.budgetRow}>
                     <View style={item.budget.toLowerCase().includes('unpaid') ? styles.unpaidBadge : styles.paidBadge}>
-                      <Text style={item.budget.toLowerCase().includes('unpaid') ? styles.unpaidBadgeText : styles.paidBadgeText}>{item.budget}</Text>
+                      <Text style={item.budget.toLowerCase().includes('unpaid') ? styles.unpaidBadgeText : styles.paidBadgeText}>
+                        {formatBudget(item.budget)}
+                      </Text>
                     </View>
                   </View>
                 )}
