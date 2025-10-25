@@ -164,7 +164,7 @@ export default function UserProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]}>
-        <View style={styles.headerRow}>
+        <View style={styles.headerColumn}>
           <Pressable
             onPress={() => {
               if (!isOwn) {
@@ -173,37 +173,41 @@ export default function UserProfileScreen() {
               }
               onChangeAvatar();
             }}
-            style={styles.avatarWrap}
+            style={styles.avatarWrapLarge}
             testID="avatar-press"
             accessibilityRole="button"
             accessibilityLabel={isOwn ? "Change profile picture" : undefined}
           >
-            <Image source={{ uri: display.avatarUrl }} style={styles.avatar} />
+            <Image source={{ uri: display.avatarUrl }} style={styles.avatarLarge} />
           </Pressable>
-          <View style={styles.nameCol}>
-            <Text style={styles.username}>{display.displayName}</Text>
-            {!!data?.location && (
-              <View style={styles.locationRow}>
-                <MapPin color="#9CA3AF" size={14} />
-                <Text numberOfLines={1} style={styles.locationText}>{data.location}</Text>
-              </View>
-            )}
+          <Text style={styles.usernameXL}>{display.displayName}</Text>
+          {!!data?.location && (
+            <View style={styles.locationRowCenter}>
+              <MapPin color="#9CA3AF" size={14} />
+              <Text numberOfLines={1} style={styles.locationText}>{data.location}</Text>
+            </View>
+          )}
+          <View style={styles.statsAndFollow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Followers</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Following</Text>
+            </View>
+            <Pressable
+              onPress={() => setFollowing((s) => !s)}
+              style={[styles.followPill, following && styles.followPillActive]}
+              testID="follow-btn"
+            >
+              <Text style={[styles.followPillText, following && styles.followPillTextActive]}>{following ? "Following" : "Follow"}</Text>
+            </Pressable>
           </View>
-          <Pressable
-            onPress={() => setFollowing((s) => !s)}
-            style={[styles.followBtn, following && styles.followBtnActive]}
-            testID="follow-btn"
-          >
-            <Text style={[styles.followText, following && styles.followTextActive]}>{following ? "Following" : "Follow"}</Text>
-          </Pressable>
         </View>
 
-        {!!data?.bio && (
-          <Text style={styles.bio}>{data.bio}</Text>
-        )}
-
         {data?.social_links && (data.social_links.instagram || data.social_links.youtube) && (
-          <View style={styles.socialRow}>
+          <View style={styles.socialRowCenter}>
             {data.social_links.instagram && (
               <Pressable
                 onPress={() => {
@@ -218,7 +222,7 @@ export default function UserProfileScreen() {
                 style={styles.socialIconBtn}
                 testID="social-instagram"
               >
-                <Instagram color="#fff" size={22} />
+                <Instagram color="#fff" size={24} />
               </Pressable>
             )}
             {data.social_links.youtube && (
@@ -235,22 +239,15 @@ export default function UserProfileScreen() {
                 style={styles.socialIconBtn}
                 testID="social-youtube"
               >
-                <Youtube color="#fff" size={22} />
+                <Youtube color="#fff" size={24} />
               </Pressable>
             )}
           </View>
         )}
 
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Followers</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </View>
-        </View>
+        {!!data?.bio && (
+          <Text style={styles.bio}>{data.bio}</Text>
+        )}
       </ScrollView>
     </View>
   );
@@ -258,27 +255,26 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B0B0F" },
-  coverWrap: { width: "100%", height: 320, backgroundColor: "#111318" },
-  cover: { width: "100%", height: 320 },
-  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 200 },
+  coverWrap: { width: "100%", height: 360, backgroundColor: "#111318" },
+  cover: { width: "100%", height: 360 },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 220 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -72 },
-  headerRow: { flexDirection: "row", alignItems: "flex-end" },
-  avatarWrap: { width: 96, height: 96, borderRadius: 48, overflow: "hidden", borderWidth: 3, borderColor: "#0B0B0F", marginRight: 12 },
-  avatar: { width: 96, height: 96 },
-  nameCol: { flex: 1, paddingBottom: 8 },
-  username: { color: "#E5E7EB", fontSize: 22, fontWeight: "900" },
-  locationRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
-  locationText: { color: "#9CA3AF", fontSize: 13, maxWidth: 180 },
-  followBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22, borderWidth: 1, borderColor: "#2C2C33", backgroundColor: "#0F0F14", marginLeft: 8, marginBottom: 8 },
-  followBtnActive: { backgroundColor: "#E5E7EB" },
-  followText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
-  followTextActive: { color: "#0B0B0F" },
-  bio: { color: "#E5E7EB", fontSize: 14, marginTop: 14, lineHeight: 20 },
-  socialRow: { flexDirection: "row", gap: 12, marginTop: 16, flexWrap: "wrap" },
-  socialIconBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
-  statsRow: { flexDirection: "row", gap: 24, marginTop: 16 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: -92 },
+  headerColumn: { alignItems: "center" },
+  avatarWrapLarge: { width: 112, height: 112, borderRadius: 56, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F" },
+  avatarLarge: { width: 112, height: 112 },
+  usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 10 },
+  locationRowCenter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
+  locationText: { color: "#9CA3AF", fontSize: 13, maxWidth: 220 },
+  statsAndFollow: { flexDirection: "row", alignItems: "center", gap: 24, marginTop: 12 },
+  followPill: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 22, borderWidth: 1, borderColor: "#FFFFFF", backgroundColor: "transparent" },
+  followPillActive: { backgroundColor: "#E5E7EB", borderColor: "#E5E7EB" },
+  followPillText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
+  followPillTextActive: { color: "#0B0B0F" },
+  bio: { color: "#E5E7EB", fontSize: 14, marginTop: 16, lineHeight: 20, textAlign: "center" },
+  socialRowCenter: { flexDirection: "row", justifyContent: "center", gap: 14, marginTop: 16 },
+  socialIconBtn: { width: 54, height: 54, borderRadius: 27, backgroundColor: "#14141C", alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth, borderColor: "#23232B" },
   statItem: { alignItems: "center" },
   statValue: { color: "#E5E7EB", fontSize: 18, fontWeight: "900" },
-  statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" },
+  statLabel: { color: "#9CA3AF", fontSize: 12, fontWeight: "700" }
 });
