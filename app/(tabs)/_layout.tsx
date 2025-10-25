@@ -74,6 +74,5 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: -20,
   },
 });
