@@ -546,20 +546,18 @@ export default function OpportunitiesScreen() {
                     <Text style={styles.metaText}>📍 {item.location}</Text>
                   )}
                 </View>
-                {(item.price_min || item.price_max) && (
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Compensation:</Text>
+                <View style={styles.priceRow}>
+                  {item.price_min || item.price_max ? (
                     <Text style={styles.priceValue}>
-                      ${item.price_min && item.price_max
-                        ? `${item.price_min.toLocaleString()} - ${item.price_max.toLocaleString()}`
-                        : item.price_min
-                        ? `${item.price_min.toLocaleString()}+`
-                        : item.price_max
-                        ? `Up to ${item.price_max.toLocaleString()}`
-                        : ""}
+                      {`Paid ${[
+                        item.price_min ? `${item.price_min.toLocaleString()}` : "",
+                        item.price_max ? `${item.price_max.toLocaleString()}` : "",
+                      ].filter(Boolean).join(" - ")}`.trim()}
                     </Text>
-                  </View>
-                )}
+                  ) : (
+                    <Text style={styles.priceValue}>Unpaid</Text>
+                  )}
+                </View>
                 {item.requirements && item.requirements.length > 0 && (
                   <View style={styles.requirementsSection}>
                     <Text style={styles.requirementsTitle}>Requirements:</Text>

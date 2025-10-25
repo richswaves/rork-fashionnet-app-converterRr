@@ -919,14 +919,14 @@ export default function CreateOpportunityScreen() {
                 </View>
                 {paymentType === "unpaid" && (
                   <View style={styles.previewPriceRow}>
-                    <Text style={styles.previewPriceLabel}>Compensation:</Text>
                     <Text style={styles.previewPriceValue}>Unpaid</Text>
                   </View>
                 )}
                 {paymentType === "paid" && (priceMin.trim() !== "" || priceMax.trim() !== "") && (
                   <View style={styles.previewPriceRow}>
-                    <Text style={styles.previewPriceLabel}>Compensation:</Text>
-                    <Text style={styles.previewPriceValue}>{[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ") || "Paid"}</Text>
+                    <Text style={styles.previewPriceValue}>
+                      {`Paid ${[priceMin && `${Number(priceMin.replace(/[^0-9.]/g, "")).toLocaleString()}`, priceMax && `${Number(priceMax.replace(/[^0-9.]/g, "")).toLocaleString()}`].filter(Boolean).join(" - ")}`.trim()}
+                    </Text>
                   </View>
                 )}
                 {requirements.length > 0 && (
