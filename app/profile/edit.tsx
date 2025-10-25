@@ -14,7 +14,7 @@ import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, isUpdating, updateProfileAsync, resolvedProfile } = useProfile();
+  const { profile, isUpdating, updateProfileAsync, resolvedProfile, logout } = useProfile();
 
   const [fullName, setFullName] = useState<string>(profile?.full_name ?? "");
   const [username, setUsername] = useState<string>(profile?.username ?? resolvedProfile.username ?? "");
@@ -550,6 +550,40 @@ export default function EditProfileScreen() {
             <Text style={styles.saveText}>{isUpdating ? "Saving..." : "Save"}</Text>
           </Pressable>
         </View>
+
+        <View style={styles.dangerZone}>
+          <Text style={styles.dangerZoneTitle}>Account</Text>
+          <Pressable 
+            onPress={async () => {
+              if (Platform.OS === "web") {
+                if (confirm("Are you sure you want to log out?")) {
+                  await logout();
+                  router.replace("/login");
+                }
+              } else {
+                Alert.alert(
+                  "Log Out",
+                  "Are you sure you want to log out?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Log Out",
+                      style: "destructive",
+                      onPress: async () => {
+                        await logout();
+                        router.replace("/login");
+                      },
+                    },
+                  ]
+                );
+              }
+            }}
+            style={styles.logoutBtn}
+            testID="btn-logout"
+          >
+            <Text style={styles.logoutText}>Log Out</Text>
+          </Pressable>
+        </View>
       </ScrollView>
 
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
@@ -683,6 +717,39 @@ const styles = StyleSheet.create({
   modalTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "900", marginBottom: 8 },
   modalInput: { backgroundColor: "#14141C", borderColor: "#23232B", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginTop: 6 },
   modalActions: { flexDirection: "row", justifyContent: "space-between", marginTop: 14 },
+  dangerZone: {
+    marginTop: 40,
+    marginHorizontal: 16,
+    paddingTop: 24,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#2C2C33",
+  },
+  dangerZoneTitle: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.6,
+    marginBottom: 12,
+  },
+  logoutBtn: {
+    backgroundColor: "#DC2626",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#DC2626",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logoutText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.3,
+  },
 });
 
 function MasonryPortfolio({ items, onDelete }: { items: PortfolioItem[]; onDelete: (id: string) => void }) {
