@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from "react-native";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play } from "lucide-react-native";
@@ -61,6 +61,41 @@ export default function UserProfileScreen() {
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [opportunitiesExpanded, setOpportunitiesExpanded] = useState<boolean>(true);
   const [portfolioExpanded, setPortfolioExpanded] = useState<boolean>(true);
+
+  const opportunitiesAnimHeight = useRef(new Animated.Value(1)).current;
+  const opportunitiesAnimOpacity = useRef(new Animated.Value(1)).current;
+  const portfolioAnimHeight = useRef(new Animated.Value(1)).current;
+  const portfolioAnimOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opportunitiesAnimHeight, {
+        toValue: opportunitiesExpanded ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(opportunitiesAnimOpacity, {
+        toValue: opportunitiesExpanded ? 1 : 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [opportunitiesExpanded]);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(portfolioAnimHeight, {
+        toValue: portfolioExpanded ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(portfolioAnimOpacity, {
+        toValue: portfolioExpanded ? 1 : 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [portfolioExpanded]);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
     queryKey: ["profile", userId],
@@ -499,7 +534,19 @@ export default function UserProfileScreen() {
               <ChevronDown color="#9CA3AF" size={24} />
             )}
           </Pressable>
-          {opportunitiesExpanded && userOpps && userOpps.length > 0 ? (
+          <Animated.View 
+            style={[
+              styles.animatedContent,
+              { 
+                maxHeight: opportunitiesAnimHeight.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 10000],
+                }),
+                opacity: opportunitiesAnimOpacity,
+              }
+            ]}
+          >
+          {userOpps && userOpps.length > 0 ? (
             <View style={styles.oppList}>
               {userOpps.map((opp) => {
                 console.log(`[Profile] Opp ${opp.id} images:`, { 
@@ -616,9 +663,10 @@ export default function UserProfileScreen() {
                 );
               })}
             </View>
-          ) : opportunitiesExpanded ? (
+          ) : (
             <Text style={styles.emptyText}>No opportunities yet.</Text>
-          ) : null}
+          )}
+          </Animated.View>
         </View>
 
         {portfolioItems.length > 0 && (
@@ -635,9 +683,20 @@ export default function UserProfileScreen() {
                 <ChevronDown color="#9CA3AF" size={24} />
               )}
             </Pressable>
-            {portfolioExpanded && (
+            <Animated.View 
+              style={[
+                styles.animatedContent,
+                { 
+                  maxHeight: portfolioAnimHeight.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 10000],
+                  }),
+                  opacity: portfolioAnimOpacity,
+                }
+              ]}
+            >
               <MasonryPortfolio items={portfolioItems} />
-            )}
+            </Animated.View>
           </View>
         )}
         </View>
@@ -752,6 +811,7 @@ const styles = StyleSheet.create({
   oppActionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   oppActionTextActive: { color: "#4CB963", fontWeight: "800" },
   emptyText: { color: "#9CA3AF", fontSize: 14 },
+  animatedContent: { overflow: "hidden" },
   portfolioMasonry: { marginTop: 8, flexDirection: "row", gap: 6 },
   portfolioColumn: { flex: 1, gap: 6 },
   portfolioItemWrap: { borderRadius: 12, overflow: "hidden", backgroundColor: "#14141C", position: "relative" },
