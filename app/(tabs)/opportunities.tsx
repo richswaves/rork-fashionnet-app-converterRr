@@ -170,7 +170,7 @@ export default function OpportunitiesScreen() {
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [city, setCity] = useState<string | null>(null);
+  const [city, setCity] = useState<string[]>([]);
   const [seekingRole, setSeekingRole] = useState<string | null>(null);
   const [postedByRole, setPostedByRole] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -452,7 +452,7 @@ export default function OpportunitiesScreen() {
           <Filter color="#E5E7EB" size={18} />
           <Text style={styles.filterText}>Filters</Text>
           {(() => {
-            const activeCount = [city, seekingRole, postedByRole, paymentStatus].filter((v) => v && v !== "all").length;
+            const activeCount = city.length + [seekingRole, postedByRole, paymentStatus].filter((v) => v && v !== "all").length;
             return activeCount > 0 ? (
               <View style={styles.filterBadge} testID="opp-filter-badge">
                 <Text style={styles.filterBadgeText}>{activeCount}</Text>
@@ -513,8 +513,11 @@ export default function OpportunitiesScreen() {
               (app?.location ?? "").toLowerCase().includes(q)
             );
           }
-          if (city && city !== "all") {
-            filteredData = filteredData.filter((opp) => (opp.location ?? "").toLowerCase().includes((city ?? "").toLowerCase()));
+          if (city.length > 0) {
+            filteredData = filteredData.filter((opp) => {
+              const oppLocation = (opp.location ?? "").toLowerCase();
+              return city.some(c => oppLocation.includes(c.toLowerCase()));
+            });
           }
           if (seekingRole && seekingRole !== "all") {
             filteredData = filteredData.filter((opp) => (opp.type ?? "").toLowerCase() === (seekingRole ?? "").toLowerCase());
@@ -751,26 +754,35 @@ export default function OpportunitiesScreen() {
           <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetScrollContent}>
             <Text style={styles.fieldLabel}>Location</Text>
             <View style={styles.locationChips}>
-              {(uniqueLocations ?? []).map((loc) => (
-                <Pressable
-                  key={loc}
-                  style={[
-                    styles.locationChip,
-                    city === loc && styles.locationChipActive,
-                  ]}
-                  onPress={() => setCity(city === loc ? null : loc)}
-                  testID={`location-${loc}`}
-                >
-                  <Text
+              {(uniqueLocations ?? []).map((loc) => {
+                const isSelected = city.includes(loc);
+                return (
+                  <Pressable
+                    key={loc}
                     style={[
-                      styles.locationChipText,
-                      city === loc && styles.locationChipTextActive,
+                      styles.locationChip,
+                      isSelected && styles.locationChipActive,
                     ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setCity(city.filter(c => c !== loc));
+                      } else {
+                        setCity([...city, loc]);
+                      }
+                    }}
+                    testID={`location-${loc}`}
                   >
-                    {loc}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.locationChipText,
+                        isSelected && styles.locationChipTextActive,
+                      ]}
+                    >
+                      {loc}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
             <Text style={styles.fieldLabel}>Seeking a</Text>
@@ -809,7 +821,7 @@ export default function OpportunitiesScreen() {
             <Pressable
               style={styles.resetBtn}
               onPress={() => {
-                setCity(null);
+                setCity([]);
                 setSeekingRole(null);
                 setPostedByRole(null);
                 setPaymentStatus(null);
