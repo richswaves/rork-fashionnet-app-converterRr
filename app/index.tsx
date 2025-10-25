@@ -4,13 +4,22 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useProfile } from "@/contexts/ProfileContext";
 
 export default function Index() {
-  const { session, isLoading } = useProfile();
+  const { session, isLoading, profile } = useProfile();
   const router = useRouter();
   const didNavigate = useRef<boolean>(false);
 
   useEffect(() => {
     if (isLoading || didNavigate.current) return;
-    const target = session ? "/(tabs)/opportunities" : "/login";
+    const target = (() => {
+      if (!session) return "/login";
+      if (profile && profile.account_status && profile.account_status !== "approved") {
+        return "/onboarding/pending-approval";
+      }
+      if (profile && profile.is_profile_updated === false) {
+        return "/onboarding/profile-setup";
+      }
+      return "/(tabs)/opportunities";
+    })();
     const id = setTimeout(() => {
       try {
         router.replace(target as any);
@@ -20,7 +29,7 @@ export default function Index() {
       }
     }, 0);
     return () => clearTimeout(id);
-  }, [isLoading, session, router]);
+  }, [isLoading, session, profile, router]);
 
   return (
     <View style={styles.container}>

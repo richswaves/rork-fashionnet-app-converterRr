@@ -29,11 +29,16 @@ interface Profile {
   location?: string;
   bio?: string;
   account_status?: string;
+  is_profile_updated?: boolean;
   created_at?: string;
   model_photos?: string[];
   portfolio_photos?: string[];
   profile_customization?: ProfileCustomization | null;
   social_links?: SocialLinks | null;
+  instagram_website?: string;
+  tiktok_link?: string;
+  twitter_link?: string;
+  youtube_link?: string;
 }
 
 export type ResolvedProfile = {
@@ -134,10 +139,15 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates.profile_picture !== undefined ? { profile_picture: updates.profile_picture } : {}),
         ...(updates.professions !== undefined ? { professions: updates.professions } : {}),
         ...(updates.account_status !== undefined ? { account_status: updates.account_status } : {}),
+        ...(updates.is_profile_updated !== undefined ? { is_profile_updated: updates.is_profile_updated } : {}),
         ...(updates.model_photos !== undefined ? { model_photos: updates.model_photos } : {}),
         ...(updates.portfolio_photos !== undefined ? { portfolio_photos: updates.portfolio_photos } : {}),
         ...(updates as any).profile_customization !== undefined ? { profile_customization: (updates as any).profile_customization as ProfileCustomization | null } : {},
         ...(updates.social_links !== undefined ? { social_links: updates.social_links } : {}),
+        ...(updates.instagram_website !== undefined ? { instagram_website: updates.instagram_website } : {}),
+        ...(updates.tiktok_link !== undefined ? { tiktok_link: updates.tiktok_link } : {}),
+        ...(updates.twitter_link !== undefined ? { twitter_link: updates.twitter_link } : {}),
+        ...(updates.youtube_link !== undefined ? { youtube_link: updates.youtube_link } : {}),
       };
 
       console.log("[ProfileContext] Upserting profile payload:", payload);

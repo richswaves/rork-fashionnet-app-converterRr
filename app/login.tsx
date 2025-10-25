@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { getSupabase } from "@/integrations/supabase/client";
 import * as Linking from "expo-linking";
@@ -19,6 +20,7 @@ import * as Haptics from "expo-haptics";
 const words = ["create", "community", "collab"];
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [displayedText, setDisplayedText] = useState<string>("");
   const [wordIndex, setWordIndex] = useState<number>(0);
@@ -88,7 +90,11 @@ export default function LoginScreen() {
   };
 
   const handleSignUp = () => {
-    Alert.alert("Coming Soon", "Sign up will be available soon.");
+    try {
+      router.push("/signup" as any);
+    } catch (e) {
+      console.log("Nav error", e);
+    }
   };
 
   const handleLogin = () => {
