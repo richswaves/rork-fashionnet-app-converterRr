@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users, Plus } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users, Plus, Trash2, MoreVertical } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -157,6 +157,7 @@ export default function OpportunitiesScreen() {
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [view, setView] = useState<ViewKey>("all");
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
@@ -250,6 +251,25 @@ export default function OpportunitiesScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      console.log("[DeleteOpportunity] Deleting opportunity:", opportunityId);
+      await sbDelete("opportunities", { id: opportunityId });
+      return opportunityId;
+    },
+    onSuccess: () => {
+      console.log("[DeleteOpportunity] Delete successful");
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["saved-ids", currentUserId] });
+    },
+    onError: (error) => {
+      console.error("[DeleteOpportunity] Delete failed:", error);
+      alert("Failed to delete post. Please try again.");
     },
   });
 
@@ -422,6 +442,15 @@ export default function OpportunitiesScreen() {
                   <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
                   <Text numberOfLines={1} style={styles.postTime}>{formatRelativeTime(item.created_at)}</Text>
                 </View>
+                {item.user_id === currentUserId && (
+                  <Pressable
+                    style={styles.moreBtn}
+                    onPress={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
+                    testID={`more-${item.id}`}
+                  >
+                    <MoreVertical color="#9CA3AF" size={20} />
+                  </Pressable>
+                )}
                 {item.profiles?.social_links && (item.profiles.social_links.instagram || item.profiles.social_links.youtube) && (
                   <View style={styles.socialIcons}>
                     {item.profiles.social_links.instagram && (
@@ -461,6 +490,36 @@ export default function OpportunitiesScreen() {
                   </View>
                 )}
               </Pressable>
+
+              {menuOpenId === item.id && item.user_id === currentUserId && (
+                <View style={styles.actionMenu}>
+                  <Pressable
+                    style={styles.deleteBtn}
+                    onPress={() => {
+                      if (Platform.OS === "web") {
+                        if (confirm("Are you sure you want to delete this post?")) {
+                          deleteMutation.mutate(item.id);
+                          setMenuOpenId(null);
+                        }
+                      } else {
+                        deleteMutation.mutate(item.id);
+                        setMenuOpenId(null);
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                    testID={`delete-${item.id}`}
+                  >
+                    {deleteMutation.isPending ? (
+                      <ActivityIndicator color="#EF4444" size="small" />
+                    ) : (
+                      <>
+                        <Trash2 color="#EF4444" size={16} />
+                        <Text style={styles.deleteBtnText}>Delete Post</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              )}
 
               <View style={styles.mediaWrap}>
                 <Image source={{ uri: imageUri }} style={styles.cover} resizeMode="cover" />
@@ -811,4 +870,29 @@ const styles = StyleSheet.create({
   ddSectionLabel: { color: "#9CA3AF", fontSize: 11, fontWeight: "800", paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, letterSpacing: 0.6 },
   ddItem: { paddingVertical: 12, paddingHorizontal: 12 },
   ddItemText: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" },
+  moreBtn: {
+    padding: 4,
+    marginLeft: "auto" as const,
+  },
+  actionMenu: {
+    marginHorizontal: 12,
+    marginTop: 8,
+    backgroundColor: "#14141C",
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+    overflow: "hidden",
+  },
+  deleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10 as const,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  deleteBtnText: {
+    color: "#EF4444",
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });
