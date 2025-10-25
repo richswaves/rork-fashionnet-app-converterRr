@@ -175,21 +175,20 @@ export default function UserProfileScreen() {
     <View style={styles.container} testID="profile-screen">
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.coverWrap}>
-        <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
-        <LinearGradient
-          colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.35)", "rgba(11,11,15,0.85)", "#0B0B0F"]}
-          locations={[0, 0.5, 0.8, 1]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={styles.coverFade}
-        />
-        <Pressable testID="back" onPress={() => router.back()} style={[styles.backBtn, { top: 12 + insets.top }]}>
-          <ArrowLeft color="#E5E7EB" size={22} />
-        </Pressable>
-      </View>
-
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]} testID="profile-scroll">
+        <View style={styles.coverWrap}>
+          <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
+          <LinearGradient
+            colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.35)", "rgba(11,11,15,0.85)", "#0B0B0F"]}
+            locations={[0, 0.5, 0.8, 1]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.coverFade}
+          />
+          <Pressable testID="back" onPress={() => router.back()} style={[styles.backBtn, { top: 12 + insets.top }]}>
+            <ArrowLeft color="#E5E7EB" size={22} />
+          </Pressable>
+        </View>
         <View style={styles.headerColumn}>
           <Pressable
             onPress={() => {
@@ -306,7 +305,7 @@ const styles = StyleSheet.create({
   cover: { width: "100%", height: 380 },
   coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 380 },
   backBtn: { position: "absolute", top: 12, left: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#00000080", alignItems: "center", justifyContent: "center" },
-  scroll: { paddingHorizontal: 16, paddingBottom: 32, marginTop: 8 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 32 },
   headerColumn: { alignItems: "center", paddingTop: 12 },
   avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F" },
   avatarLarge: { width: 116, height: 116 },
