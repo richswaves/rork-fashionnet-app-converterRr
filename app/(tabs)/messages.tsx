@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   messageBubbleOwn: {
-    backgroundColor: "#6366f1",
+    backgroundColor: "#FFFFFF",
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 4,
   },
@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   messageTextOwn: {
-    color: "#fff",
+    color: "#000000",
   },
   messageTime: {
     fontSize: 11,
@@ -859,7 +859,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   messageTimeOwn: {
-    color: "#E0E7FF",
+    color: "#6B7280",
   },
   inputContainer: {
     flexDirection: "row",
