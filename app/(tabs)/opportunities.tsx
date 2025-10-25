@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Youtube, Search, Bell, Users, Plus, Trash2, MoreVertical, LogOut } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Plus, Trash2, MoreVertical, LogOut } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -13,6 +13,7 @@ interface ProfileRow {
   profile_picture?: string;
   profession?: string;
   username?: string;
+  instagram_website?: string;
   social_links?: {
     instagram?: string;
     youtube?: string;
@@ -582,42 +583,23 @@ export default function OpportunitiesScreen() {
                     <MoreVertical color="#9CA3AF" size={20} />
                   </Pressable>
                 )}
-                {item.profiles?.social_links && (item.profiles.social_links.instagram || item.profiles.social_links.youtube) && (
+                {item.profiles?.instagram_website && item.profiles.instagram_website !== "https://www.instagram.com" && (
                   <View style={styles.socialIcons}>
-                    {item.profiles.social_links.instagram && (
-                      <Pressable
-                        onPress={() => {
-                          const url = item.profiles?.social_links?.instagram ?? "";
-                          const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
-                          if (Platform.OS === "web") {
-                            window.open(fullUrl, "_blank");
-                          } else {
-                            Linking.openURL(fullUrl).catch(() => {});
-                          }
-                        }}
-                        style={styles.socialIconBtn}
-                        testID={`social-instagram-${item.id}`}
-                      >
-                        <Instagram color="#C13584" size={16} />
-                      </Pressable>
-                    )}
-                    {item.profiles.social_links.youtube && (
-                      <Pressable
-                        onPress={() => {
-                          const url = item.profiles?.social_links?.youtube ?? "";
-                          const fullUrl = url.startsWith("http") ? url : `https://youtube.com/${url}`;
-                          if (Platform.OS === "web") {
-                            window.open(fullUrl, "_blank");
-                          } else {
-                            Linking.openURL(fullUrl).catch(() => {});
-                          }
-                        }}
-                        style={styles.socialIconBtn}
-                        testID={`social-youtube-${item.id}`}
-                      >
-                        <Youtube color="#FF0000" size={16} />
-                      </Pressable>
-                    )}
+                    <Pressable
+                      onPress={() => {
+                        const url = item.profiles?.instagram_website ?? "";
+                        const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
+                        if (Platform.OS === "web") {
+                          window.open(fullUrl, "_blank");
+                        } else {
+                          Linking.openURL(fullUrl).catch(() => {});
+                        }
+                      }}
+                      style={styles.socialIconBtn}
+                      testID={`social-instagram-${item.id}`}
+                    >
+                      <Instagram color="#C13584" size={16} />
+                    </Pressable>
                   </View>
                 )}
               </Pressable>
