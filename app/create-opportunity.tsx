@@ -8,10 +8,12 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, ChevronDown, Eye } from "lucide-react-native";
+import { X, ChevronDown, Eye, ImagePlus } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -78,6 +80,26 @@ export default function CreateOpportunityScreen() {
     if (newRequirement.trim()) {
       setRequirements([...requirements, newRequirement.trim()]);
       setNewRequirement("");
+    }
+  };
+
+  const handlePickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setImageUrl(result.assets[0].uri);
     }
   };
 
@@ -209,14 +231,26 @@ export default function CreateOpportunityScreen() {
         />
 
         <Text style={styles.label}>Image</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Image URL (optional)"
-          placeholderTextColor="#6B7280"
-          value={imageUrl}
-          onChangeText={setImageUrl}
-          testID="input-image"
-        />
+        <Pressable
+          style={styles.imagePickerBtn}
+          onPress={handlePickImage}
+          testID="pick-image"
+        >
+          {imageUrl ? (
+            <View style={styles.imagePreviewContainer}>
+              <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+              <View style={styles.changeImageOverlay}>
+                <ImagePlus color="#E5E7EB" size={24} />
+                <Text style={styles.changeImageText}>Change Image</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.imagePickerContent}>
+              <ImagePlus color="#6B7280" size={32} />
+              <Text style={styles.imagePickerText}>Pick from Camera Roll</Text>
+            </View>
+          )}
+        </Pressable>
 
         <Text style={styles.label}>Requirements</Text>
         <View style={styles.requirementsRow}>
@@ -459,5 +493,50 @@ const styles = StyleSheet.create({
     color: "#E5E7EB",
     fontSize: 14,
     fontWeight: "700",
+  },
+  imagePickerBtn: {
+    backgroundColor: "#14141C",
+    borderColor: "#23232B",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    overflow: "hidden",
+    minHeight: 150,
+  },
+  imagePickerContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+    gap: 12,
+  },
+  imagePickerText: {
+    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  imagePreviewContainer: {
+    position: "relative" as const,
+    width: "100%",
+    height: 200,
+  },
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover" as const,
+  },
+  changeImageOverlay: {
+    position: "absolute" as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(11, 11, 15, 0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  changeImageText: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
