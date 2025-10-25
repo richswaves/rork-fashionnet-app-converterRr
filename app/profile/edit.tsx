@@ -324,9 +324,9 @@ export default function EditProfileScreen() {
           />
           <View style={styles.coverOverlay} />
           <LinearGradient
-            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.25)", "#0B0B0F"]}
-            locations={[0, 0.6, 1]}
-            start={{ x: 0.5, y: 0.2 }}
+            colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.35)", "rgba(11,11,15,0.85)", "#0B0B0F"]}
+            locations={[0, 0.5, 0.8, 1]}
+            start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={styles.coverFade}
           />
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   coverWrap: { width: "100%", height: 320, backgroundColor: "#111318" },
   cover: { width: "100%", height: 320 },
   coverOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#00000040" },
-  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 220 },
+  coverFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 260 },
   coverEditFab: { position: "absolute", right: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center" },
   avatarFloating: { position: "absolute", bottom: -56, left: 0, right: 0, alignItems: "center" },
   hero: { width: "100%", paddingTop: 80, paddingBottom: 24 },
