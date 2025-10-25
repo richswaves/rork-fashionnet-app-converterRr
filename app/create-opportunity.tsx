@@ -44,6 +44,7 @@ export default function CreateOpportunityScreen() {
   const [needType, setNeedType] = useState("");
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState("");
+  const [company, setCompany] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -66,6 +67,7 @@ export default function CreateOpportunityScreen() {
         description: description.trim() || null,
         requirements: requirements.length > 0 ? requirements : null,
         budget: budget.trim() || null,
+        company: company.trim() || null,
       };
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
@@ -205,6 +207,16 @@ export default function CreateOpportunityScreen() {
           value={budget}
           onChangeText={setBudget}
           testID="input-budget"
+        />
+
+        <Text style={styles.label}>Company</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Fashion Brand Co."
+          placeholderTextColor="#6B7280"
+          value={company}
+          onChangeText={setCompany}
+          testID="input-company"
         />
 
         <Text style={styles.label}>Description</Text>
