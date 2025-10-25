@@ -27,6 +27,7 @@ const NEED_TYPES = [
   "Clothing Brand",
   "Agency",
   "Publisher",
+  "Photography Business",
   "Other",
 ];
 
