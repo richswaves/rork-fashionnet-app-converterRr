@@ -175,20 +175,6 @@ export default function OpportunitiesScreen() {
     enabled: !!currentUserId,
   });
 
-  const { data: approvedIds } = useQuery<Set<string>>({
-    queryKey: ["approved-ids", currentUserId],
-    queryFn: async () => {
-      if (!currentUserId) return new Set<string>();
-      const apps = await sbSelect<{ opportunity_id: string; status?: string }>("applications", {
-        select: "opportunity_id,status",
-        query: { applicant_id: `eq.${currentUserId}`, status: `eq.approved` },
-        limit: 1000,
-      });
-      return new Set(apps.map((a) => a.opportunity_id));
-    },
-    enabled: !!currentUserId,
-  });
-
   const { data: savedIds } = useQuery<Set<string>>({
     queryKey: ["saved-ids", currentUserId],
     queryFn: async () => {
@@ -229,7 +215,6 @@ export default function OpportunitiesScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["approved-ids", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
     },
   });
@@ -473,18 +458,10 @@ export default function OpportunitiesScreen() {
                 {(item.user_id !== currentUserId) && (
                   <View style={styles.actionButtons}>
                     <Pressable
-                      style={[
-                        styles.actionBtn, 
-                        appliedIds?.has(item.id) && styles.actionBtnActive,
-                        approvedIds?.has(item.id) && styles.actionBtnApproved
-                      ]}
+                      style={[styles.actionBtn, appliedIds?.has(item.id) && styles.actionBtnActive]}
                       onPress={() => {
                         if (!currentUserId) {
                           console.log("Must be logged in to apply");
-                          return;
-                        }
-                        if (approvedIds?.has(item.id)) {
-                          console.log("Cannot unapply from approved application");
                           return;
                         }
                         if (appliedIds?.has(item.id)) {
@@ -493,15 +470,12 @@ export default function OpportunitiesScreen() {
                           applyMutation.mutate(item.id);
                         }
                       }}
-                      disabled={applyMutation.isPending || unapplyMutation.isPending || approvedIds?.has(item.id)}
+                      disabled={applyMutation.isPending || unapplyMutation.isPending}
                       testID={`apply-${item.id}`}
                     >
-                      <CheckCircle2 color={approvedIds?.has(item.id) || appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
-                      <Text style={[
-                        styles.actionText, 
-                        (appliedIds?.has(item.id) || approvedIds?.has(item.id)) && styles.actionTextActive
-                      ]}>
-                        {approvedIds?.has(item.id) ? "Approved" : appliedIds?.has(item.id) ? "Applied" : "Apply"}
+                      <CheckCircle2 color={appliedIds?.has(item.id) ? "#4CB963" : "#E5E7EB"} size={16} />
+                      <Text style={[styles.actionText, appliedIds?.has(item.id) && styles.actionTextActive]}>
+                        {appliedIds?.has(item.id) ? "Applied" : "Apply"}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -752,13 +726,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     shadowColor: "#4CB963",
     shadowOpacity: 0.25,
-  },
-  actionBtnApproved: { 
-    backgroundColor: "#1A1A24", 
-    borderColor: "#4CB963",
-    borderWidth: 2,
-    shadowColor: "#4CB963",
-    shadowOpacity: 0.3,
   },
   actionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   actionTextActive: { color: "#4CB963", fontWeight: "800" },
