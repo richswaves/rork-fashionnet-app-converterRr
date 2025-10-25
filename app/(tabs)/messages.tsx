@@ -565,11 +565,11 @@ export default function MessagesScreen() {
         </View>
 
         <View style={styles.searchContainer}>
-          <Search size={20} color="#6B7280" style={styles.searchIcon} />
+          <Search size={20} color="#000000" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search conversations..."
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 20,
     marginVertical: 12,
-    backgroundColor: "#1F2937",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#fff",
+    color: "#000000",
   },
   conversationsList: {
     paddingBottom: 20,
