@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect, getSupabase } from "@/integrations/supabase/client";
 import GrainTexture from "@/components/GrainTexture";
-import { PieChart, Shield, BarChart3, Users as UsersIcon, BriefcaseBusiness, ChevronRight } from "lucide-react-native";
+import { PieChart, Shield, BarChart3, Users as UsersIcon, BriefcaseBusiness, ChevronRight, AlertTriangle } from "lucide-react-native";
 import { useProfile } from "@/contexts/ProfileContext";
 
 function useAdminCheck(userId?: string) {
@@ -165,6 +165,16 @@ export default function AdminDashboard() {
           </TouchableOpacity>
         </Section>
 
+        <Section title="Reports">
+          <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/reports")}>
+            <View style={styles.linkLeftContent}>
+              <AlertTriangle size={18} color="#EF4444" />
+              <Text style={styles.linkText}>User reports</Text>
+            </View>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+        </Section>
+
         <Section title="Onboarding Roles">
           <TinyBars data={(rolesPie.data ?? []).sort((a,b)=>b.count-a.count).slice(0,6).map(r=>({ label: r.role, value: r.count }))} />
         </Section>
@@ -244,6 +254,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionTitle: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" as const },
   linkCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#15151A", borderColor: "#2A2A33", borderWidth: 1, borderRadius: 12, padding: 12 },
+  linkLeftContent: { flexDirection: "row", alignItems: "center", gap: 10 },
   linkText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" as const },
   placeholderCard: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#15151A", borderColor: "#2A2A33", borderWidth: 1, borderRadius: 12, padding: 12 },
   placeholderText: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" as const },
