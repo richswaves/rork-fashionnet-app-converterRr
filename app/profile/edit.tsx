@@ -4,8 +4,9 @@ import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, Phone, Bell } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
+import { Switch } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +40,7 @@ export default function EditProfileScreen() {
     | "youtube"
     | "twitter"
     | "tiktok"
+    | "phone"
   >(null);
   const [temp, setTemp] = useState<string>("");
   const [socialLinks, setSocialLinks] = useState<{
@@ -47,6 +49,8 @@ export default function EditProfileScreen() {
     twitter?: string;
     tiktok?: string;
   }>((profile as any)?.social_links ?? {});
+  const [phoneNumber, setPhoneNumber] = useState<string>((profile as any)?.phone_number ?? "");
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>((profile as any)?.notifications_enabled ?? false);
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -169,6 +173,9 @@ export default function EditProfileScreen() {
         break;
       case "tiktok":
         setTemp(socialLinks.tiktok ?? "");
+        break;
+      case "phone":
+        setTemp(phoneNumber);
         break;
       default:
         setTemp("");
@@ -307,6 +314,7 @@ export default function EditProfileScreen() {
     if (editing === "youtube") setSocialLinks(prev => ({ ...prev, youtube: val }));
     if (editing === "twitter") setSocialLinks(prev => ({ ...prev, twitter: val }));
     if (editing === "tiktok") setSocialLinks(prev => ({ ...prev, tiktok: val }));
+    if (editing === "phone") setPhoneNumber(val);
     setEditing(null);
   }
 
@@ -373,6 +381,16 @@ export default function EditProfileScreen() {
       if (hasChangedSocial) {
         updates.social_links = socialLinks;
         console.log("[onSave] Adding social_links to updates:", socialLinks);
+      }
+
+      if (phoneNumber !== ((profile as any)?.phone_number ?? "")) {
+        (updates as any).phone_number = phoneNumber;
+        console.log("[onSave] Adding phone_number to updates:", phoneNumber);
+      }
+
+      if (notificationsEnabled !== ((profile as any)?.notifications_enabled ?? false)) {
+        (updates as any).notifications_enabled = notificationsEnabled;
+        console.log("[onSave] Adding notifications_enabled to updates:", notificationsEnabled);
       }
 
       if (Object.keys(updates).length === 0) {
@@ -527,6 +545,55 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
+        <View style={styles.contactSection}>
+          <Text style={styles.sectionTitle}>Contact & Notifications</Text>
+          
+          <Pressable onPress={() => openEditor("instagram")} style={styles.contactCard} testID="edit-instagram">
+            <View style={styles.contactLeft}>
+              <View style={[styles.contactIcon, { backgroundColor: "#C13584" }]}>
+                <Instagram color="#fff" size={20} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Instagram</Text>
+                <Text style={styles.contactValue}>{socialLinks.instagram || "Add Instagram handle"}</Text>
+              </View>
+            </View>
+            <Pencil color="#9CA3AF" size={16} />
+          </Pressable>
+
+          <Pressable onPress={() => openEditor("phone")} style={styles.contactCard} testID="edit-phone">
+            <View style={styles.contactLeft}>
+              <View style={[styles.contactIcon, { backgroundColor: "#10B981" }]}>
+                <Phone color="#fff" size={20} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Phone Number</Text>
+                <Text style={styles.contactValue}>{phoneNumber || "Add phone number"}</Text>
+              </View>
+            </View>
+            <Pencil color="#9CA3AF" size={16} />
+          </Pressable>
+
+          <View style={styles.contactCard}>
+            <View style={styles.contactLeft}>
+              <View style={[styles.contactIcon, { backgroundColor: "#8B5CF6" }]}>
+                <Bell color="#fff" size={20} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Enable Notifications</Text>
+                <Text style={styles.contactSubLabel}>Get notified about new opportunities</Text>
+              </View>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={setNotificationsEnabled}
+              trackColor={{ false: "#2C2C33", true: "#8B5CF6" }}
+              thumbColor={notificationsEnabled ? "#E5E7EB" : "#6B7280"}
+              testID="notifications-switch"
+            />
+          </View>
+        </View>
+
         <View style={styles.portfolioSection}>
           <View style={styles.portfolioHeader}>
             <Text style={styles.portfolioTitle}>Portfolio</Text>
@@ -623,17 +690,19 @@ export default function EditProfileScreen() {
               {editing === "youtube" && "YouTube link"}
               {editing === "twitter" && "Twitter link"}
               {editing === "tiktok" && "TikTok link"}
+              {editing === "phone" && "Phone number"}
             </Text>
             <TextInput
               value={temp}
               onChangeText={setTemp}
-              placeholder={editing === "bio" ? "About you" : "https://"}
+              placeholder={editing === "bio" ? "About you" : editing === "phone" ? "+1 (555) 123-4567" : "https://"}
               placeholderTextColor="#6B7280"
               style={[styles.input, styles.modalInput, editing === "bio" ? styles.multiline : undefined]}
               autoCapitalize="none"
               multiline={editing === "bio"}
               numberOfLines={editing === "bio" ? 4 : 1}
               maxLength={editing === "bio" ? 200 : 200}
+              keyboardType={editing === "phone" ? "phone-pad" : "default"}
             />
             <View style={styles.modalActions}>
               <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
@@ -792,6 +861,59 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
     letterSpacing: 0.3,
+  },
+  contactSection: {
+    marginTop: 24,
+    marginHorizontal: 16,
+  },
+  sectionTitle: {
+    color: "#E5E7EB",
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 12,
+  },
+  contactCard: {
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  contactLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+    marginRight: 12,
+  },
+  contactIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactLabel: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  contactValue: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    marginTop: 2,
+  },
+  contactSubLabel: {
+    color: "#6B7280",
+    fontSize: 12,
+    marginTop: 2,
   },
 });
 
