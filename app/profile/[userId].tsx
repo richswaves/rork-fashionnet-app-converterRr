@@ -424,7 +424,7 @@ export default function UserProfileScreen() {
           </View>
         )}
         <View style={styles.inner}>
-          <View style={styles.headerColumn}>
+          <View style={[styles.headerColumn, !cover && styles.headerColumnNoCover]}>
           <Pressable
             onPress={() => {
               if (!isOwn) {
@@ -752,6 +752,7 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 32 },
   inner: { paddingHorizontal: 16 },
   headerColumn: { alignItems: "center", paddingTop: 12 },
+  headerColumnNoCover: { paddingTop: 120 },
   avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F" },
   avatarLarge: { width: 116, height: 116 },
   usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 12 },
