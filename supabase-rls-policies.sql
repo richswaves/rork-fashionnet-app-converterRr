@@ -185,8 +185,14 @@ CREATE TRIGGER set_suspended_at
 -- BLOCKED USERS TABLE
 -- ============================================================================
 
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view own blocks" ON blocked_users;
+DROP POLICY IF EXISTS "Users can create blocks" ON blocked_users;
+DROP POLICY IF EXISTS "Users can delete blocks" ON blocked_users;
+DROP POLICY IF EXISTS "Admins can view all blocks" ON blocked_users;
+
 -- Create blocked_users table
-CREATE TABLE IF NOT EXISTS blocked_users (
+CREATE TABLE IF NOT EXISTS public.blocked_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   blocker_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   blocked_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -228,8 +234,14 @@ FOR SELECT USING (
 -- REPORTS TABLE
 -- ============================================================================
 
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view own reports" ON reports;
+DROP POLICY IF EXISTS "Users can create reports" ON reports;
+DROP POLICY IF EXISTS "Admins can view all reports" ON reports;
+DROP POLICY IF EXISTS "Admins can update reports" ON reports;
+
 -- Create reports table
-CREATE TABLE IF NOT EXISTS reports (
+CREATE TABLE IF NOT EXISTS public.reports (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reporter_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   reported_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
