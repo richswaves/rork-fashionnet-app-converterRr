@@ -59,7 +59,7 @@ function resolveFromSession(profile: Profile | null, session: any): ResolvedProf
   const md = session?.user?.user_metadata ?? session?.user?.app_metadata ?? {};
   const email: string | undefined = session?.user?.email ?? undefined;
   const avatarFromGoogle: string | undefined = md["avatar_url"] ?? md["picture"] ?? undefined;
-  const fullNameFromAuth: string | undefined = md["full_name"] ?? md["name"] ?? undefined;
+  const fullNameFromAuth: string | undefined = md["display_name"] ?? md["full_name"] ?? md["name"] ?? undefined;
   const usernameFromEmail: string | undefined = email ? email.split("@")[0] : undefined;
 
   const displayName = (profile?.full_name ?? fullNameFromAuth ?? profile?.username ?? usernameFromEmail ?? "Member") as string;

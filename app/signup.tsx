@@ -260,7 +260,9 @@ export default function SignupScreen() {
         email: email.trim().toLowerCase(),
         password: password.trim(),
         options: {
-          data: {},
+          data: {
+            display_name: displayName.trim(),
+          },
         },
       });
       if (error) throw error;
