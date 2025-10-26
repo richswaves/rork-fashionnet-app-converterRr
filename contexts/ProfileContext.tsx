@@ -120,7 +120,10 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<Profile>) => {
-      if (!currentUserId) throw new Error("No user ID");
+      if (!currentUserId) {
+        console.error("[ProfileContext] No currentUserId available. Session:", session?.user?.id);
+        throw new Error("No user ID - please ensure you are logged in");
+      }
 
       console.log("[ProfileContext] Starting profile update:", updates);
       const safeProfession = (updates.profession ?? profileQuery.data?.profession ?? "other") as string;

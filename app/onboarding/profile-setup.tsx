@@ -189,7 +189,8 @@ export default function ProfileSetup() {
 
   const onSave = useCallback(async () => {
     if (!currentUserId) {
-      Alert.alert("Not logged in", "Please log in to continue.");
+      console.error("[ProfileSetup] No currentUserId available when trying to save");
+      Alert.alert("Not logged in", "Please log in to continue. Your session may have expired.");
       return;
     }
     if (!userType || !role) {
@@ -198,6 +199,7 @@ export default function ProfileSetup() {
     }
 
     try {
+      console.log("[ProfileSetup] Saving profile with userId:", currentUserId);
       await recordEvent(3, "profile_details", "complete");
 
       const profileData: any = {
