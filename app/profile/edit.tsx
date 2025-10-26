@@ -340,23 +340,7 @@ export default function EditProfileScreen() {
         Alert.alert("Password Too Short", "Password must be at least 6 characters.");
         return;
       }
-      const supabase = getSupabase();
-      if (supabase) {
-        try {
-          const { error: verifyError } = await supabase.auth.signInWithPassword({
-            email: session?.user?.email ?? email,
-            password: oldPassword,
-          });
-          if (verifyError) {
-            Alert.alert("Incorrect Password", "The old password you entered is incorrect.");
-            return;
-          }
-          setPassword(val);
-        } catch (e) {
-          Alert.alert("Error", "Failed to verify old password.");
-          return;
-        }
-      }
+      setPassword(val);
     }
     setEditing(null);
   }
@@ -442,12 +426,26 @@ export default function EditProfileScreen() {
       }
 
       if (password.trim().length > 0 && supabase) {
-        console.log("[onSave] Updating password in auth");
+        console.log("[onSave] Verifying old password and updating password in auth");
+        
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: session?.user?.email ?? email,
+          password: oldPassword,
+        });
+        
+        if (verifyError) {
+          console.error("[onSave] Old password verification failed:", verifyError);
+          throw new Error("Incorrect old password. Please try again.");
+        }
+        
         const { error: passwordError } = await supabase.auth.updateUser({ password: password.trim() });
         if (passwordError) {
           console.error("[onSave] Password update failed:", passwordError);
           throw new Error(`Failed to update password: ${passwordError.message}`);
         }
+        
+        console.log("[onSave] Password updated successfully");
+        Alert.alert("Success", "Your password has been updated successfully.");
         setPassword("");
         setOldPassword("");
       }
