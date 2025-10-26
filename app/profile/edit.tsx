@@ -4,7 +4,7 @@ import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
@@ -50,6 +50,20 @@ export default function EditProfileScreen() {
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
+
+  const { data: isAdmin } = useQuery<boolean>({
+    queryKey: ["is-admin", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return false;
+      const rows = await sbSelect<{ user_id: string; role: string }>("user_roles", {
+        select: "user_id,role",
+        query: { user_id: `eq.${currentUserId}`, role: "eq.admin" },
+        limit: 1,
+      });
+      return (rows?.length ?? 0) > 0;
+    },
+    enabled: !!currentUserId,
+  });
 
   const { data: portfolioItems = [] } = useQuery<PortfolioItem[]>({
     queryKey: ["portfolio", currentUserId],
@@ -553,6 +567,16 @@ export default function EditProfileScreen() {
 
         <View style={styles.dangerZone}>
           <Text style={styles.dangerZoneTitle}>Account</Text>
+          {isAdmin && (
+            <Pressable
+              onPress={() => router.push("/admin/access" as any)}
+              style={styles.adminBtn}
+              testID="btn-admin-access"
+            >
+              <Shield color="#8B5CF6" size={18} />
+              <Text style={styles.adminText}>Admin Access</Text>
+            </Pressable>
+          )}
           <Pressable 
             onPress={async () => {
               if (Platform.OS === "web") {
@@ -746,6 +770,25 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.3,
+  },
+  adminBtn: {
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(139, 92, 246, 0.3)",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  adminText: {
+    color: "#8B5CF6",
     fontSize: 15,
     fontWeight: "900",
     letterSpacing: 0.3,
