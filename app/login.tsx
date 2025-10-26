@@ -385,9 +385,12 @@ export default function LoginScreen() {
                 }
                 try {
                   setIsSendingReset(true);
-                  const webRedirect = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined;
-                  const isWeb = Platform.OS === 'web';
-                  const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, isWeb ? { redirectTo: webRedirect } : undefined);
+                  const redirectUrl = Platform.OS === 'web' 
+                    ? (typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined)
+                    : Linking.createURL('/reset-password');
+                  const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+                    redirectTo: redirectUrl,
+                  });
                   if (error) throw error;
                   Alert.alert("Check your email", "We sent a password reset link. Open it on this device to continue.");
                 } catch (e: any) {
