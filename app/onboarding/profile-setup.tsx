@@ -150,6 +150,8 @@ export default function ProfileSetup() {
   const [hairColor, setHairColor] = useState<string>("");
   const [eyeColor, setEyeColor] = useState<string>("");
 
+  const [currentStep, setCurrentStep] = useState<number>(1);
+
   const [instagram, setInstagram] = useState<string>(profile?.social_links?.instagram ?? "");
   const [youtube, setYoutube] = useState<string>(profile?.social_links?.youtube ?? "");
   const [twitter, setTwitter] = useState<string>(profile?.social_links?.twitter ?? "");
@@ -325,11 +327,42 @@ export default function ProfileSetup() {
     }
   }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
+  const onContinue = useCallback(() => {
+    if (!userType || !role) {
+      Alert.alert("Missing info", "Choose your user type and role.");
+      return;
+    }
+    if (!displayName.trim()) {
+      Alert.alert("Missing info", "Please enter your display name.");
+      return;
+    }
+    if (!profilePictureUri) {
+      Alert.alert("Missing info", "Please upload a profile picture.");
+      return;
+    }
+    
+    if (role === "model" && currentStep === 1) {
+      setCurrentStep(2);
+      return;
+    }
+    
+    onSave();
+  }, [userType, role, displayName, profilePictureUri, currentStep, onSave]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <GrainTexture />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Set up your profile</Text>
+        {currentStep === 2 && role === "model" && (
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => setCurrentStep(1)}
+            testID="back-button"
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.title}>{currentStep === 2 && role === "model" ? "Model Measurements" : "Set up your profile"}</Text>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>You are joining as</Text>
@@ -351,159 +384,166 @@ export default function ProfileSetup() {
           </View>
         </View>
 
-        {!!userType && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Select your role</Text>
-            <View style={styles.grid}>
-              {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => setRole(r)}>
-                  <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {!!role && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Profile Information</Text>
-            <Text style={styles.fieldLabel}>Display Name *</Text>
-            <TextInput
-              value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Your name"
-              placeholderTextColor="#9CA3AF"
-              style={styles.input}
-              testID="ps-display-name"
-              autoCapitalize="words"
-            />
-            
-            <Text style={styles.fieldLabel}>Profile Picture *</Text>
-            <TouchableOpacity
-              testID="ps-profile-pic"
-              style={styles.imagePickerBtn}
-              onPress={async () => {
-                try {
-                  const result = await ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                    allowsEditing: true,
-                    aspect: [1, 1],
-                    quality: 0.8,
-                    base64: Platform.OS !== "web",
-                  });
-                  if (!result.canceled && result.assets[0]) {
-                    setProfilePictureUri(result.assets[0].uri);
-                  }
-                } catch (e) {
-                  console.log("Image picker error:", e);
-                }
-              }}
-            >
-              {profilePictureUri ? (
-                <Image source={{ uri: profilePictureUri }} style={styles.profilePreview} />
-              ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Text style={styles.imagePlaceholderText}>Tap to upload</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            
-            <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
-            <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
-          </View>
-        )}
-
-        {!!role && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Social Links (optional)</Text>
-            <TextInput 
-              value={instagram} 
-              onChangeText={setInstagram} 
-              placeholder="Instagram (username or link)" 
-              placeholderTextColor="#9CA3AF" 
-              style={styles.input} 
-              autoCapitalize="none" 
-              testID="ps-instagram" 
-            />
-            <TextInput 
-              value={youtube} 
-              onChangeText={setYoutube} 
-              placeholder="YouTube (username or link)" 
-              placeholderTextColor="#9CA3AF" 
-              style={styles.input} 
-              autoCapitalize="none" 
-              testID="ps-youtube" 
-            />
-            <TextInput 
-              value={twitter} 
-              onChangeText={setTwitter} 
-              placeholder="Twitter/X (username or link)" 
-              placeholderTextColor="#9CA3AF" 
-              style={styles.input} 
-              autoCapitalize="none" 
-              testID="ps-twitter" 
-            />
-            <TextInput 
-              value={tiktok} 
-              onChangeText={setTiktok} 
-              placeholder="TikTok (username or link)" 
-              placeholderTextColor="#9CA3AF" 
-              style={styles.input} 
-              autoCapitalize="none" 
-              testID="ps-tiktok" 
-            />
-          </View>
-        )}
-
-        {!!role && availableQuestions.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Tell us more</Text>
-            {availableQuestions.map((q) => (
-              <View key={q.id} style={{ marginBottom: 12 }}>
-                <Text style={styles.prompt}>{q.prompt}</Text>
-                <View style={styles.rowWrap}>
-                  {q.options.map((opt) => {
-                    const selected = (answers[q.id] ?? []).includes(opt);
-                    return (
-                      <TouchableOpacity
-                        key={opt}
-                        testID={`q-${q.id}-${opt}`}
-                        style={[styles.pill, selected && styles.pillActive]}
-                        onPress={() => toggleAnswer(q.id, opt, q.multiple)}
-                      >
-                        <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+        {currentStep === 1 && (
+          <>
+            {!!userType && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Select your role</Text>
+                <View style={styles.grid}>
+                  {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
+                    <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => setRole(r)}>
+                      <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
-            ))}
-          </View>
+            )}
+
+            {!!role && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Profile Information</Text>
+                <Text style={styles.fieldLabel}>Display Name *</Text>
+                <TextInput
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                  placeholder="Your name"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.input}
+                  testID="ps-display-name"
+                  autoCapitalize="words"
+                />
+                
+                <Text style={styles.fieldLabel}>Profile Picture *</Text>
+                <TouchableOpacity
+                  testID="ps-profile-pic"
+                  style={styles.imagePickerBtn}
+                  onPress={async () => {
+                    try {
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [1, 1],
+                        quality: 0.8,
+                        base64: Platform.OS !== "web",
+                      });
+                      if (!result.canceled && result.assets[0]) {
+                        setProfilePictureUri(result.assets[0].uri);
+                      }
+                    } catch (e) {
+                      console.log("Image picker error:", e);
+                    }
+                  }}
+                >
+                  {profilePictureUri ? (
+                    <Image source={{ uri: profilePictureUri }} style={styles.profilePreview} />
+                  ) : (
+                    <View style={styles.imagePlaceholder}>
+                      <Text style={styles.imagePlaceholderText}>Tap to upload</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+                
+                <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
+                <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
+              </View>
+            )}
+
+            {!!role && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Social Links (optional)</Text>
+                <TextInput 
+                  value={instagram} 
+                  onChangeText={setInstagram} 
+                  placeholder="Instagram (username or link)" 
+                  placeholderTextColor="#9CA3AF" 
+                  style={styles.input} 
+                  autoCapitalize="none" 
+                  testID="ps-instagram" 
+                />
+                <TextInput 
+                  value={youtube} 
+                  onChangeText={setYoutube} 
+                  placeholder="YouTube (username or link)" 
+                  placeholderTextColor="#9CA3AF" 
+                  style={styles.input} 
+                  autoCapitalize="none" 
+                  testID="ps-youtube" 
+                />
+                <TextInput 
+                  value={twitter} 
+                  onChangeText={setTwitter} 
+                  placeholder="Twitter/X (username or link)" 
+                  placeholderTextColor="#9CA3AF" 
+                  style={styles.input} 
+                  autoCapitalize="none" 
+                  testID="ps-twitter" 
+                />
+                <TextInput 
+                  value={tiktok} 
+                  onChangeText={setTiktok} 
+                  placeholder="TikTok (username or link)" 
+                  placeholderTextColor="#9CA3AF" 
+                  style={styles.input} 
+                  autoCapitalize="none" 
+                  testID="ps-tiktok" 
+                />
+              </View>
+            )}
+
+            {!!role && availableQuestions.length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Tell us more</Text>
+                {availableQuestions.map((q) => (
+                  <View key={q.id} style={{ marginBottom: 12 }}>
+                    <Text style={styles.prompt}>{q.prompt}</Text>
+                    <View style={styles.rowWrap}>
+                      {q.options.map((opt) => {
+                        const selected = (answers[q.id] ?? []).includes(opt);
+                        return (
+                          <TouchableOpacity
+                            key={opt}
+                            testID={`q-${q.id}-${opt}`}
+                            style={[styles.pill, selected && styles.pillActive]}
+                            onPress={() => toggleAnswer(q.id, opt, q.multiple)}
+                          >
+                            <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
         )}
 
-        {role === "model" && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
-            <View style={styles.row}>
-              <TextInput value={height} onChangeText={setHeight} placeholder="Height" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-height" />
-              <TextInput value={waist} onChangeText={setWaist} placeholder="Waist" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-waist" />
+        {currentStep === 2 && role === "model" && (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
+              <Text style={styles.helpText}>Fill in your measurements to help brands and photographers find the right fit.</Text>
+              <View style={styles.row}>
+                <TextInput value={height} onChangeText={setHeight} placeholder="Height (e.g. 5'9)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-height" />
+                <TextInput value={waist} onChangeText={setWaist} placeholder="Waist (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-waist" />
+              </View>
+              <View style={styles.row}>
+                <TextInput value={hips} onChangeText={setHips} placeholder="Hips (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hips" />
+                <TextInput value={bust} onChangeText={setBust} placeholder="Bust (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-bust" />
+              </View>
+              <View style={styles.row}>
+                <TextInput value={chest} onChangeText={setChest} placeholder="Chest (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-chest" />
+                <TextInput value={shoeSize} onChangeText={setShoeSize} placeholder="Shoe size" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-shoe" />
+              </View>
+              <View style={styles.row}>
+                <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hair" />
+                <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-eye" />
+              </View>
             </View>
-            <View style={styles.row}>
-              <TextInput value={hips} onChangeText={setHips} placeholder="Hips" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hips" />
-              <TextInput value={bust} onChangeText={setBust} placeholder="Bust" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-bust" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={chest} onChangeText={setChest} placeholder="Chest" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-chest" />
-              <TextInput value={shoeSize} onChangeText={setShoeSize} placeholder="Shoe size" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-shoe" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hair" />
-              <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-eye" />
-            </View>
-          </View>
+          </>
         )}
 
-        <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
+        <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onContinue}>
           <Text style={styles.primaryBtnText}>Continue</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -538,4 +578,7 @@ const styles = StyleSheet.create({
   profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
+  backButton: { paddingVertical: 8, paddingHorizontal: 12, alignSelf: "flex-start", marginBottom: 8 },
+  backButtonText: { color: "#E5E7EB", fontSize: 16, fontWeight: "600" as const },
+  helpText: { color: "#9CA3AF", fontSize: 13, marginBottom: 8 },
 });
