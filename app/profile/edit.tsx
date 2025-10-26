@@ -239,43 +239,46 @@ export default function EditProfileScreen() {
     const path = `${folder}/${fileName}`;
 
     let blob: Blob | null = null;
+    const mime = (asset as any).mimeType ?? "image/jpeg";
 
     try {
-      if (Platform.OS === "web") {
-        console.log("[upload] Web: fetching blob from uri", uri);
-        const response = await fetch(uri);
-        blob = await response.blob();
-      } else if (asset.base64 && asset.base64.length > 0) {
-        const mime = (asset as any).mimeType ?? "image/jpeg";
+      if (asset.base64 && asset.base64.length > 0) {
+        console.log("[upload] Using base64 data");
         const dataUrl = `data:${mime};base64,${asset.base64}`;
-        console.log("[upload] Native: creating blob from base64 data URL");
         const response = await fetch(dataUrl);
-        blob = await response.blob();
-      } else {
-        console.log("[upload] Native: fetching blob from file uri", uri);
-        const response = await fetch(uri);
-        blob = await response.blob();
+        if (response.blob) {
+          blob = await response.blob();
+        }
       }
-    } catch (err) {
-      console.warn("[upload] Primary blob creation failed, attempting FileSystem fallback", err);
-      try {
+
+      if (!blob) {
+        console.log("[upload] Attempting FileSystem fallback");
         const FileSystem = await import("expo-file-system");
         const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
-        const mime = (asset as any).mimeType ?? "image/jpeg";
         const dataUrl = `data:${mime};base64,${base64}`;
         const response = await fetch(dataUrl);
-        blob = await response.blob();
-      } catch (e) {
-        console.error("[upload] Fallback blob creation failed", e);
-        throw new Error("Could not read selected image. Please try a different photo.");
+        if (response.blob) {
+          blob = await response.blob();
+        } else {
+          console.warn("[upload] Response doesn't have blob method, converting manually");
+          const binaryString = atob(base64);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          blob = new Blob([bytes], { type: mime });
+        }
       }
+    } catch (err) {
+      console.error("[upload] All blob creation methods failed", err);
+      throw new Error(`Could not read selected image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
 
     if (!blob) {
       throw new Error("Failed to create blob from image. Please try a different photo.");
     }
 
-    const contentType = (asset as any).mimeType ?? blob.type ?? "image/jpeg";
+    const contentType = mime ?? blob.type ?? "image/jpeg";
     console.log("[upload] Uploading to Supabase Storage", { bucket: "model-photos", path, contentType, size: blob.size });
     const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
       cacheControl: "3600",
