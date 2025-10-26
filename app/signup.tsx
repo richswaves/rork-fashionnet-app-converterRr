@@ -137,6 +137,7 @@ export default function SignupScreen() {
   const { updateProfileAsync } = useProfile();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
@@ -235,10 +236,10 @@ export default function SignupScreen() {
   }, [displayName, profilePictureUri, socialLink]);
 
   const canSubmit = useMemo(() => {
-    const baseValid = email.trim().length > 3 && password.trim().length >= 6 && phoneNumber.trim().length >= 10;
+    const baseValid = email.trim().length > 3 && password.trim().length >= 6 && password === confirmPassword && phoneNumber.trim().length >= 10;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
     return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete;
-  }, [email, password, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete]);
+  }, [email, password, confirmPassword, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete]);
 
   async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
     const supabase = getSupabase();
@@ -440,6 +441,18 @@ export default function SignupScreen() {
             onChangeText={setPassword}
             style={styles.input}
           />
+          <TextInput
+            testID="signup-confirm-password"
+            placeholder="Confirm Password"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            style={[styles.input, confirmPassword.length > 0 && password !== confirmPassword && styles.inputError]}
+          />
+          {confirmPassword.length > 0 && password !== confirmPassword && (
+            <Text style={styles.errorText}>Passwords do not match</Text>
+          )}
           <View style={styles.row}>
             <TouchableOpacity
               testID="signup-dob"
@@ -753,5 +766,6 @@ const styles = StyleSheet.create({
   socialLinkPlaceholder: { color: "#9CA3AF" },
   pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
-
+  inputError: { borderColor: "#EF4444", borderWidth: 2 },
+  errorText: { color: "#EF4444", fontSize: 12, marginTop: -8, marginLeft: 4 },
 });
