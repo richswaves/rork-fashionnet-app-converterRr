@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Ban, Flag } from "lucide-react-native";
@@ -894,48 +894,59 @@ export default function UserProfileScreen() {
           setReportReason("");
         }}
       >
-        <View style={styles.reportModalOverlay}>
-          <View style={styles.reportModalContent}>
-            <Text style={styles.reportModalTitle}>Report User</Text>
-            <Text style={styles.reportModalSubtitle}>Please tell us why you&apos;re reporting this account</Text>
-            <TextInput
-              style={styles.reportInput}
-              placeholder="Reason for reporting..."
-              placeholderTextColor="#6B7280"
-              value={reportReason}
-              onChangeText={setReportReason}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-            <View style={styles.reportModalActions}>
-              <TouchableOpacity
-                style={[styles.reportModalButton, styles.reportModalButtonCancel]}
-                onPress={() => {
-                  setReportModalVisible(false);
-                  setReportReason("");
-                }}
-              >
-                <Text style={styles.reportModalButtonTextCancel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.reportModalButton, styles.reportModalButtonSubmit]}
-                onPress={() => {
-                  if (!reportReason || reportReason.trim().length === 0) {
-                    Alert.alert("Error", "Please provide a reason for reporting");
-                    return;
-                  }
-                  reportMutation.mutate(reportReason);
-                }}
-                disabled={reportMutation.isPending}
-              >
-                <Text style={styles.reportModalButtonTextSubmit}>
-                  {reportMutation.isPending ? "Submitting..." : "Submit Report"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            style={styles.reportModalOverlay}
+            onPress={() => {
+              setReportModalVisible(false);
+              setReportReason("");
+            }}
+          >
+            <Pressable style={styles.reportModalContent} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.reportModalTitle}>Report User</Text>
+              <Text style={styles.reportModalSubtitle}>Please tell us why you&apos;re reporting this account</Text>
+              <TextInput
+                style={styles.reportInput}
+                placeholder="Reason for reporting..."
+                placeholderTextColor="#6B7280"
+                value={reportReason}
+                onChangeText={setReportReason}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+              <View style={styles.reportModalActions}>
+                <TouchableOpacity
+                  style={[styles.reportModalButton, styles.reportModalButtonCancel]}
+                  onPress={() => {
+                    setReportModalVisible(false);
+                    setReportReason("");
+                  }}
+                >
+                  <Text style={styles.reportModalButtonTextCancel}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.reportModalButton, styles.reportModalButtonSubmit]}
+                  onPress={() => {
+                    if (!reportReason || reportReason.trim().length === 0) {
+                      Alert.alert("Error", "Please provide a reason for reporting");
+                      return;
+                    }
+                    reportMutation.mutate(reportReason);
+                  }}
+                  disabled={reportMutation.isPending}
+                >
+                  <Text style={styles.reportModalButtonTextSubmit}>
+                    {reportMutation.isPending ? "Submitting..." : "Submit Report"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
