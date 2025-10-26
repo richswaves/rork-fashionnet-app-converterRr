@@ -80,7 +80,89 @@ export default function LoginScreen() {
   }, [displayedText, isDeleting, wordIndex, showLoginForm, isFocused]);
 
   const handleAppleLogin = async () => {
-    Alert.alert("Coming Soon", "Apple sign-in will be available soon.");
+    const supabase = getSupabase();
+    if (!supabase) {
+      Alert.alert("Error", "Supabase is not configured.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      if (Platform.OS === 'web') {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
+          },
+        });
+        if (error) throw error;
+      } else {
+        const redirectTo = Linking.createURL("/");
+        console.log('Apple Redirect URL:', redirectTo);
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo,
+            skipBrowserRedirect: true,
+          },
+        });
+        if (error) throw error;
+        if (!data?.url) throw new Error('No OAuth URL returned');
+        console.log('Opening Apple OAuth URL:', data.url);
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo, { showInRecents: true });
+        console.log('Apple OAuth result:', result);
+        if (result.type === 'success') {
+          const url = result.url || '';
+          const parsed = Linking.parse(url);
+          const qp = parsed.queryParams as Record<string, string | undefined> | undefined;
+          const hash = url.includes('#') ? url.split('#')[1] : undefined;
+          const hashParams = (() => {
+            if (!hash) return {} as Record<string, string>;
+            return Object.fromEntries(hash.split('&').map(p => {
+              const [k, v] = p.split('=');
+              return [decodeURIComponent(k ?? ''), decodeURIComponent(v ?? '')];
+            }));
+          })();
+          const code = (qp?.code as string | undefined) ?? (hashParams['code'] as string | undefined);
+          const accessToken = (qp?.access_token as string | undefined) ?? (hashParams['access_token'] as string | undefined);
+          const refreshToken = (qp?.refresh_token as string | undefined) ?? (hashParams['refresh_token'] as string | undefined);
+
+          try {
+            if (code) {
+              console.log('Exchanging Apple code for session');
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              if (exchangeError) throw exchangeError;
+            } else if (accessToken) {
+              console.log('Setting Apple session from tokens');
+              const { error: sessionError } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              });
+              if (sessionError) throw sessionError;
+            } else {
+              throw new Error('Missing auth code and access token in redirect URL');
+            }
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              router.replace('/' as any);
+            } else {
+              throw new Error('No user after Apple sign-in');
+            }
+          } catch (e) {
+            console.error('Post-Apple OAuth session handling failed', e);
+            Alert.alert('Sign-in error', 'We could not complete Apple sign-in. Please try again.');
+          }
+        } else if (result.type === 'cancel') {
+          console.log('User cancelled Apple OAuth');
+        }
+      }
+    } catch (error: any) {
+      console.error('Apple login error:', error);
+      const msg = typeof error?.message === 'string' ? error.message : 'We could not start Apple sign-in.';
+      Alert.alert('Apple Sign-in Failed', msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
