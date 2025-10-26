@@ -238,7 +238,7 @@ export default function EditProfileScreen() {
     const fileName = /\.[a-zA-Z0-9]+$/.test(rawName) ? rawName : `${rawName}.${extFromType}`;
     const path = `${folder}/${fileName}`;
 
-    let blob: Blob;
+    let blob: Blob | null = null;
 
     try {
       if (Platform.OS === "web") {
@@ -269,6 +269,10 @@ export default function EditProfileScreen() {
         console.error("[upload] Fallback blob creation failed", e);
         throw new Error("Could not read selected image. Please try a different photo.");
       }
+    }
+
+    if (!blob) {
+      throw new Error("Failed to create blob from image. Please try a different photo.");
     }
 
     const contentType = (asset as any).mimeType ?? blob.type ?? "image/jpeg";
