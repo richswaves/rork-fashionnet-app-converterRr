@@ -837,5 +837,5 @@ const styles = StyleSheet.create({
   socialLinkPlaceholder: { color: "#9CA3AF" },
   pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
-  notifRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, maxWidth: "100%" },
+  notifRow: { flexDirection: "row", alignItems: "center", gap: 10, maxWidth: "100%" },
 });
