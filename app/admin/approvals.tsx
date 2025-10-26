@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Image } from "react-native";
-import { Shield } from "lucide-react-native";
+import { Shield, Instagram, Youtube } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -8,6 +8,13 @@ import { sbSelect, sbUpdate, getPublicUrl } from "@/integrations/supabase/client
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc";
 import GrainTexture from "@/components/GrainTexture";
+
+interface SocialLinks {
+  instagram?: string;
+  youtube?: string;
+  twitter?: string;
+  tiktok?: string;
+}
 
 interface AdminUser {
   user_id: string;
@@ -21,6 +28,7 @@ interface AdminUser {
   account_status?: string;
   created_at?: string;
   email?: string;
+  social_links?: SocialLinks | null;
 }
 
 interface OnboardingResponse {
@@ -335,6 +343,78 @@ export default function AdminApprovalsScreen() {
                   </View>
                 )}
 
+                {p.social_links && (Object.keys(p.social_links).length > 0) && (
+                  <View style={styles.socialLinksSection}>
+                    <Text style={styles.socialLinksLabel}>Social Links</Text>
+                    <View style={styles.socialLinksRow}>
+                      {p.social_links.instagram && (
+                        <TouchableOpacity 
+                          style={styles.socialLinkBtn}
+                          onPress={() => {
+                            const url = p.social_links?.instagram?.startsWith('http') 
+                              ? p.social_links.instagram 
+                              : `https://instagram.com/${p.social_links?.instagram}`;
+                            console.log('[Social] Opening Instagram:', url);
+                          }}
+                        >
+                          <Instagram size={16} color="#C13584" />
+                          <Text style={styles.socialLinkText} numberOfLines={1}>
+                            {p.social_links.instagram}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {p.social_links.youtube && (
+                        <TouchableOpacity 
+                          style={styles.socialLinkBtn}
+                          onPress={() => {
+                            const url = p.social_links?.youtube?.startsWith('http') 
+                              ? p.social_links.youtube 
+                              : `https://youtube.com/${p.social_links?.youtube}`;
+                            console.log('[Social] Opening YouTube:', url);
+                          }}
+                        >
+                          <Youtube size={16} color="#FF0000" />
+                          <Text style={styles.socialLinkText} numberOfLines={1}>
+                            {p.social_links.youtube}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {p.social_links.twitter && (
+                        <TouchableOpacity 
+                          style={styles.socialLinkBtn}
+                          onPress={() => {
+                            const url = p.social_links?.twitter?.startsWith('http') 
+                              ? p.social_links.twitter 
+                              : `https://twitter.com/${p.social_links?.twitter}`;
+                            console.log('[Social] Opening Twitter:', url);
+                          }}
+                        >
+                          <Text style={styles.socialIcon}>𝕏</Text>
+                          <Text style={styles.socialLinkText} numberOfLines={1}>
+                            {p.social_links.twitter}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {p.social_links.tiktok && (
+                        <TouchableOpacity 
+                          style={styles.socialLinkBtn}
+                          onPress={() => {
+                            const url = p.social_links?.tiktok?.startsWith('http') 
+                              ? p.social_links.tiktok 
+                              : `https://tiktok.com/@${p.social_links?.tiktok}`;
+                            console.log('[Social] Opening TikTok:', url);
+                          }}
+                        >
+                          <Text style={styles.socialIcon}>♪</Text>
+                          <Text style={styles.socialLinkText} numberOfLines={1}>
+                            {p.social_links.tiktok}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                )}
+
                 {responses.length > 0 && (
                   <View style={styles.responsesSection}>
                     <Text style={styles.responsesLabel}>Onboarding Responses ({responses.length})</Text>
@@ -458,4 +538,21 @@ const styles = StyleSheet.create({
   rejectButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
   adminButton: { backgroundColor: "#8B5CF6" },
   adminButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
+  socialLinksSection: { gap: 8, marginTop: 4 },
+  socialLinksLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const, marginBottom: 4 },
+  socialLinksRow: { flexDirection: "row", flexWrap: "wrap" as const, gap: 8 },
+  socialLinkBtn: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 6, 
+    backgroundColor: "rgba(20, 20, 20, 0.85)", 
+    paddingVertical: 8, 
+    paddingHorizontal: 12, 
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#404040",
+    maxWidth: "48%",
+  },
+  socialLinkText: { color: "#D1D5DB", fontSize: 13, fontWeight: "500" as const, flex: 1 },
+  socialIcon: { color: "#D1D5DB", fontSize: 16, fontWeight: "700" as const },
 });
