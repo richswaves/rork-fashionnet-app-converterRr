@@ -104,7 +104,8 @@ export default function LoginScreen() {
         });
         if (error) throw error;
       } else {
-        const redirectTo = Linking.createURL("/signup");
+        const redirectTo = Linking.createURL("/");
+        console.log('Redirect URL:', redirectTo);
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
