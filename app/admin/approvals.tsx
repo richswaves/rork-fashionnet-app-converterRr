@@ -295,7 +295,13 @@ export default function AdminApprovalsScreen() {
               <View key={p.user_id} style={styles.applicationCard}>
                 <View style={styles.applicationHeader}>
                   <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{p.full_name || p.username || "User"}</Text>
+                    <Text style={styles.userName}>
+                      {p.full_name && p.full_name.trim() && !p.full_name.startsWith("User_") 
+                        ? p.full_name 
+                        : p.username && !p.username.startsWith("User_") 
+                          ? p.username
+                          : "No display name set"}
+                    </Text>
                     <Text style={styles.userMeta}>
                       {(() => {
                         const meta = getUserMetaData(p.user_id);
