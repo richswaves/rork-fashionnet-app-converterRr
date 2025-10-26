@@ -41,6 +41,8 @@ export default function EditProfileScreen() {
     | "twitter"
     | "tiktok"
     | "phone"
+    | "email"
+    | "password"
   >(null);
   const [temp, setTemp] = useState<string>("");
   const [socialLinks, setSocialLinks] = useState<{
@@ -50,6 +52,8 @@ export default function EditProfileScreen() {
     tiktok?: string;
   }>((profile as any)?.social_links ?? {});
   const [phoneNumber, setPhoneNumber] = useState<string>((profile as any)?.phone_number ?? "");
+  const [email, setEmail] = useState<string>(session?.user?.email ?? "");
+  const [password, setPassword] = useState<string>("");
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -175,6 +179,12 @@ export default function EditProfileScreen() {
         break;
       case "phone":
         setTemp(phoneNumber);
+        break;
+      case "email":
+        setTemp(email);
+        break;
+      case "password":
+        setTemp("");
         break;
       default:
         setTemp("");
@@ -314,6 +324,8 @@ export default function EditProfileScreen() {
     if (editing === "twitter") setSocialLinks(prev => ({ ...prev, twitter: val }));
     if (editing === "tiktok") setSocialLinks(prev => ({ ...prev, tiktok: val }));
     if (editing === "phone") setPhoneNumber(val);
+    if (editing === "email") setEmail(val);
+    if (editing === "password") setPassword(val);
     setEditing(null);
   }
 
@@ -385,6 +397,25 @@ export default function EditProfileScreen() {
       if (phoneNumber !== ((profile as any)?.phone_number ?? "")) {
         (updates as any).phone_number = phoneNumber;
         console.log("[onSave] Adding phone_number to updates:", phoneNumber);
+      }
+
+      const supabase = getSupabase();
+      if (email !== (session?.user?.email ?? "") && supabase) {
+        console.log("[onSave] Updating email in auth");
+        const { error: emailError } = await supabase.auth.updateUser({ email });
+        if (emailError) {
+          console.error("[onSave] Email update failed:", emailError);
+          throw new Error(`Failed to update email: ${emailError.message}`);
+        }
+      }
+
+      if (password.trim().length > 0 && supabase) {
+        console.log("[onSave] Updating password in auth");
+        const { error: passwordError } = await supabase.auth.updateUser({ password });
+        if (passwordError) {
+          console.error("[onSave] Password update failed:", passwordError);
+          throw new Error(`Failed to update password: ${passwordError.message}`);
+        }
       }
 
       if (Object.keys(updates).length === 0) {
@@ -580,17 +611,30 @@ export default function EditProfileScreen() {
         <View style={styles.dangerZone}>
           <Text style={styles.dangerZoneTitle}>Account Information</Text>
           <View style={styles.infoSection}>
-            <View style={styles.infoRow}>
+            <Pressable style={styles.infoRow} onPress={() => openEditor("email")} testID="edit-email">
               <Text style={styles.infoLabel}>Email:</Text>
-              <Text style={styles.infoValue}>{session?.user?.email ?? "N/A"}</Text>
-            </View>
-            <View style={styles.infoRow}>
+              <View style={styles.infoValueRow}>
+                <Text style={styles.infoValue}>{email || "N/A"}</Text>
+                <Pencil color="#9CA3AF" size={14} />
+              </View>
+            </Pressable>
+            <Pressable style={styles.infoRow} onPress={() => openEditor("password")} testID="edit-password">
+              <Text style={styles.infoLabel}>Password:</Text>
+              <View style={styles.infoValueRow}>
+                <Text style={styles.infoValue}>••••••••</Text>
+                <Pencil color="#9CA3AF" size={14} />
+              </View>
+            </Pressable>
+            <Pressable style={styles.infoRow} onPress={() => openEditor("phone")} testID="edit-phone">
               <Text style={styles.infoLabel}>Phone:</Text>
-              <Text style={styles.infoValue}>{phoneNumber || "Not set"}</Text>
-            </View>
-            <View style={styles.infoRow}>
+              <View style={styles.infoValueRow}>
+                <Text style={styles.infoValue}>{phoneNumber || "Not set"}</Text>
+                <Pencil color="#9CA3AF" size={14} />
+              </View>
+            </Pressable>
+            <View style={[styles.infoRow, styles.infoRowNonEditable]}>
               <Text style={styles.infoLabel}>User ID:</Text>
-              <Text style={styles.infoValue}>{currentUserId ?? "N/A"}</Text>
+              <Text style={[styles.infoValue, styles.infoValueNonEditable]}>{currentUserId ?? "N/A"}</Text>
             </View>
           </View>
           {isAdmin && (
@@ -650,18 +694,31 @@ export default function EditProfileScreen() {
               {editing === "twitter" && "Twitter link"}
               {editing === "tiktok" && "TikTok link"}
               {editing === "phone" && "Phone number"}
+              {editing === "email" && "Email address"}
+              {editing === "password" && "New password"}
             </Text>
             <TextInput
               value={temp}
               onChangeText={setTemp}
-              placeholder={editing === "bio" ? "About you" : editing === "phone" ? "+1 (555) 123-4567" : "https://"}
+              placeholder={
+                editing === "bio" ? "About you" : 
+                editing === "phone" ? "+1 (555) 123-4567" : 
+                editing === "email" ? "email@example.com" :
+                editing === "password" ? "Enter new password" :
+                "https://"
+              }
               placeholderTextColor="#6B7280"
               style={[styles.input, styles.modalInput, editing === "bio" ? styles.multiline : undefined]}
-              autoCapitalize="none"
+              autoCapitalize={editing === "email" || editing === "password" ? "none" : "sentences"}
               multiline={editing === "bio"}
               numberOfLines={editing === "bio" ? 4 : 1}
               maxLength={editing === "bio" ? 200 : 200}
-              keyboardType={editing === "phone" ? "phone-pad" : "default"}
+              keyboardType={
+                editing === "phone" ? "phone-pad" : 
+                editing === "email" ? "email-address" : 
+                "default"
+              }
+              secureTextEntry={editing === "password"}
             />
             <View style={styles.modalActions}>
               <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
@@ -843,6 +900,18 @@ const styles = StyleSheet.create({
     color: "#E5E7EB",
     fontSize: 14,
     fontWeight: "600",
+  },
+  infoValueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+    justifyContent: "flex-end" as const,
+  },
+  infoRowNonEditable: {
+    opacity: 0.6,
+  },
+  infoValueNonEditable: {
     flex: 1,
     textAlign: "right" as const,
   },
