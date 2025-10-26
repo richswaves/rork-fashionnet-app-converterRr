@@ -6,7 +6,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { trpc, trpcClient } from "@/lib/trpc";
-import { setRuntimeSupabaseEnv } from "@/integrations/supabase/client";
+import { getSupabase, setRuntimeSupabaseEnv } from "@/integrations/supabase/client";
 
 const envUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const envAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -50,6 +50,19 @@ function RootLayoutNav() {
 export default function RootLayout() {
   useEffect(() => {
     SplashScreen.hideAsync();
+
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        console.log('User signed in via OAuth:', session.user.email);
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   return (
