@@ -246,9 +246,7 @@ export default function EditProfileScreen() {
         console.log("[upload] Using base64 data");
         const dataUrl = `data:${mime};base64,${asset.base64}`;
         const response = await fetch(dataUrl);
-        if (response.blob) {
-          blob = await response.blob();
-        }
+        blob = await response.blob();
       }
 
       if (!blob) {
@@ -257,17 +255,7 @@ export default function EditProfileScreen() {
         const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
         const dataUrl = `data:${mime};base64,${base64}`;
         const response = await fetch(dataUrl);
-        if (response.blob) {
-          blob = await response.blob();
-        } else {
-          console.warn("[upload] Response doesn't have blob method, converting manually");
-          const binaryString = atob(base64);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          blob = new Blob([bytes], { type: mime });
-        }
+        blob = await response.blob();
       }
     } catch (err) {
       console.error("[upload] All blob creation methods failed", err);
