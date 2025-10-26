@@ -91,23 +91,66 @@ export default function LoginScreen() {
     }
     setIsLoading(true);
     try {
-      WebBrowser.maybeCompleteAuthSession?.();
-      const redirectTo = Platform.select<string | undefined>({
-        web: typeof window !== "undefined" ? `${window.location.origin}/signup` : undefined,
-        default: Linking.createURL("/signup") ?? undefined,
-      });
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { 
+      if (Platform.OS === 'web') {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/signup` : undefined,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+          },
+        });
+        if (error) throw error;
+      } else {
+        const redirectTo = Linking.createURL("/signup");
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+            skipBrowserRedirect: true,
+          },
+        });
+        if (error) throw error;
+        if (!data?.url) {
+          throw new Error("No OAuth URL returned");
+        }
+        console.log('Opening OAuth URL:', data.url);
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
           redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
+          { showInRecents: true }
+        );
+        console.log('OAuth result:', result);
+        if (result.type === 'success') {
+          const url = result.url;
+          const parsedUrl = Linking.parse(url);
+          const accessToken = parsedUrl.queryParams?.access_token as string | undefined;
+          const refreshToken = parsedUrl.queryParams?.refresh_token as string | undefined;
+          if (accessToken) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+            if (sessionError) throw sessionError;
+            console.log('Google OAuth session set successfully');
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              router.replace("/" as any);
+            }
+          } else {
+            throw new Error("No access token in redirect");
           }
-        },
-      });
-      if (error) throw error;
-      console.log('Google OAuth initiated:', data);
+        } else if (result.type === 'cancel') {
+          console.log('User cancelled OAuth');
+        }
+      }
     } catch (error: any) {
       console.error("Google login error:", error);
       const msg = typeof error?.message === "string" ? error.message : "We couldn't start Google sign-in.";
