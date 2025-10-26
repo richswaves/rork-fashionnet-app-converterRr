@@ -328,7 +328,8 @@ export default function ProfileSetup() {
   }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
   const isStep1Valid = userType && role && displayName.trim() && profilePictureUri;
-  const isContinueEnabled = currentStep === 2 ? true : isStep1Valid;
+  const hasAnsweredQuestions = Object.keys(answers).length > 0;
+  const isContinueEnabled = currentStep === 2 ? true : (isStep1Valid && (role === "model" || hasAnsweredQuestions));
   
   const onContinue = useCallback(() => {
     console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep, displayName: displayName.trim(), hasProfilePic: !!profilePictureUri });
