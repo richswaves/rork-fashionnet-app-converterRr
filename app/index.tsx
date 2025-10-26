@@ -18,7 +18,7 @@ export default function Index() {
       if (profile && profile.is_profile_updated === false) {
         return "/onboarding/profile-setup";
       }
-      return "/(tabs)/opportunities";
+      return "/(tabs)/network";
     })();
     const id = setTimeout(() => {
       try {

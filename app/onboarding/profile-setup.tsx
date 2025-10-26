@@ -318,7 +318,7 @@ export default function ProfileSetup() {
       if (profile?.account_status && profile.account_status !== "approved") {
         router.replace("/onboarding/pending-approval" as any);
       } else {
-        router.replace("/(tabs)/opportunities" as any);
+        router.replace("/(tabs)/network" as any);
       }
     } catch (e: any) {
       const msg = typeof e?.message === "string" ? e.message : "Could not save";
