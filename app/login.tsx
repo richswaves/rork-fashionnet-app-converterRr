@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
-  Image,
   TextInput,
   KeyboardAvoidingView,
   ScrollView,
@@ -35,6 +34,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const [isSendingReset, setIsSendingReset] = useState<boolean>(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -368,6 +368,45 @@ export default function LoginScreen() {
                 <Text style={styles.submitButtonText}>Log in</Text>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              testID="forgot-password"
+              style={styles.forgotButton}
+              onPress={async () => {
+                const supabase = getSupabase();
+                if (!supabase) {
+                  Alert.alert("Error", "Supabase is not configured.");
+                  return;
+                }
+                const trimmedEmail = email.trim().toLowerCase();
+                if (!trimmedEmail) {
+                  Alert.alert("Enter email", "Please enter your account email above first.");
+                  return;
+                }
+                try {
+                  setIsSendingReset(true);
+                  const redirectTo = Platform.select({
+                    web: typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined,
+                    default: Linking.createURL("/reset-password"),
+                  });
+                  const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, { redirectTo });
+                  if (error) throw error;
+                  Alert.alert("Check your email", "We sent a password reset link. Open it on this device to continue.");
+                } catch (e: any) {
+                  const msg = typeof e?.message === "string" ? e.message : "Failed to send reset email";
+                  Alert.alert("Error", msg);
+                } finally {
+                  setIsSendingReset(false);
+                }
+              }}
+              disabled={isSendingReset}
+            >
+              {isSendingReset ? (
+                <ActivityIndicator color="#9CA3AF" />
+              ) : (
+                <Text style={styles.forgotButtonText}>Forgot password?</Text>
+              )}
+            </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -385,39 +424,6 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.appleButton}
-            onPress={handleAppleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#000000" />
-            ) : (
-              <>
-                <Text style={styles.appleIcon}></Text>
-                <Text style={styles.appleButtonText}>Continue with Apple</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Image
-                  source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" }}
-                  style={styles.googleIcon}
-                />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.signUpButton}
             onPress={handleSignUp}
@@ -471,46 +477,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "100%",
     gap: 12,
-  },
-  appleButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  appleIcon: {
-    fontSize: 20,
-    color: "#000000",
-  },
-  appleButtonText: {
-    fontSize: 17,
-    fontWeight: "600" as const,
-    color: "#000000",
-  },
-  googleButton: {
-    backgroundColor: "rgba(40, 40, 40, 0.85)",
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "#404040",
-  },
-  googleIcon: {
-    width: 20,
-    height: 20,
-  },
-  googleButtonText: {
-    fontSize: 17,
-    fontWeight: "600" as const,
-    color: "#FFFFFF",
   },
   signUpButton: {
     backgroundColor: "rgba(40, 40, 40, 0.85)",
@@ -582,5 +548,15 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontSize: 17,
     fontWeight: "600" as const,
+  },
+  forgotButton: {
+    alignSelf: "center",
+    paddingVertical: 12,
+  },
+  forgotButtonText: {
+    color: "#9CA3AF",
+    fontSize: 15,
+    fontWeight: "600" as const,
+    textDecorationLine: "underline" as const,
   },
 });
