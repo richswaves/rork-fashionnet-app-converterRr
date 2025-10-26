@@ -15,7 +15,7 @@ import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, isUpdating, updateProfileAsync, resolvedProfile, logout } = useProfile();
+  const { profile, isUpdating, updateProfileAsync, resolvedProfile, logout, session } = useProfile();
 
   const [fullName, setFullName] = useState<string>(profile?.full_name ?? "");
   const [username, setUsername] = useState<string>(profile?.username ?? resolvedProfile.username ?? "");
@@ -578,7 +578,21 @@ export default function EditProfileScreen() {
         </View>
 
         <View style={styles.dangerZone}>
-          <Text style={styles.dangerZoneTitle}>Account</Text>
+          <Text style={styles.dangerZoneTitle}>Account Information</Text>
+          <View style={styles.infoSection}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Email:</Text>
+              <Text style={styles.infoValue}>{session?.user?.email ?? "N/A"}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Phone:</Text>
+              <Text style={styles.infoValue}>{phoneNumber || "Not set"}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>User ID:</Text>
+              <Text style={styles.infoValue}>{currentUserId ?? "N/A"}</Text>
+            </View>
+          </View>
           {isAdmin && (
             <Pressable
               onPress={() => router.push("/admin/approvals" as any)}
@@ -806,6 +820,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
     letterSpacing: 0.3,
+  },
+  infoSection: {
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  infoLabel: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  infoValue: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "right" as const,
   },
   contactSection: {
     marginTop: 24,
