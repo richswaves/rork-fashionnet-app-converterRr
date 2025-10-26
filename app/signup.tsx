@@ -162,6 +162,7 @@ export default function SignupScreen() {
   const [eyeColor, setEyeColor] = useState<string>("");
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1);
+  const [showingProfileInfo, setShowingProfileInfo] = useState<boolean>(false);
 
   const [displayName, setDisplayName] = useState<string>("");
   const [profilePictureUri, setProfilePictureUri] = useState<string>("");
@@ -578,7 +579,7 @@ export default function SignupScreen() {
           </View>
         )}
 
-        {!!role && currentQuestionIndex >= 0 && currentQuestionIndex < availableQuestions.length && (() => {
+        {!!role && currentQuestionIndex >= 0 && currentQuestionIndex < availableQuestions.length && !showingProfileInfo && (() => {
           const q = availableQuestions[currentQuestionIndex];
           return (
             <View style={styles.card}>
@@ -601,11 +602,21 @@ export default function SignupScreen() {
                   })}
                 </View>
               </View>
-              {isCurrentQuestionAnswered && currentQuestionIndex < availableQuestions.length - 1 && (
+              {isCurrentQuestionAnswered && (
                 <TouchableOpacity
                   testID="signup-continue"
                   style={styles.secondaryBtn}
-                  onPress={handleContinueQuestion}
+                  onPress={() => {
+                    if (currentQuestionIndex < availableQuestions.length - 1) {
+                      handleContinueQuestion();
+                    } else {
+                      if (role === "model") {
+                        handleContinueQuestion();
+                      } else {
+                        setShowingProfileInfo(true);
+                      }
+                    }
+                  }}
                 >
                   <Text style={styles.secondaryBtnText}>Continue</Text>
                 </TouchableOpacity>
@@ -614,7 +625,7 @@ export default function SignupScreen() {
           );
         })()}
 
-        {role === "model" && allQuestionsAnswered && (
+        {role === "model" && allQuestionsAnswered && currentQuestionIndex >= availableQuestions.length && !showingProfileInfo && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
             <View style={styles.row}>
@@ -633,10 +644,17 @@ export default function SignupScreen() {
               <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="signup-hair" />
               <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="signup-eye" />
             </View>
+            <TouchableOpacity
+              testID="signup-continue-profile"
+              style={styles.secondaryBtn}
+              onPress={() => setShowingProfileInfo(true)}
+            >
+              <Text style={styles.secondaryBtnText}>Continue</Text>
+            </TouchableOpacity>
           </View>
         )}
 
-        {allQuestionsAnswered && (
+        {showingProfileInfo && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Profile Information</Text>
             <Text style={styles.helperText}>Complete your profile to continue</Text>
@@ -703,7 +721,7 @@ export default function SignupScreen() {
           </View>
         )}
 
-        {canSubmit && (
+        {showingProfileInfo && canSubmit && (
           <TouchableOpacity
             testID="signup-submit"
             style={[styles.primaryBtn, { opacity: loading ? 0.6 : 1 }]}
