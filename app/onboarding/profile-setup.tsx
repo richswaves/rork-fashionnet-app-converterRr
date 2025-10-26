@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbInsert, sbUpsert } from "@/integrations/supabase/client";
+import { sbInsert } from "@/integrations/supabase/client";
 import GrainTexture from "@/components/GrainTexture";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
@@ -200,14 +200,27 @@ export default function ProfileSetup() {
     try {
       await recordEvent(3, "profile_details", "complete");
 
-      await updateProfileAsync({
+      const profileData: any = {
         full_name: fullName || undefined,
         username: username || undefined,
         location: location || undefined,
         bio: bio || undefined,
         profession: role,
         is_profile_updated: true,
-      } as any);
+      };
+
+      if (role === "model") {
+        profileData.height = height || undefined;
+        profileData.waist = waist || undefined;
+        profileData.hips = hips || undefined;
+        profileData.bust = bust || undefined;
+        profileData.chest = chest || undefined;
+        profileData.shoe_size = shoeSize || undefined;
+        profileData.hair_color = hairColor || undefined;
+        profileData.eye_color = eyeColor || undefined;
+      }
+
+      await updateProfileAsync(profileData);
 
       const qs = availableQuestions;
       for (const q of qs) {
@@ -224,27 +237,6 @@ export default function ProfileSetup() {
         }
       }
 
-      if (role === "model") {
-        try {
-          await sbUpsert("profiles", {
-            user_id: currentUserId,
-            profession: role,
-            is_profile_updated: true,
-            account_status: profile?.account_status ?? "pending",
-            height: height || undefined,
-            waist: waist || undefined,
-            hips: hips || undefined,
-            bust: bust || undefined,
-            chest: chest || undefined,
-            shoe_size: shoeSize || undefined,
-            hair_color: hairColor || undefined,
-            eye_color: eyeColor || undefined,
-          } as any, "user_id");
-        } catch (e) {
-          console.log("model details upsert failed", e);
-        }
-      }
-
       await recordEvent(4, "profile_setup_complete", "complete");
 
       if (profile?.account_status && profile.account_status !== "approved") {
@@ -256,7 +248,7 @@ export default function ProfileSetup() {
       const msg = typeof e?.message === "string" ? e.message : "Could not save";
       Alert.alert("Save failed", msg);
     }
-  }, [answers, availableQuestions, bio, currentUserId, fullName, height, location, profile?.account_status, recordEvent, role, router, updateProfileAsync, username, waist, hips, userType]);
+  }, [answers, availableQuestions, bio, bust, chest, currentUserId, eyeColor, fullName, hairColor, height, hips, location, profile?.account_status, recordEvent, role, router, shoeSize, updateProfileAsync, username, waist, userType]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
