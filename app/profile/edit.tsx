@@ -238,20 +238,23 @@ export default function EditProfileScreen() {
     const fileName = /\.[a-zA-Z0-9]+$/.test(rawName) ? rawName : `${rawName}.${extFromType}`;
     const path = `${folder}/${fileName}`;
 
-    let blob: Blob | null = null;
+    let blob: Blob;
 
     try {
       if (Platform.OS === "web") {
         console.log("[upload] Web: fetching blob from uri", uri);
-        blob = await (await fetch(uri)).blob();
+        const response = await fetch(uri);
+        blob = await response.blob();
       } else if (asset.base64 && asset.base64.length > 0) {
         const mime = (asset as any).mimeType ?? "image/jpeg";
         const dataUrl = `data:${mime};base64,${asset.base64}`;
         console.log("[upload] Native: creating blob from base64 data URL");
-        blob = await (await fetch(dataUrl)).blob();
+        const response = await fetch(dataUrl);
+        blob = await response.blob();
       } else {
         console.log("[upload] Native: fetching blob from file uri", uri);
-        blob = await (await fetch(uri)).blob();
+        const response = await fetch(uri);
+        blob = await response.blob();
       }
     } catch (err) {
       console.warn("[upload] Primary blob creation failed, attempting FileSystem fallback", err);
@@ -260,16 +263,17 @@ export default function EditProfileScreen() {
         const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
         const mime = (asset as any).mimeType ?? "image/jpeg";
         const dataUrl = `data:${mime};base64,${base64}`;
-        blob = await (await fetch(dataUrl)).blob();
+        const response = await fetch(dataUrl);
+        blob = await response.blob();
       } catch (e) {
         console.error("[upload] Fallback blob creation failed", e);
         throw new Error("Could not read selected image. Please try a different photo.");
       }
     }
 
-    const contentType = (asset as any).mimeType ?? (blob as any)?.type ?? "image/jpeg";
-    console.log("[upload] Uploading to Supabase Storage", { bucket: "model-photos", path, contentType, size: (blob as any)?.size });
-    const { error } = await supabase.storage.from("model-photos").upload(path, blob as any, {
+    const contentType = (asset as any).mimeType ?? blob.type ?? "image/jpeg";
+    console.log("[upload] Uploading to Supabase Storage", { bucket: "model-photos", path, contentType, size: blob.size });
+    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
       cacheControl: "3600",
       upsert: true,
       contentType,
