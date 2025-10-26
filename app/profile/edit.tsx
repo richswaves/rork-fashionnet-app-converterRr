@@ -43,6 +43,8 @@ export default function EditProfileScreen() {
     | "phone"
     | "email"
     | "password"
+    | "delete_confirm"
+    | "delete_reason"
   >(null);
   const [temp, setTemp] = useState<string>("");
   const [socialLinks, setSocialLinks] = useState<{
@@ -54,6 +56,8 @@ export default function EditProfileScreen() {
   const [phoneNumber, setPhoneNumber] = useState<string>((profile as any)?.phone_number ?? "");
   const [email, setEmail] = useState<string>(session?.user?.email ?? "");
   const [password, setPassword] = useState<string>("");
+  const [oldPassword, setOldPassword] = useState<string>("");
+  const [deleteReason, setDeleteReason] = useState<string>("");
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -184,6 +188,8 @@ export default function EditProfileScreen() {
         setTemp(email);
         break;
       case "password":
+        setOldPassword("");
+        setPassword("");
         setTemp("");
         break;
       default:
@@ -311,7 +317,7 @@ export default function EditProfileScreen() {
     }
   }
 
-  function applyEdit() {
+  async function applyEdit() {
     if (!editing) return;
     const val = temp.trim();
     if (editing === "name") setFullName(val);
@@ -325,7 +331,33 @@ export default function EditProfileScreen() {
     if (editing === "tiktok") setSocialLinks(prev => ({ ...prev, tiktok: val }));
     if (editing === "phone") setPhoneNumber(val);
     if (editing === "email") setEmail(val);
-    if (editing === "password") setPassword(val);
+    if (editing === "password") {
+      if (oldPassword.trim().length === 0) {
+        Alert.alert("Old Password Required", "Please enter your current password to change it.");
+        return;
+      }
+      if (val.length < 6) {
+        Alert.alert("Password Too Short", "Password must be at least 6 characters.");
+        return;
+      }
+      const supabase = getSupabase();
+      if (supabase) {
+        try {
+          const { error: verifyError } = await supabase.auth.signInWithPassword({
+            email: session?.user?.email ?? email,
+            password: oldPassword,
+          });
+          if (verifyError) {
+            Alert.alert("Incorrect Password", "The old password you entered is incorrect.");
+            return;
+          }
+          setPassword(val);
+        } catch (e) {
+          Alert.alert("Error", "Failed to verify old password.");
+          return;
+        }
+      }
+    }
     setEditing(null);
   }
 
@@ -411,11 +443,13 @@ export default function EditProfileScreen() {
 
       if (password.trim().length > 0 && supabase) {
         console.log("[onSave] Updating password in auth");
-        const { error: passwordError } = await supabase.auth.updateUser({ password });
+        const { error: passwordError } = await supabase.auth.updateUser({ password: password.trim() });
         if (passwordError) {
           console.error("[onSave] Password update failed:", passwordError);
           throw new Error(`Failed to update password: ${passwordError.message}`);
         }
+        setPassword("");
+        setOldPassword("");
       }
 
       if (Object.keys(updates).length === 0) {
@@ -648,6 +682,13 @@ export default function EditProfileScreen() {
             </Pressable>
           )}
           <Pressable 
+            onPress={() => setEditing("delete_confirm")}
+            style={styles.deleteBtn}
+            testID="btn-delete-account"
+          >
+            <Text style={styles.deleteText}>Delete Account</Text>
+          </Pressable>
+          <Pressable 
             onPress={async () => {
               if (Platform.OS === "web") {
                 if (confirm("Are you sure you want to log out?")) {
@@ -683,53 +724,159 @@ export default function EditProfileScreen() {
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              {editing === "name" && "Edit name"}
-              {editing === "location" && "Edit location"}
-              {editing === "bio" && "Edit bio"}
-              {editing === "avatar" && "Edit avatar URL"}
-              {editing === "banner" && "Edit cover image URL"}
-              {editing === "instagram" && "Instagram link"}
-              {editing === "youtube" && "YouTube link"}
-              {editing === "twitter" && "Twitter link"}
-              {editing === "tiktok" && "TikTok link"}
-              {editing === "phone" && "Phone number"}
-              {editing === "email" && "Email address"}
-              {editing === "password" && "New password"}
-            </Text>
-            <TextInput
-              value={temp}
-              onChangeText={setTemp}
-              placeholder={
-                editing === "bio" ? "About you" : 
-                editing === "phone" ? "+1 (555) 123-4567" : 
-                editing === "email" ? "email@example.com" :
-                editing === "password" ? "Enter new password" :
-                "https://"
-              }
-              placeholderTextColor="#6B7280"
-              style={[styles.input, styles.modalInput, editing === "bio" ? styles.multiline : undefined]}
-              autoCapitalize={editing === "email" || editing === "password" ? "none" : "sentences"}
-              multiline={editing === "bio"}
-              numberOfLines={editing === "bio" ? 4 : 1}
-              maxLength={editing === "bio" ? 200 : 200}
-              keyboardType={
-                editing === "phone" ? "phone-pad" : 
-                editing === "email" ? "email-address" : 
-                "default"
-              }
-              secureTextEntry={editing === "password"}
-            />
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
-                <X color="#E5E7EB" size={18} />
-                <Text style={styles.cancelText}>Close</Text>
-              </Pressable>
-              <Pressable onPress={applyEdit} style={styles.saveBtn}>
-                <Check color="#0B0B0F" size={16} />
-                <Text style={styles.saveText}>Apply</Text>
-              </Pressable>
-            </View>
+            {editing === "delete_confirm" ? (
+              <>
+                <Text style={styles.modalTitle}>Delete Account?</Text>
+                <Text style={styles.modalSubtitle}>Are you sure you want to delete your account? This action cannot be undone.</Text>
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
+                    <X color="#E5E7EB" size={18} />
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setEditing("delete_reason")} style={[styles.saveBtn, { backgroundColor: "#DC2626" }]}>
+                    <Text style={[styles.saveText, { color: "#FFF" }]}>Continue</Text>
+                  </Pressable>
+                </View>
+              </>
+            ) : editing === "delete_reason" ? (
+              <>
+                <Text style={styles.modalTitle}>Why are you leaving?</Text>
+                <Text style={styles.modalSubtitle}>Help us improve by sharing your reason</Text>
+                <View style={{ gap: 8, marginVertical: 12 }}>
+                  {[
+                    "Not finding relevant connections",
+                    "Privacy concerns",
+                    "Too many notifications",
+                    "Not using the app anymore",
+                    "Found another platform",
+                    "Just trying it out",
+                    "Other"
+                  ].map((reason) => (
+                    <Pressable
+                      key={reason}
+                      onPress={() => setDeleteReason(reason)}
+                      style={[
+                        styles.reasonOption,
+                        deleteReason === reason && styles.reasonOptionActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.reasonText,
+                        deleteReason === reason && styles.reasonTextActive
+                      ]}>{reason}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setEditing("delete_confirm")} style={styles.cancelBtn}>
+                    <X color="#E5E7EB" size={18} />
+                    <Text style={styles.cancelText}>Back</Text>
+                  </Pressable>
+                  <Pressable 
+                    onPress={async () => {
+                      if (!deleteReason) {
+                        Alert.alert("Please select a reason", "We'd appreciate knowing why you're leaving.");
+                        return;
+                      }
+                      try {
+                        const supabase = getSupabase();
+                        if (!supabase) throw new Error("Supabase not configured");
+                        
+                        await sbInsert("account_deletion_feedback", {
+                          user_id: currentUserId,
+                          reason: deleteReason,
+                          deleted_at: new Date().toISOString(),
+                        } as any);
+                        
+                        const { error } = await supabase.rpc("delete_user_account", { target_user_id: currentUserId });
+                        
+                        if (error) {
+                          console.error("[Delete] Account deletion failed:", error);
+                          Alert.alert("Error", "Failed to delete account. Please contact support.");
+                          return;
+                        }
+                        
+                        await logout();
+                        router.replace("/login");
+                        Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+                      } catch (e: any) {
+                        console.error("[Delete] Error:", e);
+                        Alert.alert("Error", e.message || "Failed to delete account");
+                      }
+                    }}
+                    style={[styles.saveBtn, { backgroundColor: "#DC2626" }]}
+                    disabled={!deleteReason}
+                  >
+                    <Text style={[styles.saveText, { color: "#FFF" }]}>Delete Account</Text>
+                  </Pressable>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.modalTitle}>
+                  {editing === "name" && "Edit name"}
+                  {editing === "location" && "Edit location"}
+                  {editing === "bio" && "Edit bio"}
+                  {editing === "avatar" && "Edit avatar URL"}
+                  {editing === "banner" && "Edit cover image URL"}
+                  {editing === "instagram" && "Instagram link"}
+                  {editing === "youtube" && "YouTube link"}
+                  {editing === "twitter" && "Twitter link"}
+                  {editing === "tiktok" && "TikTok link"}
+                  {editing === "phone" && "Phone number"}
+                  {editing === "email" && "Email address"}
+                  {editing === "password" && "Change password"}
+                </Text>
+                {editing === "password" && (
+                  <>
+                    <Text style={styles.fieldLabel}>Current Password</Text>
+                    <TextInput
+                      value={oldPassword}
+                      onChangeText={setOldPassword}
+                      placeholder="Enter your current password"
+                      placeholderTextColor="#6B7280"
+                      style={[styles.input, styles.modalInput]}
+                      autoCapitalize="none"
+                      secureTextEntry
+                    />
+                    <Text style={[styles.fieldLabel, { marginTop: 8 }]}>New Password</Text>
+                  </>
+                )}
+                <TextInput
+                  value={temp}
+                  onChangeText={setTemp}
+                  placeholder={
+                    editing === "bio" ? "About you" : 
+                    editing === "phone" ? "+1 (555) 123-4567" : 
+                    editing === "email" ? "email@example.com" :
+                    editing === "password" ? "Enter new password" :
+                    "https://"
+                  }
+                  placeholderTextColor="#6B7280"
+                  style={[styles.input, styles.modalInput, editing === "bio" ? styles.multiline : undefined]}
+                  autoCapitalize={editing === "email" || editing === "password" ? "none" : "sentences"}
+                  multiline={editing === "bio"}
+                  numberOfLines={editing === "bio" ? 4 : 1}
+                  maxLength={editing === "bio" ? 200 : 200}
+                  keyboardType={
+                    editing === "phone" ? "phone-pad" : 
+                    editing === "email" ? "email-address" : 
+                    "default"
+                  }
+                  secureTextEntry={editing === "password"}
+                />
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
+                    <X color="#E5E7EB" size={18} />
+                    <Text style={styles.cancelText}>Close</Text>
+                  </Pressable>
+                  <Pressable onPress={applyEdit} style={styles.saveBtn}>
+                    <Check color="#0B0B0F" size={16} />
+                    <Text style={styles.saveText}>Apply</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -914,6 +1061,53 @@ const styles = StyleSheet.create({
   infoValueNonEditable: {
     flex: 1,
     textAlign: "right" as const,
+  },
+  deleteBtn: {
+    backgroundColor: "#7C2D12",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  deleteText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.3,
+  },
+  modalSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  reasonOption: {
+    backgroundColor: "#14141C",
+    borderWidth: 1,
+    borderColor: "#23232B",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  reasonOptionActive: {
+    backgroundColor: "#E5E7EB",
+    borderColor: "#E5E7EB",
+  },
+  reasonText: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  reasonTextActive: {
+    color: "#0B0B0F",
+    fontWeight: "700",
+  },
+  fieldLabel: {
+    color: "#E5E7EB",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 6,
   },
   contactSection: {
     marginTop: 24,

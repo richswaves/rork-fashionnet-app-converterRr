@@ -39,6 +39,7 @@ interface Profile {
   tiktok_link?: string;
   twitter_link?: string;
   youtube_link?: string;
+  phone_number?: string;
 }
 
 export type ResolvedProfile = {
@@ -152,6 +153,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates.tiktok_link !== undefined ? { tiktok_link: updates.tiktok_link } : {}),
         ...(updates.twitter_link !== undefined ? { twitter_link: updates.twitter_link } : {}),
         ...(updates.youtube_link !== undefined ? { youtube_link: updates.youtube_link } : {}),
+        ...((updates as any).phone_number !== undefined ? { phone_number: (updates as any).phone_number } : {}),
       };
 
       console.log("[ProfileContext] Upserting profile payload:", payload);
