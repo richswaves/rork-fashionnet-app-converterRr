@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch, Platform, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch, Platform, Image, Keyboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
@@ -208,6 +208,7 @@ export default function SignupScreen() {
   }, [currentStep, totalSteps]);
 
   const toggleAnswer = useCallback((qid: string, option: string, multiple?: boolean) => {
+    Keyboard.dismiss();
     setAnswers((prev) => {
       const existing = prev[qid] ?? [];
       if (multiple) {
@@ -502,7 +503,10 @@ export default function SignupScreen() {
                     key={m}
                     testID={`signup-notif-${m}`}
                     style={[styles.pill, selected && styles.pillActive]}
-                    onPress={() => setNotifMethod(m)}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setNotifMethod(m);
+                    }}
                   >
                     <Text style={[styles.pillText, selected && styles.pillTextActive]}>
                       {m === "sms" ? "SMS" : "Instagram DMs"}
@@ -549,6 +553,7 @@ export default function SignupScreen() {
                 testID={`signup-type-${t}`}
                 style={[styles.pill, userType === t && styles.pillActive]}
                 onPress={() => {
+                  Keyboard.dismiss();
                   setUserType(t);
                   setRole(undefined);
                 }}
@@ -568,6 +573,7 @@ export default function SignupScreen() {
                   key={r}
                   style={[styles.roleItem, role === r && styles.roleItemActive]}
                   onPress={() => {
+                    Keyboard.dismiss();
                     setRole(r);
                     setCurrentQuestionIndex(0);
                   }}
@@ -607,6 +613,7 @@ export default function SignupScreen() {
                   testID="signup-continue"
                   style={styles.secondaryBtn}
                   onPress={() => {
+                    Keyboard.dismiss();
                     if (currentQuestionIndex < availableQuestions.length - 1) {
                       handleContinueQuestion();
                     } else {
@@ -647,7 +654,10 @@ export default function SignupScreen() {
             <TouchableOpacity
               testID="signup-continue-profile"
               style={styles.secondaryBtn}
-              onPress={() => setShowingProfileInfo(true)}
+              onPress={() => {
+                Keyboard.dismiss();
+                setShowingProfileInfo(true);
+              }}
             >
               <Text style={styles.secondaryBtnText}>Continue</Text>
             </TouchableOpacity>
