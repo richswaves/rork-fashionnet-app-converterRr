@@ -451,7 +451,7 @@ export default function OpportunitiesScreen() {
             <Bell color="#E5E7EB" size={20} />
           </Pressable>
           {isAdmin ? (
-            <Pressable onPress={() => router.push("/admin/approvals")} style={styles.iconBtn} testID="opp-top-admin">
+            <Pressable onPress={() => router.push("/admin")} style={styles.iconBtn} testID="opp-top-admin">
               <ShieldCheck color="#34D399" size={20} />
             </Pressable>
           ) : null}
