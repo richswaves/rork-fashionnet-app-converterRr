@@ -33,16 +33,19 @@ export default function AdminDashboard() {
     queryKey: ["admin", "users-stats"],
     enabled: !!isAdmin,
     queryFn: async () => {
-      const totalRows = await sbSelect<{ count: number }>("profiles", { select: "count(*)", limit: 1 });
       const supabase = getSupabase();
-      const { data, error } = await supabase!
+      const { count: total, error: totalError } = await supabase!
         .from("profiles")
-        .select("created_at", { count: "exact", head: true })
+        .select("*", { count: "exact", head: true });
+      if (totalError) console.log("users total error", totalError.message);
+      
+      const { count: recent7, error: recentError } = await supabase!
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
         .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-      if (error) console.log("users recent error", error.message);
-      const recent7 = (data as any) ?? 0;
-      const total = Number((totalRows as unknown as any)?.[0]?.count ?? 0);
-      return { total, recent7 };
+      if (recentError) console.log("users recent error", recentError.message);
+      
+      return { total: total ?? 0, recent7: recent7 ?? 0 };
     },
   });
 
@@ -50,16 +53,19 @@ export default function AdminDashboard() {
     queryKey: ["admin", "opps-stats"],
     enabled: !!isAdmin,
     queryFn: async () => {
-      const totalRows = await sbSelect<{ count: number }>("opportunities", { select: "count(*)", limit: 1 });
       const supabase = getSupabase();
-      const { data, error } = await supabase!
+      const { count: total, error: totalError } = await supabase!
         .from("opportunities")
-        .select("created_at", { count: "exact", head: true })
+        .select("*", { count: "exact", head: true });
+      if (totalError) console.log("opportunities total error", totalError.message);
+      
+      const { count: recent7, error: recentError } = await supabase!
+        .from("opportunities")
+        .select("*", { count: "exact", head: true })
         .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-      if (error) console.log("opps recent error", error.message);
-      const recent7 = (data as any) ?? 0;
-      const total = Number((totalRows as unknown as any)?.[0]?.count ?? 0);
-      return { total, recent7 };
+      if (recentError) console.log("opportunities recent error", recentError.message);
+      
+      return { total: total ?? 0, recent7: recent7 ?? 0 };
     },
   });
 
