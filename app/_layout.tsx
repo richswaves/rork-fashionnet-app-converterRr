@@ -41,6 +41,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding/profile-setup" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding/pending-approval" options={{ headerShown: false }} />
+      <Stack.Screen name="admin/approvals" options={{ headerShown: false }} />
       <Stack.Screen name="create-opportunity" options={{ presentation: "modal", headerShown: false }} />
     </Stack>
   );

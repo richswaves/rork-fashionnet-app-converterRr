@@ -149,6 +149,26 @@ export async function sbUpsert<T = unknown>(table: string, rows: T | T[], onConf
   return res.json();
 }
 
+export async function sbUpdate<T = unknown>(table: string, updates: Partial<T>, match: Record<string, string>) {
+  assertConfigured();
+  const { url } = getEnv();
+  const composed = new URL(`${url}/rest/v1/${table}`);
+  Object.entries(match).forEach(([k, v]) => composed.searchParams.set(k, v));
+  const headers = await getAuthHeaders("return=representation");
+  const res = await fetch(composed.toString(), {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Supabase update error", res.status, text);
+    const msg = text && text.length < 500 ? text : `Supabase error ${res.status}`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 export async function sbDelete(table: string, match: Record<string, string | number>) {
   assertConfigured();
   const { url } = getEnv();
