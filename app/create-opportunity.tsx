@@ -11,6 +11,7 @@ import {
   Image,
   Modal,
   FlatList,
+  Switch,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -1111,6 +1112,7 @@ export default function CreateOpportunityScreen() {
   const [showPreview, setShowPreview] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<{ city: string; state: string; display: string }[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [enableNotifications, setEnableNotifications] = useState(true);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -1449,6 +1451,17 @@ export default function CreateOpportunityScreen() {
             ))}
           </View>
         )}
+
+        <View style={styles.notificationRow}>
+          <Text style={styles.notificationLabel}>Enable post notifications</Text>
+          <Switch
+            value={enableNotifications}
+            onValueChange={setEnableNotifications}
+            trackColor={{ false: "#23232B", true: "#4CB963" }}
+            thumbColor={enableNotifications ? "#FFFFFF" : "#9CA3AF"}
+            testID="notification-switch"
+          />
+        </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
@@ -2067,5 +2080,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 0.3,
+  },
+  notificationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    maxWidth: "100%",
+  },
+  notificationLabel: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "700",
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 16,
   },
 });
