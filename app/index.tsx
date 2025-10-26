@@ -12,6 +12,9 @@ export default function Index() {
     if (isLoading || didNavigate.current) return;
     const target = (() => {
       if (!session) return "/login";
+      if (profile && profile.account_status === "suspended") {
+        return "/account-suspended";
+      }
       if (profile && profile.account_status === "approved") {
         return "/(tabs)/opportunities";
       }
