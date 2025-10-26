@@ -327,22 +327,33 @@ export default function ProfileSetup() {
     }
   }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
+  const isStep1Valid = userType && role && displayName.trim() && profilePictureUri;
+  
   const onContinue = useCallback(() => {
     if (!userType || !role) {
       Alert.alert("Missing info", "Choose your user type and role.");
       return;
     }
+    
+    if (role === "model" && currentStep === 1) {
+      if (!displayName.trim()) {
+        Alert.alert("Missing info", "Please enter your display name.");
+        return;
+      }
+      if (!profilePictureUri) {
+        Alert.alert("Missing info", "Please upload a profile picture.");
+        return;
+      }
+      setCurrentStep(2);
+      return;
+    }
+    
     if (!displayName.trim()) {
       Alert.alert("Missing info", "Please enter your display name.");
       return;
     }
     if (!profilePictureUri) {
       Alert.alert("Missing info", "Please upload a profile picture.");
-      return;
-    }
-    
-    if (role === "model" && currentStep === 1) {
-      setCurrentStep(2);
       return;
     }
     
@@ -543,8 +554,21 @@ export default function ProfileSetup() {
           </>
         )}
 
-        <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onContinue}>
-          <Text style={styles.primaryBtnText}>Continue</Text>
+        <TouchableOpacity 
+          testID="ps-save" 
+          style={[
+            styles.primaryBtn,
+            (currentStep === 1 && !isStep1Valid) && styles.primaryBtnDisabled
+          ]} 
+          onPress={onContinue}
+          disabled={currentStep === 1 && !isStep1Valid}
+        >
+          <Text style={[
+            styles.primaryBtnText,
+            (currentStep === 1 && !isStep1Valid) && styles.primaryBtnTextDisabled
+          ]}>
+            Continue
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -572,7 +596,9 @@ const styles = StyleSheet.create({
   inputHalf: { flex: 1 },
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
+  primaryBtnDisabled: { backgroundColor: "rgba(255, 255, 255, 0.2)", opacity: 0.5 },
   primaryBtnText: { color: "#111827", fontSize: 16, fontWeight: "700" as const },
+  primaryBtnTextDisabled: { color: "#6B7280" },
   fieldLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 6 },
   imagePickerBtn: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden" as const, marginBottom: 6 },
   profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
