@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sbSelect, sbUpdate, getSupabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc";
 import GrainTexture from "@/components/GrainTexture";
 
 interface AdminUser {
@@ -33,7 +34,7 @@ type StatusTab = "pending" | "approved" | "rejected";
 
 export default function AdminApprovalsScreen() {
   const router = useRouter();
-  const { profile, currentUserId } = useProfile();
+  const { currentUserId } = useProfile();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<StatusTab>("pending");
 
@@ -124,6 +125,17 @@ export default function AdminApprovalsScreen() {
     },
   });
 
+  const assignAdminMutation = trpc.admin.assignAdminRole.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
+      Alert.alert("Success", "Admin role assigned successfully");
+    },
+    onError: (error) => {
+      console.error("[Admin] Assign admin error:", error);
+      Alert.alert("Error", "Failed to assign admin role");
+    },
+  });
+
   const handleApprove = (userId: string, userName?: string) => {
     Alert.alert(
       "Approve Application",
@@ -142,6 +154,17 @@ export default function AdminApprovalsScreen() {
       [
         { text: "Cancel", style: "cancel" },
         { text: "Reject", onPress: () => rejectMutation.mutate(userId), style: "destructive" },
+      ]
+    );
+  };
+
+  const handleMakeAdmin = (userId: string, userName?: string) => {
+    Alert.alert(
+      "Make Admin",
+      `Grant admin access to ${userName || "this user"}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Make Admin", onPress: () => assignAdminMutation.mutate({ userId }), style: "default" },
       ]
     );
   };
@@ -239,24 +262,33 @@ export default function AdminApprovalsScreen() {
                   </View>
                 )}
 
-                {activeTab === "pending" && (
-                  <View style={styles.actionButtons}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.approveButton]}
-                      onPress={() => handleApprove(p.user_id, p.full_name || p.username)}
-                      disabled={approveMutation.isPending || rejectMutation.isPending}
-                    >
-                      <Text style={styles.approveButtonText}>Approve</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.rejectButton]}
-                      onPress={() => handleReject(p.user_id, p.full_name || p.username)}
-                      disabled={approveMutation.isPending || rejectMutation.isPending}
-                    >
-                      <Text style={styles.rejectButtonText}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <View style={styles.actionButtons}>
+                  {activeTab === "pending" && (
+                    <>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.approveButton]}
+                        onPress={() => handleApprove(p.user_id, p.full_name || p.username)}
+                        disabled={approveMutation.isPending || rejectMutation.isPending}
+                      >
+                        <Text style={styles.approveButtonText}>Approve</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.rejectButton]}
+                        onPress={() => handleReject(p.user_id, p.full_name || p.username)}
+                        disabled={approveMutation.isPending || rejectMutation.isPending}
+                      >
+                        <Text style={styles.rejectButtonText}>Reject</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.adminButton]}
+                    onPress={() => handleMakeAdmin(p.user_id, p.full_name || p.username)}
+                    disabled={assignAdminMutation.isPending}
+                  >
+                    <Text style={styles.adminButtonText}>Make Admin</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             );
           })
@@ -304,10 +336,12 @@ const styles = StyleSheet.create({
   responseItem: { gap: 2 },
   responseQuestion: { color: "#D1D5DB", fontSize: 13, fontWeight: "500" as const },
   responseAnswer: { color: "#9CA3AF", fontSize: 13, lineHeight: 18 },
-  actionButtons: { flexDirection: "row", gap: 12, marginTop: 4 },
-  actionButton: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
+  actionButtons: { flexDirection: "row", gap: 12, marginTop: 4, flexWrap: "wrap" as const },
+  actionButton: { flex: 1, minWidth: 100, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
   approveButton: { backgroundColor: "#10B981" },
   approveButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
   rejectButton: { backgroundColor: "#EF4444" },
   rejectButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
+  adminButton: { backgroundColor: "#8B5CF6" },
+  adminButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
 });
