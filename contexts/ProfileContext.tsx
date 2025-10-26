@@ -182,7 +182,9 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
 
     const cleanedEmail = String(email ?? "").trim().toLowerCase();
     const cleanedPassword = String(password ?? "").trim();
-    console.log("Attempting login for", cleanedEmail);
+    
+    console.log("[Login] Attempting login for:", cleanedEmail);
+    console.log("[Login] Email length:", cleanedEmail.length, "Password length:", cleanedPassword.length);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanedEmail,
@@ -190,13 +192,23 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     });
 
     if (error) {
+      console.error("[Login] Supabase auth error:", error);
+      console.error("[Login] Error details:", JSON.stringify(error, null, 2));
+      
       const msg = typeof error.message === "string" ? error.message : "Login failed";
+      
       if (msg.toLowerCase().includes("invalid login credentials")) {
-        throw new Error("Invalid login credentials");
+        throw new Error("Invalid email or password. Please check your credentials and try again.");
       }
-      throw error;
+      
+      if (msg.toLowerCase().includes("email not confirmed")) {
+        throw new Error("Please confirm your email address before logging in. Check your inbox for a confirmation link.");
+      }
+      
+      throw new Error(msg);
     }
 
+    console.log("[Login] Login successful for user:", data.user?.id);
     return data;
   }, []);
 
