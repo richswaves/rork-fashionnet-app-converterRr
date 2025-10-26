@@ -30,9 +30,9 @@ const sharedFollowerRanges = ["<1k", "1–5k", "5–25k", "25–100k", "100k+"];
 
 const roleQuestions: Record<string, ChoiceQuestion[]> = {
   model: [
-    { id: "shoot_types", prompt: "What types of shoots do you focus on?", options: ["Streetwear campaigns", "Editorial / magazine work", "Commercial / e-commerce", "Music / culture collaborations", "Social media"], multiple: true },
+    { id: "shoot_types", prompt: "What types of shoots do you focus on?", options: ["Streetwear campaigns", "Editorial / magazine work", "Commercial / e-commerce", "Music / culture collaborations"], multiple: true },
     { id: "showcase_where", prompt: "Where do you showcase most of your work?", options: ["Instagram", "TikTok", "Portfolio / website"], multiple: true },
-    { id: "connect_with", prompt: "Who are you most interested in connecting with?", options: ["Photographers", "Videographers", "Models", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "connect_with", prompt: "Who are you most interested in connecting with?", options: ["Photographers", "Creative directors", "Clothing brands / designers", "Stylists", "Content creators"], multiple: true },
     { id: "audience_size", prompt: "Roughly how many followers / audience reach do you have?", options: sharedFollowerRanges },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -40,7 +40,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   photographer: [
     { id: "primarily_shoot", prompt: "What do you primarily shoot?", options: ["Street/editorial fashion", "Sneakers / products", "Lifestyle / culture", "Artists / events"], multiple: true },
     { id: "aesthetic", prompt: "How would you describe your aesthetic?", options: ["Raw and street-focused", "Clean and luxury-inspired", "Experimental / artistic", "Documentary-style realism"], multiple: true },
-    { id: "connect_with", prompt: "Who would you like to connect with most?", options: ["Photographers", "Videographers", "Models", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "connect_with", prompt: "Who would you like to connect with most?", options: ["Models", "Designers / brands", "Videographers", "Content creators", "Stylists"], multiple: true },
     { id: "projects_per_month", prompt: "Average number of projects per month?", options: ["0–2", "3–5", "6–10", "10+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -48,7 +48,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   videographer: [
     { id: "video_work", prompt: "What type of video work do you create most often?", options: ["Fashion films", "Sneaker or brand promos", "Music x fashion collaborations", "Behind-the-scenes / culture docs"], multiple: true },
     { id: "approach", prompt: "What best describes your approach?", options: ["Cinematic and polished", "Raw handheld", "Fast-cut, short-form edits", "Artistic / experimental"], multiple: true },
-    { id: "prefer_collab", prompt: "Who do you prefer collaborating with?", options: ["Photographers", "Videographers", "Models", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "prefer_collab", prompt: "Who do you prefer collaborating with?", options: ["Photographers", "Clothing brands", "Models", "Creative directors", "Content creators"], multiple: true },
     { id: "monthly_output", prompt: "Average monthly content output?", options: ["<5 videos", "5–15 videos", "15–30 videos", "30+ videos"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -56,13 +56,13 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   content_creator: [
     { id: "content_kind", prompt: "What kind of content do you create most?", options: ["Styling / GRWM videos", "Fashion x lifestyle storytelling", "Brand collaborations", "Culture commentary"], multiple: true },
     { id: "audience_strongest", prompt: "Where is your audience strongest?", options: ["TikTok", "Instagram", "YouTube", "Multi-platform"] },
-    { id: "collab_with", prompt: "Who do you want to collaborate with here?", options: ["Photographers", "Videographers", "Models", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "collab_with", prompt: "Who do you want to collaborate with here?", options: ["Clothing brands", "Photographers / videographers", "Stylists", "Other creators", "Models"], multiple: true },
     { id: "follower_range", prompt: "Follower range / audience size?", options: ["<1k", "1–10k", "10–50k", "50–200k", "200k+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
   ],
   stylist: [
-    { id: "style_for", prompt: "Who you mostly style for", options: ["Editorial shoots", "Artists / music videos", "Personal clients", "Events / live culture moments", "Influencers"], multiple: true },
+    { id: "style_for", prompt: "You mainly style for…", options: ["Editorial shoots", "Artists / music videos", "Personal clients", "Events / live culture moments"], multiple: true },
     { id: "approach", prompt: "How would you describe your approach?", options: ["Streetwear layering", "Luxury streetwear", "Bold / experimental", "Archive + contemporary mix"], multiple: true },
     { id: "top_collaborators", prompt: "Who are your top collaborators?", options: ["Models", "Designers", "Photographers", "Brands", "Content creators"], multiple: true },
     { id: "projects_per_month", prompt: "Average projects styled per month?", options: ["0–2", "3–5", "6–10", "10+"] },
@@ -72,7 +72,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   designer: [
     { id: "design_focus", prompt: "Your design focus is…", options: ["Streetwear-focused", "Archive-inspired / vintage revivals", "Sustainable / upcycled", "Luxury street", "Experimental / avant-garde", "Minimalist / refined", "Gender-fluid / unisex"], multiple: true },
     { id: "release_where", prompt: "Where do you release?", options: ["Instagram drops", "TikTok previews", "Online shop / Shopify", "In-person pop-ups", "Wholesale / stockists"], multiple: true },
-    { id: "ideal_collaborators", prompt: "Who are your ideal collaborators?", options: ["Models", "Photographers", "Videographers", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "ideal_collaborators", prompt: "Who are your ideal collaborators?", options: ["Models", "Photographers", "Stylists", "Creative directors", "Other designers", "Brands"], multiple: true },
     { id: "pieces_per_year", prompt: "How many pieces or collections do you produce per year?", options: ["1–2", "3–5", "6–10", "10+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -80,25 +80,24 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   creative_director: [
     { id: "direct_mainly", prompt: "You mainly direct…", options: ["Campaigns for streetwear brands", "Content teams / fashion shoots", "Music x culture projects", "Concept / visual development"], multiple: true },
     { id: "strongest_contrib", prompt: "What is your strongest contribution?", options: ["Vision + brand storytelling", "Team leadership", "Moodboarding / trend direction", "Brand positioning"], multiple: true },
-    { id: "partnerships_prioritize", prompt: "Who would you like to connect with?", options: ["Models", "Photographers", "Videographers", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "partnerships_prioritize", prompt: "What types of partnerships do you prioritize?", options: ["Leading full creative teams", "Co-developing with brands", "Conceptual collaborations", "Mentorship / talent development"], multiple: true },
     { id: "team_size", prompt: "Approximate team size you manage or lead?", options: ["Solo / 1–2", "Small team (3–5)", "Medium team (6–10)", "Large team (10+)"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
   ],
   clothing_brand: [
-    { id: "what_make", prompt: "What do you make or sell?", options: ["Skate-Rooted Streetwear", "Hip-Hop / Urban Streetwear", "Luxury Streetwear", "Techwear / Futuristic Streetwear", "Japanese / Eastern Streetwear", "Sneaker-Centric Streetwear", "Sports-Inspired / Ath-Street Hybrid", "Preppy Streetwear / Street-Prep Hybrid"], multiple: true },
+    { id: "what_make", prompt: "What do you make or sell?", options: ["Skate-Rooted Streetwear", "Hip-Hop / Urban Streetwear", "Luxury Streetwear", "Preppy Streetwear / Street-Prep Hybrid"], multiple: true },
     { id: "who_need", prompt: "Who do you need to work with?", options: ["Photographers", "Videographers", "Models", "Designers", "Stylists", "Marketing / promotion partners", "Other brands"], multiple: true },
     { id: "most_help_with", prompt: "What do you most need help with?", options: ["Shoots (photo / video)", "Brand collaborations", "Marketing / promotion", "Talent relationships"], multiple: true },
-    { id: "how_often_post", prompt: "How often do you post?", options: ["Daily", "2-3 times a week", "Weekly", "Bi-weekly", "Monthly"] },
-    { id: "how_often_drop", prompt: "How often do you drop?", options: ["Daily", "2-3 times a week", "Weekly", "Bi-weekly", "Monthly"] },
+    { id: "monthly_output", prompt: "Estimated monthly projects or content output?", options: ["0–2", "3–5", "6–10", "10+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
   ],
   agency: [
     { id: "specialize_in", prompt: "What does your agency specialize in?", options: ["Talent management (models, creators, stylists)", "Creative production (shoots, campaigns, content)", "Brand strategy / marketing", "Full-service fashion / lifestyle agency"], multiple: true },
-    { id: "typical_clients", prompt: "Who are your typical clients?", options: ["Emerging streetwear brands", "Established fashion / luxury brands", "Artists / musicians / culture collaborators", "Lifestyle / wellness brands", "Content creators", "Models", "Videographers / photographers"], multiple: true },
+    { id: "typical_clients", prompt: "Who are your typical clients?", options: ["Emerging streetwear brands", "Established fashion / luxury brands", "Artists / musicians / culture collaborators", "Lifestyle / wellness brands"], multiple: true },
     { id: "work_with_most", prompt: "What types of creatives do you work with most?", options: ["Models", "Photographers / videographers", "Content creators / influencers", "Stylists", "Designers"], multiple: true },
-    { id: "monthly_projects", prompt: "Estimated monthly projects?", options: ["0–5", "6–15", "16–30", "30+"] },
+    { id: "monthly_projects", prompt: "Average monthly projects?", options: ["0–5", "6–15", "16–30", "30+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
   ],
@@ -150,8 +149,6 @@ export default function ProfileSetup() {
   const [shoeSize, setShoeSize] = useState<string>("");
   const [hairColor, setHairColor] = useState<string>("");
   const [eyeColor, setEyeColor] = useState<string>("");
-
-  const [currentStep, setCurrentStep] = useState<number>(1);
 
   const [instagram, setInstagram] = useState<string>(profile?.social_links?.instagram ?? "");
   const [youtube, setYoutube] = useState<string>(profile?.social_links?.youtube ?? "");
@@ -328,46 +325,11 @@ export default function ProfileSetup() {
     }
   }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
-  const isStep1Valid = userType && role;
-  const hasAnsweredQuestions = Object.keys(answers).length > 0;
-  const isContinueEnabled = currentStep === 2 
-    ? true 
-    : (role === "model" && currentStep === 1 ? Boolean(userType && role) : (isStep1Valid && hasAnsweredQuestions));
-  
-  const onContinue = useCallback(() => {
-    console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep });
-    
-    if (currentStep === 1) {
-      if (!userType || !role) {
-        Alert.alert("Missing info", "Choose your user type and role.");
-        return;
-      }
-      
-      if (role === "model") {
-        console.log('[ProfileSetup] Model role on step 1, moving to step 2');
-        setCurrentStep(2);
-        return;
-      }
-    }
-    
-    console.log('[ProfileSetup] Calling onSave');
-    onSave();
-  }, [userType, role, currentStep, onSave]);
-
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <GrainTexture />
       <ScrollView contentContainerStyle={styles.content}>
-        {currentStep === 2 && role === "model" && (
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => setCurrentStep(1)}
-            testID="back-button"
-          >
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-        )}
-        <Text style={styles.title}>{currentStep === 2 && role === "model" ? "Model Measurements" : "Set up your profile"}</Text>
+        <Text style={styles.title}>Set up your profile</Text>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>You are joining as</Text>
@@ -389,180 +351,160 @@ export default function ProfileSetup() {
           </View>
         </View>
 
-        {currentStep === 1 && (
-          <>
-            {!!userType && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Select your role</Text>
-                <View style={styles.grid}>
-                  {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                    <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => setRole(r)}>
-                      <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
-                    </TouchableOpacity>
-                  ))}
+        {!!userType && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Select your role</Text>
+            <View style={styles.grid}>
+              {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
+                <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => setRole(r)}>
+                  <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {!!role && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Profile Information</Text>
+            <Text style={styles.fieldLabel}>Display Name *</Text>
+            <TextInput
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Your name"
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+              testID="ps-display-name"
+              autoCapitalize="words"
+            />
+            
+            <Text style={styles.fieldLabel}>Profile Picture *</Text>
+            <TouchableOpacity
+              testID="ps-profile-pic"
+              style={styles.imagePickerBtn}
+              onPress={async () => {
+                try {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.8,
+                    base64: Platform.OS !== "web",
+                  });
+                  if (!result.canceled && result.assets[0]) {
+                    setProfilePictureUri(result.assets[0].uri);
+                  }
+                } catch (e) {
+                  console.log("Image picker error:", e);
+                }
+              }}
+            >
+              {profilePictureUri ? (
+                <Image source={{ uri: profilePictureUri }} style={styles.profilePreview} />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>Tap to upload</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            
+            <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
+            <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
+          </View>
+        )}
+
+        {!!role && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Social Links (optional)</Text>
+            <TextInput 
+              value={instagram} 
+              onChangeText={setInstagram} 
+              placeholder="Instagram (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-instagram" 
+            />
+            <TextInput 
+              value={youtube} 
+              onChangeText={setYoutube} 
+              placeholder="YouTube (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-youtube" 
+            />
+            <TextInput 
+              value={twitter} 
+              onChangeText={setTwitter} 
+              placeholder="Twitter/X (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-twitter" 
+            />
+            <TextInput 
+              value={tiktok} 
+              onChangeText={setTiktok} 
+              placeholder="TikTok (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-tiktok" 
+            />
+          </View>
+        )}
+
+        {!!role && availableQuestions.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Tell us more</Text>
+            {availableQuestions.map((q) => (
+              <View key={q.id} style={{ marginBottom: 12 }}>
+                <Text style={styles.prompt}>{q.prompt}</Text>
+                <View style={styles.rowWrap}>
+                  {q.options.map((opt) => {
+                    const selected = (answers[q.id] ?? []).includes(opt);
+                    return (
+                      <TouchableOpacity
+                        key={opt}
+                        testID={`q-${q.id}-${opt}`}
+                        style={[styles.pill, selected && styles.pillActive]}
+                        onPress={() => toggleAnswer(q.id, opt, q.multiple)}
+                      >
+                        <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
-            )}
-
-            {!!role && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Profile Information</Text>
-                <Text style={styles.fieldLabel}>Display Name *</Text>
-                <TextInput
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                  placeholder="Your name"
-                  placeholderTextColor="#9CA3AF"
-                  style={styles.input}
-                  testID="ps-display-name"
-                  autoCapitalize="words"
-                />
-                
-                <Text style={styles.fieldLabel}>Profile Picture *</Text>
-                <TouchableOpacity
-                  testID="ps-profile-pic"
-                  style={styles.imagePickerBtn}
-                  onPress={async () => {
-                    try {
-                      const result = await ImagePicker.launchImageLibraryAsync({
-                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                        allowsEditing: true,
-                        aspect: [1, 1],
-                        quality: 0.8,
-                        base64: Platform.OS !== "web",
-                      });
-                      if (!result.canceled && result.assets[0]) {
-                        setProfilePictureUri(result.assets[0].uri);
-                      }
-                    } catch (e) {
-                      console.log("Image picker error:", e);
-                    }
-                  }}
-                >
-                  {profilePictureUri ? (
-                    <Image source={{ uri: profilePictureUri }} style={styles.profilePreview} />
-                  ) : (
-                    <View style={styles.imagePlaceholder}>
-                      <Text style={styles.imagePlaceholderText}>Tap to upload</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-                
-                <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
-                <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
-              </View>
-            )}
-
-            {!!role && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Social Links (optional)</Text>
-                <TextInput 
-                  value={instagram} 
-                  onChangeText={setInstagram} 
-                  placeholder="Instagram (username or link)" 
-                  placeholderTextColor="#9CA3AF" 
-                  style={styles.input} 
-                  autoCapitalize="none" 
-                  testID="ps-instagram" 
-                />
-                <TextInput 
-                  value={youtube} 
-                  onChangeText={setYoutube} 
-                  placeholder="YouTube (username or link)" 
-                  placeholderTextColor="#9CA3AF" 
-                  style={styles.input} 
-                  autoCapitalize="none" 
-                  testID="ps-youtube" 
-                />
-                <TextInput 
-                  value={twitter} 
-                  onChangeText={setTwitter} 
-                  placeholder="Twitter/X (username or link)" 
-                  placeholderTextColor="#9CA3AF" 
-                  style={styles.input} 
-                  autoCapitalize="none" 
-                  testID="ps-twitter" 
-                />
-                <TextInput 
-                  value={tiktok} 
-                  onChangeText={setTiktok} 
-                  placeholder="TikTok (username or link)" 
-                  placeholderTextColor="#9CA3AF" 
-                  style={styles.input} 
-                  autoCapitalize="none" 
-                  testID="ps-tiktok" 
-                />
-              </View>
-            )}
-
-            {!!role && availableQuestions.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Tell us more</Text>
-                {availableQuestions.map((q) => (
-                  <View key={q.id} style={{ marginBottom: 12 }}>
-                    <Text style={styles.prompt}>{q.prompt}</Text>
-                    <View style={styles.rowWrap}>
-                      {q.options.map((opt) => {
-                        const selected = (answers[q.id] ?? []).includes(opt);
-                        return (
-                          <TouchableOpacity
-                            key={opt}
-                            testID={`q-${q.id}-${opt}`}
-                            style={[styles.pill, selected && styles.pillActive]}
-                            onPress={() => toggleAnswer(q.id, opt, q.multiple)}
-                          >
-                            <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
+            ))}
+          </View>
         )}
 
-        {currentStep === 2 && role === "model" && (
-          <>
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
-              <Text style={styles.helpText}>Fill in your measurements to help brands and photographers find the right fit.</Text>
-              <View style={styles.row}>
-                <TextInput value={height} onChangeText={setHeight} placeholder="Height (e.g. 5'9)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-height" />
-                <TextInput value={waist} onChangeText={setWaist} placeholder="Waist (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-waist" />
-              </View>
-              <View style={styles.row}>
-                <TextInput value={hips} onChangeText={setHips} placeholder="Hips (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hips" />
-                <TextInput value={bust} onChangeText={setBust} placeholder="Bust (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-bust" />
-              </View>
-              <View style={styles.row}>
-                <TextInput value={chest} onChangeText={setChest} placeholder="Chest (in)" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-chest" />
-                <TextInput value={shoeSize} onChangeText={setShoeSize} placeholder="Shoe size" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-shoe" />
-              </View>
-              <View style={styles.row}>
-                <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hair" />
-                <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-eye" />
-              </View>
+        {role === "model" && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
+            <View style={styles.row}>
+              <TextInput value={height} onChangeText={setHeight} placeholder="Height" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-height" />
+              <TextInput value={waist} onChangeText={setWaist} placeholder="Waist" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-waist" />
             </View>
-          </>
+            <View style={styles.row}>
+              <TextInput value={hips} onChangeText={setHips} placeholder="Hips" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hips" />
+              <TextInput value={bust} onChangeText={setBust} placeholder="Bust" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-bust" />
+            </View>
+            <View style={styles.row}>
+              <TextInput value={chest} onChangeText={setChest} placeholder="Chest" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-chest" />
+              <TextInput value={shoeSize} onChangeText={setShoeSize} placeholder="Shoe size" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-shoe" />
+            </View>
+            <View style={styles.row}>
+              <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hair" />
+              <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-eye" />
+            </View>
+          </View>
         )}
 
-        <TouchableOpacity 
-          testID="ps-save" 
-          style={[
-            styles.primaryBtn,
-            !isContinueEnabled && styles.primaryBtnDisabled
-          ]} 
-          onPress={onContinue}
-          disabled={!isContinueEnabled}
-        >
-          <Text style={[
-            styles.primaryBtnText,
-            !isContinueEnabled && styles.primaryBtnTextDisabled
-          ]}>
-            Continue
-          </Text>
+        <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
+          <Text style={styles.primaryBtnText}>Continue</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -590,15 +532,10 @@ const styles = StyleSheet.create({
   inputHalf: { flex: 1 },
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
-  primaryBtnDisabled: { backgroundColor: "rgba(255, 255, 255, 0.2)", opacity: 0.5 },
   primaryBtnText: { color: "#111827", fontSize: 16, fontWeight: "700" as const },
-  primaryBtnTextDisabled: { color: "#6B7280" },
   fieldLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 6 },
   imagePickerBtn: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden" as const, marginBottom: 6 },
   profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
-  backButton: { paddingVertical: 8, paddingHorizontal: 12, alignSelf: "flex-start", marginBottom: 8 },
-  backButtonText: { color: "#E5E7EB", fontSize: 16, fontWeight: "600" as const },
-  helpText: { color: "#9CA3AF", fontSize: 13, marginBottom: 8 },
 });
