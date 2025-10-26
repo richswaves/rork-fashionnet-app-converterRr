@@ -136,7 +136,6 @@ export default function SignupScreen() {
   const { updateProfileAsync } = useProfile();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [fullName, setFullName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
@@ -260,7 +259,7 @@ export default function SignupScreen() {
         email: email.trim().toLowerCase(),
         password: password.trim(),
         options: {
-          data: fullName.trim().length > 0 ? { full_name: fullName.trim() } : undefined,
+          data: {},
         },
       });
       if (error) throw error;
@@ -273,7 +272,7 @@ export default function SignupScreen() {
       try {
         await updateProfileAsync({
           user_id: userId,
-          full_name: fullName.trim() || displayName.trim() || undefined,
+          full_name: displayName.trim() || undefined,
           username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
           profile_picture: profilePictureUri || undefined,
           location: cityLocation.trim() || undefined,
@@ -393,16 +392,6 @@ export default function SignupScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={{ gap: 16 }}>
           <Text style={styles.title}>account application</Text>
-          <TextInput
-            testID="signup-fullname"
-            placeholder="Full name"
-            placeholderTextColor="#9CA3AF"
-            value={fullName}
-            onChangeText={setFullName}
-            style={styles.input}
-            autoCapitalize="words"
-            autoCorrect={false}
-          />
           <TextInput
             testID="signup-email"
             placeholder="Email"
@@ -620,9 +609,6 @@ export default function SignupScreen() {
                       if (role === "model") {
                         handleContinueQuestion();
                       } else {
-                        if (fullName.trim().length > 0 && displayName.trim().length === 0) {
-                          setDisplayName(fullName.trim());
-                        }
                         setShowingProfileInfo(true);
                       }
                     }
@@ -659,9 +645,6 @@ export default function SignupScreen() {
               style={styles.secondaryBtn}
               onPress={() => {
                 Keyboard.dismiss();
-                if (fullName.trim().length > 0 && displayName.trim().length === 0) {
-                  setDisplayName(fullName.trim());
-                }
                 setShowingProfileInfo(true);
               }}
             >
