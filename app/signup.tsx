@@ -309,7 +309,7 @@ export default function SignupScreen() {
           await sbInsert("onboarding_responses", {
             user_id: userId,
             role,
-            question: q.prompt,
+            question: q.id,
             answer: a,
           } as any);
         }

@@ -229,7 +229,7 @@ export default function ProfileSetup() {
           await sbInsert("onboarding_responses", {
             user_id: currentUserId,
             role,
-            question: q.prompt,
+            question: q.id,
             answer: a,
           } as any);
         } catch (e) {
