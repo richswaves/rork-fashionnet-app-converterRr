@@ -149,3 +149,134 @@ GRANT SELECT ON user_roles TO authenticated;
 -- SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual 
 -- FROM pg_policies 
 -- WHERE tablename IN ('profiles', 'user_roles');
+
+-- ============================================================================
+-- ADD SUSPENDED_AT FIELD TO PROFILES
+-- ============================================================================
+
+-- Add suspended_at column if it doesn't exist
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS suspended_at timestamptz;
+
+-- Update suspended_at for existing suspended accounts
+UPDATE profiles 
+SET suspended_at = CURRENT_TIMESTAMP 
+WHERE account_status = 'suspended' AND suspended_at IS NULL;
+
+-- Create trigger to automatically set suspended_at when account is suspended
+CREATE OR REPLACE FUNCTION update_suspended_at()
+RETURNS TRIGGER AS $
+BEGIN
+  IF NEW.account_status = 'suspended' AND OLD.account_status != 'suspended' THEN
+    NEW.suspended_at = CURRENT_TIMESTAMP;
+  ELSIF NEW.account_status != 'suspended' THEN
+    NEW.suspended_at = NULL;
+  END IF;
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS set_suspended_at ON profiles;
+CREATE TRIGGER set_suspended_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_suspended_at();
+
+-- ============================================================================
+-- BLOCKED USERS TABLE
+-- ============================================================================
+
+-- Create blocked_users table
+CREATE TABLE IF NOT EXISTS blocked_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  blocker_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocked_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(blocker_id, blocked_id),
+  CHECK (blocker_id != blocked_id)
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_blocked_users_blocker ON blocked_users(blocker_id);
+CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked ON blocked_users(blocked_id);
+
+-- Enable RLS
+ALTER TABLE blocked_users ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own blocks
+CREATE POLICY "Users can view own blocks" ON blocked_users
+FOR SELECT USING (auth.uid() = blocker_id);
+
+-- Users can create their own blocks
+CREATE POLICY "Users can create blocks" ON blocked_users
+FOR INSERT WITH CHECK (auth.uid() = blocker_id);
+
+-- Users can delete their own blocks
+CREATE POLICY "Users can delete blocks" ON blocked_users
+FOR DELETE USING (auth.uid() = blocker_id);
+
+-- Admins can view all blocks
+CREATE POLICY "Admins can view all blocks" ON blocked_users
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
+
+-- ============================================================================
+-- REPORTS TABLE
+-- ============================================================================
+
+-- Create reports table
+CREATE TABLE IF NOT EXISTS reports (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reported_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reason text NOT NULL,
+  status text DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'resolved', 'dismissed')),
+  admin_notes text,
+  created_at timestamptz DEFAULT now(),
+  resolved_at timestamptz,
+  resolved_by uuid REFERENCES auth.users(id)
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_reports_reported ON reports(reported_user_id);
+CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+
+-- Enable RLS
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own reports
+CREATE POLICY "Users can view own reports" ON reports
+FOR SELECT USING (auth.uid() = reporter_id);
+
+-- Users can create reports
+CREATE POLICY "Users can create reports" ON reports
+FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+
+-- Admins can view all reports
+CREATE POLICY "Admins can view all reports" ON reports
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
+
+-- Admins can update reports
+CREATE POLICY "Admins can update reports" ON reports
+FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
+
+-- Grant permissions
+GRANT SELECT, INSERT, DELETE ON blocked_users TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON reports TO authenticated;

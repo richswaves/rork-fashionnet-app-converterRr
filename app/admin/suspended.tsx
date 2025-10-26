@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Image } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -25,6 +25,7 @@ interface SuspendedUser {
   bio?: string;
   account_status?: string;
   created_at?: string;
+  suspended_at?: string;
   email?: string;
   social_links?: SocialLinks | null;
 }
@@ -194,6 +195,13 @@ export default function AdminSuspendedScreen() {
                     <Text style={styles.userDate}>
                       Joined: {p.created_at ? new Date(p.created_at).toLocaleDateString() : "Unknown"}
                     </Text>
+                    {p.suspended_at && (
+                      <View style={styles.suspendedBadge}>
+                        <Text style={styles.suspendedBadgeText}>
+                          Suspended: {new Date(p.suspended_at).toLocaleDateString()} at {new Date(p.suspended_at).toLocaleTimeString()}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
 
@@ -273,6 +281,20 @@ const styles = StyleSheet.create({
   userProfession: { color: "#D1D5DB", fontSize: 14, fontWeight: "500" as const, textTransform: "capitalize" as const },
   userLocation: { color: "#9CA3AF", fontSize: 13, fontWeight: "500" as const },
   userDate: { color: "#6B7280", fontSize: 12, fontWeight: "400" as const, marginTop: 4 },
+  suspendedBadge: {
+    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.3)",
+  },
+  suspendedBadgeText: {
+    color: "#F59E0B",
+    fontSize: 12,
+    fontWeight: "600" as const,
+  },
   bioSection: { gap: 4 },
   bioLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const },
   bioText: { color: "#9CA3AF", fontSize: 14, lineHeight: 20 },
