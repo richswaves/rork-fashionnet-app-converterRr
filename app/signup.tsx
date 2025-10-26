@@ -7,6 +7,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import GrainTexture from "@/components/GrainTexture";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
+import * as Clipboard from "expo-clipboard";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
 
@@ -700,16 +701,27 @@ export default function SignupScreen() {
 
             <View style={{ marginTop: 12 }}>
               <Text style={styles.fieldLabel}>Social Link *</Text>
-              <TextInput
-                testID="signup-social-link"
-                placeholder="Instagram, TikTok, or other social profile URL"
-                placeholderTextColor="#9CA3AF"
-                value={socialLink}
-                onChangeText={setSocialLink}
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+              <View style={styles.pasteContainer}>
+                <View style={[styles.input, styles.socialLinkDisplay]}>
+                  <Text style={[styles.socialLinkText, !socialLink && styles.socialLinkPlaceholder]} numberOfLines={1}>
+                    {socialLink || "Instagram, TikTok, or other social profile URL"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  testID="signup-paste-link"
+                  style={styles.pasteBtn}
+                  onPress={async () => {
+                    const text = await Clipboard.getStringAsync();
+                    if (text && text.trim().length > 0) {
+                      setSocialLink(text.trim());
+                    } else {
+                      Alert.alert("Clipboard empty", "Copy a link first, then tap Paste");
+                    }
+                  }}
+                >
+                  <Text style={styles.pasteBtnText}>Paste</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {!profileInfoComplete && (
@@ -767,4 +779,10 @@ const styles = StyleSheet.create({
   profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
+  pasteContainer: { flexDirection: "row", gap: 10, alignItems: "center" },
+  socialLinkDisplay: { flex: 1, justifyContent: "center" },
+  socialLinkText: { color: "#FFFFFF", fontSize: 14 },
+  socialLinkPlaceholder: { color: "#9CA3AF" },
+  pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
+  pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
 });
