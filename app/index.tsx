@@ -12,6 +12,9 @@ export default function Index() {
     if (isLoading || didNavigate.current) return;
     const target = (() => {
       if (!session) return "/login";
+      if (profile && profile.account_status === "approved") {
+        return "/(tabs)/network";
+      }
       if (profile && profile.account_status && profile.account_status !== "approved") {
         return "/onboarding/pending-approval";
       }
