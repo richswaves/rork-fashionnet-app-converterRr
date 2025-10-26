@@ -1,17 +1,86 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
 import GrainTexture from "@/components/GrainTexture";
+import { getSupabase, sbSelect } from "@/integrations/supabase/client";
 
 export default function PendingApproval() {
   const router = useRouter();
-  const { logout, session } = useProfile();
+  const { logout, session, profile } = useProfile();
+  const checkingRef = useRef<boolean>(false);
 
   const userEmail = useMemo(() => {
     return session?.user?.email || "your email";
   }, [session]);
+
+  useEffect(() => {
+    if (profile?.account_status === "approved") {
+      try {
+        router.replace("/(tabs)/opportunities" as any);
+      } catch (e) {
+        console.log("PendingApproval immediate redirect error", e);
+      }
+    }
+  }, [profile?.account_status, router]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const supabase = getSupabase();
+
+    const checkStatus = async () => {
+      if (checkingRef.current) return;
+      checkingRef.current = true;
+      try {
+        const uid: string | undefined = session?.user?.id;
+        if (!uid) return;
+        const rows = await sbSelect<{ account_status?: string }>("profiles", {
+          select: "account_status",
+          query: { user_id: `eq.${uid}` },
+          limit: 1,
+        });
+        const status = rows[0]?.account_status;
+        if (isMounted && status === "approved") {
+          router.replace("/(tabs)/opportunities" as any);
+        }
+      } catch (e) {
+        console.log("PendingApproval status poll failed", e);
+      } finally {
+        checkingRef.current = false;
+      }
+    };
+
+    const interval = setInterval(checkStatus, 8000);
+    checkStatus();
+
+    const channel = supabase?.channel(`profiles-status:${session?.user?.id ?? "anon"}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: session?.user?.id ? `user_id=eq.${session.user.id}` : undefined },
+        (payload: any) => {
+          const next = (payload?.new as { account_status?: string } | undefined)?.account_status;
+          if (next === "approved") {
+            try {
+              router.replace("/(tabs)/opportunities" as any);
+            } catch (e) {
+              console.log("Realtime redirect error", e);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      if (channel && supabase) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {}
+      }
+    };
+  }, [router, session?.user?.id]);
 
   const handleSignOut = async () => {
     await logout();
@@ -24,10 +93,10 @@ export default function PendingApproval() {
       <View style={styles.content}>
         <View style={styles.statusSection}>
           <Text style={styles.statusLabel}>Application status:</Text>
-          <Text style={styles.statusTitle}>In review</Text>
+          <Text style={styles.statusTitle}>{profile?.account_status === "approved" ? "Approved" : "In review"}</Text>
           
           <View style={styles.progressBarContainer}>
-            <View style={styles.progressBar} />
+            <View style={[styles.progressBar, profile?.account_status === "approved" ? styles.progressBarDone : null]} />
           </View>
         </View>
 
@@ -101,6 +170,10 @@ const styles = StyleSheet.create({
     width: "35%",
     backgroundColor: "#D1D5DB",
     borderRadius: 3
+  },
+  progressBarDone: {
+    width: "100%",
+    backgroundColor: "#4CB963",
   },
   infoSection: {
     flex: 1,
