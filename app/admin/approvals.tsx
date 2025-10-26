@@ -267,9 +267,17 @@ export default function AdminApprovalsScreen() {
                 <View style={styles.applicationHeader}>
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>{p.full_name || p.username || "User"}</Text>
-                    <Text style={styles.userMeta}>
-                      {p.profession || "No role"} • {p.location || "No location"}
-                    </Text>
+                    <Text style={styles.userUsername}>@{p.username || "no-username"}</Text>
+                    <View style={styles.metaRow}>
+                      <View style={styles.metaItem}>
+                        <Text style={styles.metaLabel}>Role:</Text>
+                        <Text style={styles.metaValue}>{p.profession?.replace(/_/g, " ") || "No role"}</Text>
+                      </View>
+                      <View style={styles.metaItem}>
+                        <Text style={styles.metaLabel}>Location:</Text>
+                        <Text style={styles.metaValue}>{p.location || "No location"}</Text>
+                      </View>
+                    </View>
                     <Text style={styles.userDate}>
                       Applied: {p.created_at ? new Date(p.created_at).toLocaleDateString() : "Unknown"}
                     </Text>
@@ -381,10 +389,14 @@ const styles = StyleSheet.create({
   emptyText: { color: "#9CA3AF", fontSize: 16 },
   applicationCard: { backgroundColor: "rgba(15, 15, 15, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 16, padding: 16, gap: 16 },
   applicationHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  userInfo: { flex: 1, gap: 4 },
+  userInfo: { flex: 1, gap: 6 },
   userName: { color: "#FFFFFF", fontSize: 20, fontWeight: "700" as const },
-  userMeta: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" as const },
-  userDate: { color: "#6B7280", fontSize: 12, fontWeight: "400" as const },
+  userUsername: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" as const, marginTop: -2 },
+  metaRow: { flexDirection: "row", gap: 16, marginTop: 4 },
+  metaItem: { flexDirection: "row", gap: 4 },
+  metaLabel: { color: "#6B7280", fontSize: 13, fontWeight: "600" as const },
+  metaValue: { color: "#D1D5DB", fontSize: 13, fontWeight: "500" as const, textTransform: "capitalize" as const },
+  userDate: { color: "#6B7280", fontSize: 12, fontWeight: "400" as const, marginTop: 2 },
   userEmail: { color: "#9CA3AF", fontSize: 12, marginTop: 2 },
   bioSection: { gap: 4 },
   bioLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const },
