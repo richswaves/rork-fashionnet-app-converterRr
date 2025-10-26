@@ -539,36 +539,6 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.contactSection}>
-          <Text style={styles.sectionTitle}>Contact & Notifications</Text>
-          
-          <Pressable onPress={() => openEditor("instagram")} style={styles.contactCard} testID="edit-instagram">
-            <View style={styles.contactLeft}>
-              <View style={[styles.contactIcon, { backgroundColor: "#C13584" }]}>
-                <Instagram color="#fff" size={20} />
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactLabel}>Instagram</Text>
-                <Text style={styles.contactValue}>{socialLinks.instagram || "Add Instagram handle"}</Text>
-              </View>
-            </View>
-            <Pencil color="#9CA3AF" size={16} />
-          </Pressable>
-
-          <Pressable onPress={() => openEditor("phone")} style={styles.contactCard} testID="edit-phone">
-            <View style={styles.contactLeft}>
-              <View style={[styles.contactIcon, { backgroundColor: "#10B981" }]}>
-                <Phone color="#fff" size={20} />
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactLabel}>Phone Number</Text>
-                <Text style={styles.contactValue}>{phoneNumber || "Add phone number"}</Text>
-              </View>
-            </View>
-            <Pencil color="#9CA3AF" size={16} />
-          </Pressable>
-        </View>
-
         <View style={styles.portfolioSection}>
           <View style={styles.portfolioHeader}>
             <Text style={styles.portfolioTitle}>Portfolio</Text>
