@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshCon
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbSelect, sbUpdate, getPublicUrl } from "@/integrations/supabase/client";
+import { sbSelect, sbUpdate } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import GrainTexture from "@/components/GrainTexture";
 import { AlertTriangle, ArrowLeft, CheckCircle, XCircle } from "lucide-react-native";
@@ -204,11 +204,7 @@ export default function AdminReportsScreen() {
                     <View style={styles.userRow}>
                       {report.reporter_profile?.profile_picture && (
                         <Image
-                          source={{
-                            uri: report.reporter_profile.profile_picture.startsWith('http')
-                              ? report.reporter_profile.profile_picture
-                              : getPublicUrl('display', report.reporter_profile.profile_picture)
-                          }}
+                          source={{ uri: report.reporter_profile.profile_picture }}
                           style={styles.avatarSmall}
                           resizeMode="cover"
                         />
@@ -222,11 +218,7 @@ export default function AdminReportsScreen() {
                     <View style={styles.userRow}>
                       {report.reported_profile?.profile_picture && (
                         <Image
-                          source={{
-                            uri: report.reported_profile.profile_picture.startsWith('http')
-                              ? report.reported_profile.profile_picture
-                              : getPublicUrl('display', report.reported_profile.profile_picture)
-                          }}
+                          source={{ uri: report.reported_profile.profile_picture }}
                           style={styles.avatarSmall}
                           resizeMode="cover"
                         />

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshCon
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbSelect, sbUpdate, getPublicUrl } from "@/integrations/supabase/client";
+import { sbSelect, sbUpdate } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import GrainTexture from "@/components/GrainTexture";
 import { UserX, ArrowLeft } from "lucide-react-native";
@@ -173,7 +173,7 @@ export default function AdminSuspendedScreen() {
                 <View style={styles.accountHeader}>
                   {p.profile_picture && (
                     <Image 
-                      source={{ uri: p.profile_picture.startsWith('http') ? p.profile_picture : getPublicUrl('display', p.profile_picture) }}
+                      source={{ uri: p.profile_picture }}
                       style={styles.profilePicture}
                       resizeMode="cover"
                     />
