@@ -199,6 +199,35 @@ export default function AdminApprovalsScreen() {
     });
   };
 
+  const getUserMetaData = (userId: string) => {
+    const responses = onboardingResponsesQuery.data?.filter((r) => r.user_id === userId) || [];
+    
+    const roleResponse = responses.find((r) => r.role);
+    const role = roleResponse?.role || "general";
+    
+    const dobResponse = responses.find((r) => r.question === "date_of_birth" && r.answer);
+    const locationResponse = responses.find((r) => r.question === "location" && r.answer);
+    
+    let age: number | null = null;
+    if (dobResponse?.answer) {
+      const dobValue = Array.isArray(dobResponse.answer) ? dobResponse.answer[0] : dobResponse.answer;
+      if (dobValue) {
+        const birthDate = new Date(dobValue as string);
+        const today = new Date();
+        age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+      }
+    }
+    
+    const locationValue = locationResponse?.answer;
+    const location = Array.isArray(locationValue) ? locationValue[0] : locationValue;
+    
+    return { role, age, location: location as string | undefined };
+  };
+
   if (!isAdmin) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -267,23 +296,19 @@ export default function AdminApprovalsScreen() {
                 <View style={styles.applicationHeader}>
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>{p.full_name || p.username || "User"}</Text>
-                    <Text style={styles.userUsername}>@{p.username || "no-username"}</Text>
-                    <View style={styles.metaRow}>
-                      <View style={styles.metaItem}>
-                        <Text style={styles.metaLabel}>Role:</Text>
-                        <Text style={styles.metaValue}>{p.profession?.replace(/_/g, " ") || "No role"}</Text>
-                      </View>
-                      <View style={styles.metaItem}>
-                        <Text style={styles.metaLabel}>Location:</Text>
-                        <Text style={styles.metaValue}>{p.location || "No location"}</Text>
-                      </View>
-                    </View>
+                    <Text style={styles.userMeta}>
+                      {(() => {
+                        const meta = getUserMetaData(p.user_id);
+                        const parts: string[] = [];
+                        if (meta.role) parts.push(meta.role);
+                        if (meta.location) parts.push(meta.location);
+                        if (meta.age !== null) parts.push(`Age ${meta.age}`);
+                        return parts.join(" • ") || "Location not set";
+                      })()}
+                    </Text>
                     <Text style={styles.userDate}>
                       Applied: {p.created_at ? new Date(p.created_at).toLocaleDateString() : "Unknown"}
                     </Text>
-                    {!!p.email && (
-                      <Text style={styles.userEmail}>{p.email}</Text>
-                    )}
                   </View>
                 </View>
 
@@ -392,6 +417,7 @@ const styles = StyleSheet.create({
   userInfo: { flex: 1, gap: 6 },
   userName: { color: "#FFFFFF", fontSize: 20, fontWeight: "700" as const },
   userUsername: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" as const, marginTop: -2 },
+  userMeta: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" as const, marginTop: 2 },
   metaRow: { flexDirection: "row", gap: 16, marginTop: 4 },
   metaItem: { flexDirection: "row", gap: 4 },
   metaLabel: { color: "#6B7280", fontSize: 13, fontWeight: "600" as const },
