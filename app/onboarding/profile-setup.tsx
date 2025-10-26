@@ -1,9 +1,10 @@
 import React, { useMemo, useRef, useState, useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Image, Platform } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbInsert } from "@/integrations/supabase/client";
+import { sbInsert, getSupabase } from "@/integrations/supabase/client";
 import GrainTexture from "@/components/GrainTexture";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
@@ -137,8 +138,6 @@ export default function ProfileSetup() {
   const [role, setRole] = useState<string | undefined>(undefined);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
-  const [fullName, setFullName] = useState<string>(profile?.full_name ?? "");
-  const [username, setUsername] = useState<string>(profile?.username ?? "");
   const [location, setLocation] = useState<string>(profile?.location ?? "");
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
 
@@ -151,10 +150,12 @@ export default function ProfileSetup() {
   const [hairColor, setHairColor] = useState<string>("");
   const [eyeColor, setEyeColor] = useState<string>("");
 
-  const [instagram, setInstagram] = useState<string>("");
-  const [youtube, setYoutube] = useState<string>("");
-  const [twitter, setTwitter] = useState<string>("");
-  const [tiktok, setTiktok] = useState<string>("");
+  const [instagram, setInstagram] = useState<string>(profile?.social_links?.instagram ?? "");
+  const [youtube, setYoutube] = useState<string>(profile?.social_links?.youtube ?? "");
+  const [twitter, setTwitter] = useState<string>(profile?.social_links?.twitter ?? "");
+  const [tiktok, setTiktok] = useState<string>(profile?.social_links?.tiktok ?? "");
+  const [profilePictureUri, setProfilePictureUri] = useState<string>(profile?.profile_picture ?? "");
+  const [displayName, setDisplayName] = useState<string>(profile?.display_name ?? "");
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
@@ -192,6 +193,41 @@ export default function ProfileSetup() {
     }
   }, [currentUserId, role, userType]);
 
+  async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase is not configured");
+    const uri = asset.uri;
+    const fileName = (asset.fileName ?? `${Date.now()}`).replace(/\s+/g, "_");
+    const extFromType = (asset as any).mimeType?.split("/")?.[1] ?? uri.split(".").pop() ?? "jpg";
+    const namePart = /\.[a-zA-Z0-9]+$/.test(fileName) ? fileName : `${fileName}.${extFromType}`;
+    const path = `avatars/${namePart}`;
+
+    let blob: Blob;
+    try {
+      if (Platform.OS === "web") {
+        blob = await (await fetch(uri)).blob();
+      } else if (asset.base64) {
+        const mime = (asset as any).mimeType ?? "image/jpeg";
+        const dataUrl = `data:${mime};base64,${asset.base64}`;
+        blob = await (await fetch(dataUrl)).blob();
+      } else {
+        blob = await (await fetch(uri)).blob();
+      }
+    } catch (e) {
+      throw new Error("Could not read selected image on this device");
+    }
+
+    const contentType = (asset as any).mimeType ?? (blob as any).type ?? "image/jpeg";
+    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType,
+    });
+    if (error) throw error as Error;
+    const { data: pub } = supabase.storage.from("model-photos").getPublicUrl(path);
+    return pub.publicUrl as string;
+  }
+
   const onSave = useCallback(async () => {
     if (!currentUserId) {
       console.error("[ProfileSetup] No currentUserId available when trying to save");
@@ -207,9 +243,31 @@ export default function ProfileSetup() {
       console.log("[ProfileSetup] Saving profile with userId:", currentUserId);
       await recordEvent(3, "profile_details", "complete");
 
+      let finalProfilePictureUrl = profilePictureUri;
+      if (profilePictureUri && profilePictureUri.startsWith("file://")) {
+        console.log("[ProfileSetup] Uploading profile picture to Supabase Storage");
+        try {
+          const mockAsset: ImagePicker.ImagePickerAsset = {
+            uri: profilePictureUri,
+            width: 0,
+            height: 0,
+            fileName: `profile_${Date.now()}.jpg`,
+            base64: undefined,
+          } as any;
+          finalProfilePictureUrl = await uploadToSupabase(mockAsset);
+          console.log("[ProfileSetup] Profile picture uploaded:", finalProfilePictureUrl);
+        } catch (uploadError: any) {
+          console.error("[ProfileSetup] Failed to upload profile picture:", uploadError);
+          Alert.alert("Upload failed", "Could not upload profile picture. Please try again.");
+          return;
+        }
+      }
+
       const profileData: any = {
-        full_name: fullName || undefined,
-        username: username || undefined,
+        display_name: displayName.trim() || undefined,
+        full_name: displayName.trim() || undefined,
+        username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
+        profile_picture: finalProfilePictureUrl || undefined,
         location: location || undefined,
         bio: bio || undefined,
         profession: role,
@@ -266,7 +324,7 @@ export default function ProfileSetup() {
       const msg = typeof e?.message === "string" ? e.message : "Could not save";
       Alert.alert("Save failed", msg);
     }
-  }, [answers, availableQuestions, bio, bust, chest, currentUserId, eyeColor, fullName, hairColor, height, hips, instagram, location, profile?.account_status, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, username, waist, youtube, userType]);
+  }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -309,9 +367,48 @@ export default function ProfileSetup() {
 
         {!!role && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Basics</Text>
-            <TextInput value={fullName} onChangeText={setFullName} placeholder="Full name" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-fullname" />
-            <TextInput value={username} onChangeText={setUsername} placeholder="Username" placeholderTextColor="#9CA3AF" style={styles.input} autoCapitalize="none" testID="ps-username" />
+            <Text style={styles.sectionTitle}>Profile Information</Text>
+            <Text style={styles.fieldLabel}>Display Name *</Text>
+            <TextInput
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Your name"
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+              testID="ps-display-name"
+              autoCapitalize="words"
+            />
+            
+            <Text style={styles.fieldLabel}>Profile Picture *</Text>
+            <TouchableOpacity
+              testID="ps-profile-pic"
+              style={styles.imagePickerBtn}
+              onPress={async () => {
+                try {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.8,
+                    base64: Platform.OS !== "web",
+                  });
+                  if (!result.canceled && result.assets[0]) {
+                    setProfilePictureUri(result.assets[0].uri);
+                  }
+                } catch (e) {
+                  console.log("Image picker error:", e);
+                }
+              }}
+            >
+              {profilePictureUri ? (
+                <Image source={{ uri: profilePictureUri }} style={styles.profilePreview} />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>Tap to upload</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            
             <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
             <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
           </View>
@@ -437,4 +534,9 @@ const styles = StyleSheet.create({
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
   primaryBtnText: { color: "#111827", fontSize: 16, fontWeight: "700" as const },
+  fieldLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 6 },
+  imagePickerBtn: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden" as const, marginBottom: 6 },
+  profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
+  imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
 });
