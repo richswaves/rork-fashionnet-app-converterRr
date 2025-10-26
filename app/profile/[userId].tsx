@@ -386,12 +386,22 @@ export default function UserProfileScreen() {
       if (!reason || reason.trim().length === 0) throw new Error("Reason is required");
       
       console.log(`[Report] User ${currentUserId} reporting user ${userId}`);
-      await sbInsert("reports", {
-        reporter_id: currentUserId,
-        reported_user_id: userId,
-        reason: reason.trim(),
-        status: "pending",
-      });
+      console.log(`[Report] Reason: ${reason.trim()}`);
+      
+      try {
+        const result = await sbInsert("reports", {
+          reporter_id: currentUserId,
+          reported_user_id: userId,
+          reason: reason.trim(),
+          status: "pending",
+        });
+        console.log("[Report] Insert result:", result);
+        return result;
+      } catch (err) {
+        console.error("[Report] Insert failed:", err);
+        console.error("[Report] Error details:", JSON.stringify(err, null, 2));
+        throw err;
+      }
     },
     onSuccess: () => {
       console.log("[Report] Successfully reported user");
@@ -399,9 +409,15 @@ export default function UserProfileScreen() {
       setReportReason("");
       Alert.alert("Success", "Report submitted. Our team will review it.");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("[Report] Error reporting user:", error);
-      Alert.alert("Error", "Failed to submit report");
+      const errorMsg = error?.message || "Failed to submit report";
+      Alert.alert(
+        "Error",
+        errorMsg.includes("404") 
+          ? "Reports feature is not configured. Please contact support."
+          : "Failed to submit report. Please try again."
+      );
     },
   });
 
