@@ -3,7 +3,7 @@ import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platfor
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube, ShieldCheck } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -185,6 +185,20 @@ export default function OpportunitiesScreen() {
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
+
+  const { data: isAdmin } = useQuery<boolean>({
+    queryKey: ["is-admin", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return false;
+      const rows = await sbSelect<{ user_id: string; role: string }>("user_roles", {
+        select: "user_id,role",
+        query: { user_id: `eq.${currentUserId}`, role: "eq.admin" },
+        limit: 1,
+      });
+      return (rows?.length ?? 0) > 0;
+    },
+    enabled: !!currentUserId,
+  });
 
   const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],
@@ -436,6 +450,11 @@ export default function OpportunitiesScreen() {
           <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
             <Bell color="#E5E7EB" size={20} />
           </Pressable>
+          {isAdmin ? (
+            <Pressable onPress={() => router.push("/admin/approvals")} style={styles.iconBtn} testID="opp-top-admin">
+              <ShieldCheck color="#34D399" size={20} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
