@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
   primaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 16, alignItems: "center", borderRadius: 14, marginTop: 8 },
   primaryBtnText: { color: "#111827", fontSize: 17, fontWeight: "700" as const },
-  helperText: { color: "#9CA3AF", flex: 1, fontWeight: "600" as const },
+  helperText: { color: "#9CA3AF", fontWeight: "600" as const, flexShrink: 1 },
   progressBarContainer: { height: 4, backgroundColor: "#1A1A1A", width: "100%" },
   progressBar: { height: "100%", backgroundColor: "#FFFFFF", borderRadius: 2 },
   secondaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, alignItems: "center", borderRadius: 12, marginTop: 6 },
@@ -837,5 +837,5 @@ const styles = StyleSheet.create({
   socialLinkPlaceholder: { color: "#9CA3AF" },
   pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
-  notifRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  notifRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, maxWidth: "100%" },
 });
