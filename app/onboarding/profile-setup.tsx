@@ -331,7 +331,7 @@ export default function ProfileSetup() {
   const hasAnsweredQuestions = Object.keys(answers).length > 0;
   const isContinueEnabled = currentStep === 2 
     ? true 
-    : (role === "model" ? isStep1Valid : (isStep1Valid && hasAnsweredQuestions));
+    : (role === "model" && currentStep === 1 ? Boolean(userType && role) : (isStep1Valid && hasAnsweredQuestions));
   
   const onContinue = useCallback(() => {
     console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep });
