@@ -155,7 +155,7 @@ export default function ProfileSetup() {
   const [twitter, setTwitter] = useState<string>(profile?.social_links?.twitter ?? "");
   const [tiktok, setTiktok] = useState<string>(profile?.social_links?.tiktok ?? "");
   const [profilePictureUri, setProfilePictureUri] = useState<string>(profile?.profile_picture ?? "");
-  const [displayName, setDisplayName] = useState<string>(profile?.display_name ?? "");
+  const [displayName, setDisplayName] = useState<string>(profile?.full_name ?? "");
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
@@ -264,7 +264,6 @@ export default function ProfileSetup() {
       }
 
       const profileData: any = {
-        display_name: displayName.trim() || undefined,
         full_name: displayName.trim() || undefined,
         username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
         profile_picture: finalProfilePictureUrl || undefined,

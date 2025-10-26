@@ -21,7 +21,6 @@ interface SocialLinks {
 
 interface Profile {
   user_id: string;
-  display_name?: string;
   full_name?: string;
   username?: string;
   profile_picture?: string;
@@ -63,9 +62,9 @@ function resolveFromSession(profile: Profile | null, session: any): ResolvedProf
   const fullNameFromAuth: string | undefined = md["display_name"] ?? md["full_name"] ?? md["name"] ?? undefined;
   const usernameFromEmail: string | undefined = email ? email.split("@")[0] : undefined;
 
-  const displayName = (profile?.display_name ?? profile?.full_name ?? fullNameFromAuth ?? profile?.username ?? usernameFromEmail ?? "Member") as string;
+  const displayName = (profile?.full_name ?? fullNameFromAuth ?? profile?.username ?? usernameFromEmail ?? "Member") as string;
   const username = (profile?.username ?? usernameFromEmail ?? (fullNameFromAuth ? fullNameFromAuth.replace(/\s+/g, "").toLowerCase() : undefined) ?? "member") as string;
-  const avatarUrl = (profile?.profile_picture ?? avatarFromGoogle ?? initialsAvatar(profile?.display_name ?? profile?.full_name ?? fullNameFromAuth ?? username)) as string;
+  const avatarUrl = (profile?.profile_picture ?? avatarFromGoogle ?? initialsAvatar(profile?.full_name ?? fullNameFromAuth ?? username)) as string;
 
   return { user_id: profile?.user_id ?? session?.user?.id, displayName, username, avatarUrl };
 }
@@ -128,14 +127,12 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
       console.log("[ProfileContext] Starting profile update:", updates);
       const safeProfession = (updates.profession ?? profileQuery.data?.profession ?? "other") as string;
       const safeUsername = (updates.username ?? profileQuery.data?.username ?? resolved.username ?? "user") as string;
-      const safeDisplayName = (updates.display_name ?? profileQuery.data?.display_name ?? resolved.displayName ?? safeUsername) as string;
-      const safeFullName = (updates.full_name ?? profileQuery.data?.full_name ?? safeDisplayName ?? safeUsername) as string;
+      const safeFullName = (updates.full_name ?? profileQuery.data?.full_name ?? resolved.displayName ?? safeUsername) as string;
       const safeLocation = (updates.location ?? profileQuery.data?.location ?? "") as string;
       const safeBio = (updates.bio ?? profileQuery.data?.bio ?? "") as string;
 
       const payload: Partial<Profile> = {
         user_id: currentUserId,
-        display_name: safeDisplayName,
         full_name: safeFullName,
         username: safeUsername,
         profession: safeProfession,
@@ -210,16 +207,15 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     setSession(null);
   }, []);
 
-  const getDisplayForProfile = useCallback((p?: { user_id?: string; display_name?: string; full_name?: string; username?: string; profile_picture?: string } | null) => {
+  const getDisplayForProfile = useCallback((p?: { user_id?: string; full_name?: string; username?: string; profile_picture?: string } | null) => {
     if (!p) return resolved;
     if (p.user_id && session?.user?.id && p.user_id === session.user.id) return resolved;
 
     const hasUsername = p.username && p.username.trim().length > 0 && !p.username.startsWith("user_");
-    const hasDisplayName = p.display_name && p.display_name.trim().length > 0;
     const hasFullName = p.full_name && p.full_name.trim().length > 0;
     
-    const derivedDisplay = hasDisplayName ? p.display_name : (hasFullName ? p.full_name : (hasUsername ? p.username : "User"));
-    const derivedUsername = hasUsername ? p.username : (hasDisplayName ? p.display_name!.replace(/\s+/g, "").toLowerCase() : (hasFullName ? p.full_name!.replace(/\s+/g, "").toLowerCase() : p.user_id || "user"));
+    const derivedDisplay = hasFullName ? p.full_name : (hasUsername ? p.username : "User");
+    const derivedUsername = hasUsername ? p.username : (hasFullName ? p.full_name!.replace(/\s+/g, "").toLowerCase() : p.user_id || "user");
     const derivedAvatar = p.profile_picture || initialsAvatar(derivedDisplay || "User");
 
     const displayName = String(derivedDisplay);

@@ -261,7 +261,7 @@ export default function SignupScreen() {
         password: password.trim(),
         options: {
           data: {
-            display_name: displayName.trim(),
+            full_name: displayName.trim(),
           },
         },
       });
@@ -275,7 +275,6 @@ export default function SignupScreen() {
       try {
         await updateProfileAsync({
           user_id: userId,
-          display_name: displayName.trim() || undefined,
           full_name: displayName.trim() || undefined,
           username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
           profile_picture: profilePictureUri || undefined,

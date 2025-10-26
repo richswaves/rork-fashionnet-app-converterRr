@@ -18,7 +18,6 @@ interface SocialLinks {
 
 interface AdminUser {
   user_id: string;
-  display_name?: string;
   full_name?: string;
   username?: string;
   profile_picture?: string;
@@ -312,9 +311,7 @@ export default function AdminApprovalsScreen() {
                   )}
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>
-                      {p.display_name && p.display_name.trim() && !p.display_name.startsWith("User_") 
-                        ? p.display_name 
-                        : p.full_name && p.full_name.trim() && !p.full_name.startsWith("User_")
+                      {p.full_name && p.full_name.trim() && !p.full_name.startsWith("User_")
                           ? p.full_name
                           : p.username && !p.username.startsWith("User_") 
                             ? p.username
@@ -437,14 +434,14 @@ export default function AdminApprovalsScreen() {
                     <>
                       <TouchableOpacity
                         style={[styles.actionButton, styles.approveButton]}
-                        onPress={() => handleApprove(p.user_id, p.display_name || p.full_name || p.username)}
+                        onPress={() => handleApprove(p.user_id, p.full_name || p.username)}
                         disabled={approveMutation.isPending || rejectMutation.isPending}
                       >
                         <Text style={styles.approveButtonText}>Approve</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.actionButton, styles.rejectButton]}
-                        onPress={() => handleReject(p.user_id, p.display_name || p.full_name || p.username)}
+                        onPress={() => handleReject(p.user_id, p.full_name || p.username)}
                         disabled={approveMutation.isPending || rejectMutation.isPending}
                       >
                         <Text style={styles.rejectButtonText}>Reject</Text>
@@ -453,7 +450,7 @@ export default function AdminApprovalsScreen() {
                   )}
                   <TouchableOpacity
                     style={[styles.actionButton, styles.adminButton]}
-                    onPress={() => handleMakeAdmin(p.user_id, p.display_name || p.full_name || p.username)}
+                    onPress={() => handleMakeAdmin(p.user_id, p.full_name || p.username)}
                     disabled={assignAdminMutation.isPending}
                   >
                     <Text style={styles.adminButtonText}>Make Admin</Text>
