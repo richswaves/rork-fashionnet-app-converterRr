@@ -329,7 +329,9 @@ export default function ProfileSetup() {
 
   const isStep1Valid = userType && role && displayName.trim() && profilePictureUri;
   const hasAnsweredQuestions = Object.keys(answers).length > 0;
-  const isContinueEnabled = currentStep === 2 ? true : (isStep1Valid && (role === "model" || hasAnsweredQuestions));
+  const isContinueEnabled = currentStep === 2 
+    ? true 
+    : (role === "model" ? isStep1Valid : (isStep1Valid && hasAnsweredQuestions));
   
   const onContinue = useCallback(() => {
     console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep, displayName: displayName.trim(), hasProfilePic: !!profilePictureUri });
