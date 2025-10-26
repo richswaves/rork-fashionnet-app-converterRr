@@ -31,6 +31,12 @@ interface OnboardingResponse {
   created_at?: string;
 }
 
+interface QuestionMapping {
+  role: string;
+  question_id: string;
+  question_text: string;
+}
+
 type StatusTab = "pending" | "approved" | "rejected";
 
 export default function AdminApprovalsScreen() {
@@ -60,7 +66,25 @@ export default function AdminApprovalsScreen() {
         select: "*",
         order: { column: "created_at", ascending: false },
       });
+      console.log("[Admin] Loaded onboarding responses:", rows.length);
       return rows;
+    },
+    enabled: !!isAdmin,
+  });
+
+  const questionMappingsQuery = useQuery<QuestionMapping[]>({
+    queryKey: ["admin", "question-mappings"],
+    queryFn: async () => {
+      try {
+        const rows = await sbSelect<QuestionMapping>("onboarding_question_mappings", {
+          select: "role,question_id,question_text",
+        });
+        console.log("[Admin] Loaded question mappings:", rows.length);
+        return rows;
+      } catch (e) {
+        console.log("[Admin] Question mappings table not found, using fallback:", e);
+        return [];
+      }
     },
     enabled: !!isAdmin,
   });
@@ -170,7 +194,18 @@ export default function AdminApprovalsScreen() {
     );
   };
 
-  const getResponsesForUser = (userId: string) => onboardingResponsesQuery.data?.filter((r) => r.user_id === userId) || [];
+  const getResponsesForUser = (userId: string) => {
+    const responses = onboardingResponsesQuery.data?.filter((r) => r.user_id === userId) || [];
+    const mappings = questionMappingsQuery.data || [];
+    
+    return responses.map((r) => {
+      const mapping = mappings.find((m) => m.role === r.role && m.question_id === r.question);
+      return {
+        ...r,
+        questionText: mapping?.question_text || r.question || "Unknown question",
+      };
+    });
+  };
 
   if (!isAdmin) {
     return (
@@ -222,6 +257,7 @@ export default function AdminApprovalsScreen() {
             onRefresh={() => {
               usersQuery.refetch();
               onboardingResponsesQuery.refetch();
+              questionMappingsQuery.refetch();
             }}
             tintColor="#FFFFFF"
           />
@@ -260,13 +296,16 @@ export default function AdminApprovalsScreen() {
 
                 {responses.length > 0 && (
                   <View style={styles.responsesSection}>
-                    <Text style={styles.responsesLabel}>Onboarding Responses</Text>
-                    {responses.map((r) => (
+                    <Text style={styles.responsesLabel}>Onboarding Responses ({responses.length})</Text>
+                    {responses.map((r: any) => (
                       <View key={r.id} style={styles.responseItem}>
-                        <Text style={styles.responseQuestion}>{r.question}</Text>
+                        <Text style={styles.responseQuestion}>{r.questionText}</Text>
                         <Text style={styles.responseAnswer}>
-                          {Array.isArray(r.answer) ? r.answer.join(", ") : String(r.answer)}
+                          {Array.isArray(r.answer) ? r.answer.join(", ") : String(r.answer || "No answer")}
                         </Text>
+                        {r.role && (
+                          <Text style={styles.responseRole}>Role: {r.role}</Text>
+                        )}
                       </View>
                     ))}
                   </View>
@@ -363,6 +402,7 @@ const styles = StyleSheet.create({
   responseItem: { gap: 2 },
   responseQuestion: { color: "#D1D5DB", fontSize: 13, fontWeight: "500" as const },
   responseAnswer: { color: "#9CA3AF", fontSize: 13, lineHeight: 18 },
+  responseRole: { color: "#6B7280", fontSize: 11, marginTop: 2, fontStyle: "italic" as const },
   actionButtons: { flexDirection: "row", gap: 12, marginTop: 4, flexWrap: "wrap" as const },
   actionButton: { flex: 1, minWidth: 100, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
   approveButton: { backgroundColor: "#10B981" },
