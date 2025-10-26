@@ -4,7 +4,7 @@ import { Shield } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbSelect, sbUpdate, getSupabase } from "@/integrations/supabase/client";
+import { sbSelect, sbUpdate } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc";
 import GrainTexture from "@/components/GrainTexture";
@@ -92,30 +92,22 @@ export default function AdminApprovalsScreen() {
   const usersQuery = useQuery<{ pending: AdminUser[]; approved: AdminUser[]; rejected: AdminUser[]}>({
     queryKey: ["admin", "users-by-status"],
     queryFn: async () => {
-      const supabase = getSupabase();
-      if (!supabase) return { pending: [], approved: [], rejected: [] };
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? "";
-      const base = "https://mnqgmpvkdmgmyoqhgswc.supabase.co/functions/v1/get-pending-users";
-
-      const buildReq = (status: StatusTab) =>
-        fetch(`${base}?status=${status}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }).then(async (r) => {
-          if (!r.ok) {
-            const t = await r.text();
-            throw new Error(t || `Failed to load ${status}`);
-          }
-          return (await r.json()) as AdminUser[];
+      console.log("[Admin] Fetching users by status...");
+      
+      const fetchByStatus = async (status: StatusTab) => {
+        const rows = await sbSelect<AdminUser>("profiles", {
+          select: "*",
+          query: { account_status: `eq.${status}` },
+          order: { column: "created_at", ascending: false },
         });
+        console.log(`[Admin] ${status} users:`, rows.length);
+        return rows;
+      };
 
       const [pending, approved, rejected] = await Promise.all([
-        buildReq("pending"),
-        buildReq("approved"),
-        buildReq("rejected"),
+        fetchByStatus("pending"),
+        fetchByStatus("approved"),
+        fetchByStatus("rejected"),
       ]);
       return { pending, approved, rejected };
     },

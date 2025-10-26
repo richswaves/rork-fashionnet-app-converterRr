@@ -209,6 +209,7 @@ export default function ProfileSetup() {
         bio: bio || undefined,
         profession: role,
         is_profile_updated: true,
+        account_status: 'pending',
       };
 
       if (role === "model") {
