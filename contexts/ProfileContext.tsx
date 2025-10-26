@@ -31,6 +31,7 @@ interface Profile {
   account_status?: string;
   is_profile_updated?: boolean;
   created_at?: string;
+  suspended_at?: string;
   model_photos?: string[];
   portfolio_photos?: string[];
   profile_customization?: ProfileCustomization | null;

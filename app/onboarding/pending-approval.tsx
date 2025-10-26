@@ -22,6 +22,12 @@ export default function PendingApproval() {
       } catch (e) {
         console.log("PendingApproval immediate redirect error", e);
       }
+    } else if (profile?.account_status === "suspended") {
+      try {
+        router.replace("/account-suspended" as any);
+      } catch (e) {
+        console.log("PendingApproval redirect to suspended error", e);
+      }
     }
   }, [profile?.account_status, router]);
 
@@ -41,8 +47,12 @@ export default function PendingApproval() {
           limit: 1,
         });
         const status = rows[0]?.account_status;
-        if (isMounted && status === "approved") {
-          router.replace("/(tabs)/opportunities" as any);
+        if (isMounted) {
+          if (status === "approved") {
+            router.replace("/(tabs)/opportunities" as any);
+          } else if (status === "suspended") {
+            router.replace("/account-suspended" as any);
+          }
         }
       } catch (e) {
         console.log("PendingApproval status poll failed", e);
@@ -65,6 +75,12 @@ export default function PendingApproval() {
               router.replace("/(tabs)/opportunities" as any);
             } catch (e) {
               console.log("Realtime redirect error", e);
+            }
+          } else if (next === "suspended") {
+            try {
+              router.replace("/account-suspended" as any);
+            } catch (e) {
+              console.log("Realtime redirect to suspended error", e);
             }
           }
         }

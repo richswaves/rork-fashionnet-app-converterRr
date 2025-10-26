@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect, getSupabase } from "@/integrations/supabase/client";
 import GrainTexture from "@/components/GrainTexture";
-import { PieChart, Shield, BarChart3, Users as UsersIcon, BriefcaseBusiness, ChevronRight, AlertTriangle } from "lucide-react-native";
+import { PieChart, Shield, BarChart3, ChevronRight, AlertTriangle, Scale } from "lucide-react-native";
 import { useProfile } from "@/contexts/ProfileContext";
 
 function useAdminCheck(userId?: string) {
@@ -165,11 +165,18 @@ export default function AdminDashboard() {
           </TouchableOpacity>
         </Section>
 
-        <Section title="Reports">
+        <Section title="Moderation">
           <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/reports")}>
             <View style={styles.linkLeftContent}>
               <AlertTriangle size={18} color="#EF4444" />
               <Text style={styles.linkText}>User reports</Text>
+            </View>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/appeals")}>
+            <View style={styles.linkLeftContent}>
+              <Scale size={18} color="#3B82F6" />
+              <Text style={styles.linkText}>Suspension appeals</Text>
             </View>
             <ChevronRight size={16} color="#9CA3AF" />
           </TouchableOpacity>

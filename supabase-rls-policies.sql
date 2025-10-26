@@ -292,3 +292,72 @@ FOR UPDATE USING (
 -- Grant permissions
 GRANT SELECT, INSERT, DELETE ON blocked_users TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON reports TO authenticated;
+
+-- ============================================================================
+-- APPEALS TABLE
+-- ============================================================================
+
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view own appeals" ON appeals;
+DROP POLICY IF EXISTS "Users can create appeals" ON appeals;
+DROP POLICY IF EXISTS "Admins can view all appeals" ON appeals;
+DROP POLICY IF EXISTS "Admins can update appeals" ON appeals;
+
+-- Create appeals table
+CREATE TABLE IF NOT EXISTS public.appeals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reason text NOT NULL,
+  status text DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected')),
+  admin_notes text,
+  created_at timestamptz DEFAULT now(),
+  resolved_at timestamptz,
+  resolved_by uuid REFERENCES auth.users(id),
+  UNIQUE(user_id, created_at)
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_appeals_user ON appeals(user_id);
+CREATE INDEX IF NOT EXISTS idx_appeals_status ON appeals(status);
+
+-- Enable RLS
+ALTER TABLE appeals ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own appeals
+CREATE POLICY "Users can view own appeals" ON appeals
+FOR SELECT USING (auth.uid() = user_id);
+
+-- Users can create appeals (suspended users only)
+CREATE POLICY "Users can create appeals" ON appeals
+FOR INSERT WITH CHECK (
+  auth.uid() = user_id AND
+  EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE profiles.user_id = auth.uid() 
+    AND profiles.account_status = 'suspended'
+  )
+);
+
+-- Admins can view all appeals
+CREATE POLICY "Admins can view all appeals" ON appeals
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
+
+-- Admins can update appeals
+CREATE POLICY "Admins can update appeals" ON appeals
+FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
+
+-- Grant permissions
+GRANT SELECT, INSERT ON appeals TO authenticated;
+GRANT UPDATE ON appeals TO authenticated;
