@@ -244,6 +244,41 @@ export default function SignupScreen() {
     return baseValid && onboardingValid && notifValid && allQuestionsAnswered && profileInfoComplete;
   }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink, allQuestionsAnswered, profileInfoComplete]);
 
+  async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase is not configured");
+    const uri = asset.uri;
+    const fileName = (asset.fileName ?? `${Date.now()}`).replace(/\s+/g, "_");
+    const extFromType = (asset as any).mimeType?.split("/")?.[1] ?? uri.split(".").pop() ?? "jpg";
+    const namePart = /\.[a-zA-Z0-9]+$/.test(fileName) ? fileName : `${fileName}.${extFromType}`;
+    const path = `avatars/${namePart}`;
+
+    let blob: Blob;
+    try {
+      if (Platform.OS === "web") {
+        blob = await (await fetch(uri)).blob();
+      } else if ((asset as any).base64) {
+        const mime = (asset as any).mimeType ?? "image/jpeg";
+        const dataUrl = `data:${mime};base64,${(asset as any).base64}`;
+        blob = await (await fetch(dataUrl)).blob();
+      } else {
+        blob = await (await fetch(uri)).blob();
+      }
+    } catch (e) {
+      throw new Error("Could not read selected image on this device");
+    }
+
+    const contentType = (asset as any).mimeType ?? (blob as any).type ?? "image/jpeg";
+    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType,
+    });
+    if (error) throw error as Error;
+    const { data: pub } = supabase.storage.from("model-photos").getPublicUrl(path);
+    return pub.publicUrl as string;
+  }
+
   const onSubmit = async () => {
     const supabase = getSupabase();
     if (!supabase) {
@@ -273,11 +308,26 @@ export default function SignupScreen() {
       }
 
       try {
+        let finalAvatar = profilePictureUri;
+        if (finalAvatar && !finalAvatar.startsWith("http")) {
+          try {
+            const mockAsset: ImagePicker.ImagePickerAsset = {
+              uri: finalAvatar,
+              width: 0,
+              height: 0,
+              fileName: `profile_${Date.now()}.jpg`,
+            } as any;
+            finalAvatar = await uploadToSupabase(mockAsset);
+          } catch (e) {
+            console.log("Avatar upload failed", e);
+          }
+        }
+
         await updateProfileAsync({
           user_id: userId,
           full_name: displayName.trim() || undefined,
           username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
-          profile_picture: profilePictureUri || undefined,
+          profile_picture: finalAvatar || undefined,
           location: cityLocation.trim() || undefined,
           account_status: "pending",
           is_profile_updated: true,
