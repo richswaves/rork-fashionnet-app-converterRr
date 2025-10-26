@@ -36,6 +36,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState<string>("");
 
   useEffect(() => {
+    if (showLoginForm) return;
+
     const currentWord = words[wordIndex];
     const typingSpeed = isDeleting ? 40 : 75;
     const pauseBeforeDelete = 2000;
@@ -65,7 +67,7 @@ export default function LoginScreen() {
     );
 
     return () => clearTimeout(timer);
-  }, [displayedText, isDeleting, wordIndex]);
+  }, [displayedText, isDeleting, wordIndex, showLoginForm]);
 
   const handleAppleLogin = async () => {
     Alert.alert("Coming Soon", "Apple sign-in will be available soon.");
