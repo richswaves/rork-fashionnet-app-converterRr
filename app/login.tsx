@@ -93,14 +93,21 @@ export default function LoginScreen() {
     try {
       WebBrowser.maybeCompleteAuthSession?.();
       const redirectTo = Platform.select<string | undefined>({
-        web: typeof window !== "undefined" ? window.location.origin : undefined,
-        default: Linking.createURL("/") ?? undefined,
+        web: typeof window !== "undefined" ? `${window.location.origin}/signup` : undefined,
+        default: Linking.createURL("/signup") ?? undefined,
       });
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo },
+        options: { 
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        },
       });
       if (error) throw error;
+      console.log('Google OAuth initiated:', data);
     } catch (error: any) {
       console.error("Google login error:", error);
       const msg = typeof error?.message === "string" ? error.message : "We couldn't start Google sign-in.";
