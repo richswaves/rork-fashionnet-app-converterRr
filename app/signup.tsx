@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch, Platform } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch, Platform, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import GrainTexture from "@/components/GrainTexture";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
 
@@ -162,12 +163,20 @@ export default function SignupScreen() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1);
 
+  const [displayName, setDisplayName] = useState<string>("");
+  const [profilePictureUri, setProfilePictureUri] = useState<string>("");
+  const [socialLink, setSocialLink] = useState<string>("");
+
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   const availableQuestions = useMemo<ChoiceQuestion[]>(() => {
     if (!role) return [];
     return roleQuestions[role] ?? [];
   }, [role]);
+
+  const allQuestionsAnswered = useMemo(() => {
+    return currentQuestionIndex >= availableQuestions.length - 1 && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
+  }, [currentQuestionIndex, availableQuestions, answers]);
 
   const totalSteps = useMemo(() => {
     let count = 1;
@@ -176,6 +185,7 @@ export default function SignupScreen() {
       count++;
       count += availableQuestions.length;
       if (role === "model") count++;
+      count++;
     }
     return count;
   }, [userType, role, availableQuestions]);
@@ -186,9 +196,11 @@ export default function SignupScreen() {
     if (role) {
       step++;
       if (currentQuestionIndex >= 0) step += currentQuestionIndex + 1;
+      if (allQuestionsAnswered && role === "model") step++;
+      if (allQuestionsAnswered && (role !== "model" || (height || waist))) step++;
     }
     return step;
-  }, [userType, role, currentQuestionIndex]);
+  }, [userType, role, currentQuestionIndex, allQuestionsAnswered, height, waist]);
 
   const progress = useMemo(() => {
     return totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
@@ -219,13 +231,16 @@ export default function SignupScreen() {
     return (answers[q.id] ?? []).length > 0;
   }, [currentQuestionIndex, availableQuestions, answers]);
 
+  const profileInfoComplete = useMemo(() => {
+    return displayName.trim().length > 0 && profilePictureUri.trim().length > 0 && socialLink.trim().length > 0;
+  }, [displayName, profilePictureUri, socialLink]);
+
   const canSubmit = useMemo(() => {
     const baseValid = email.trim().length > 3 && password.trim().length >= 6;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
     const notifValid = !notifOptIn || (notifMethod === "sms" ? phoneNumber.trim().length >= 7 : notifMethod === "instagram" ? instagramLink.trim().length > 0 : false);
-    const allQuestionsAnswered = currentQuestionIndex >= availableQuestions.length - 1 && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
-    return baseValid && onboardingValid && notifValid && allQuestionsAnswered;
-  }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink, currentQuestionIndex]);
+    return baseValid && onboardingValid && notifValid && allQuestionsAnswered && profileInfoComplete;
+  }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink, allQuestionsAnswered, profileInfoComplete]);
 
   const onSubmit = async () => {
     const supabase = getSupabase();
@@ -256,11 +271,17 @@ export default function SignupScreen() {
       try {
         await updateProfileAsync({
           user_id: userId,
-          full_name: fullName.trim() || undefined,
+          full_name: fullName.trim() || displayName.trim() || undefined,
+          username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
+          profile_picture: profilePictureUri || undefined,
           location: cityLocation.trim() || undefined,
           account_status: "pending",
           is_profile_updated: true,
           profession: role,
+          instagram_website: socialLink.includes("instagram") ? socialLink : undefined,
+          tiktok_link: socialLink.includes("tiktok") ? socialLink : undefined,
+          twitter_link: socialLink.includes("twitter") || socialLink.includes("x.com") ? socialLink : undefined,
+          youtube_link: socialLink.includes("youtube") ? socialLink : undefined,
           ...(role === "model"
             ? {
                 height: height || undefined,
@@ -593,7 +614,7 @@ export default function SignupScreen() {
           );
         })()}
 
-        {role === "model" && currentQuestionIndex >= availableQuestions.length - 1 && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0) && (
+        {role === "model" && allQuestionsAnswered && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
             <View style={styles.row}>
@@ -612,6 +633,73 @@ export default function SignupScreen() {
               <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="signup-hair" />
               <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="signup-eye" />
             </View>
+          </View>
+        )}
+
+        {allQuestionsAnswered && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Profile Information</Text>
+            <Text style={styles.helperText}>Complete your profile to continue</Text>
+            
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.fieldLabel}>Display Name *</Text>
+              <TextInput
+                testID="signup-display-name"
+                placeholder="Your name"
+                placeholderTextColor="#9CA3AF"
+                value={displayName}
+                onChangeText={setDisplayName}
+                style={styles.input}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.fieldLabel}>Profile Picture *</Text>
+              <TouchableOpacity
+                testID="signup-profile-pic"
+                style={styles.imagePickerBtn}
+                onPress={async () => {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.8,
+                  });
+                  if (!result.canceled && result.assets[0]) {
+                    setProfilePictureUri(result.assets[0].uri);
+                  }
+                }}
+              >
+                {profilePictureUri ? (
+                  <Image source={{ uri: profilePictureUri }} style={styles.profilePreview} />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Text style={styles.imagePlaceholderText}>Tap to upload</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.fieldLabel}>Social Link *</Text>
+              <TextInput
+                testID="signup-social-link"
+                placeholder="Instagram, TikTok, or other social profile URL"
+                placeholderTextColor="#9CA3AF"
+                value={socialLink}
+                onChangeText={setSocialLink}
+                style={styles.input}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            {!profileInfoComplete && (
+              <Text style={[styles.helperText, { marginTop: 8, color: "#EF4444" }]}>
+                All fields are required to continue
+              </Text>
+            )}
           </View>
         )}
 
@@ -657,4 +745,9 @@ const styles = StyleSheet.create({
   progressBar: { height: "100%", backgroundColor: "#FFFFFF", borderRadius: 2 },
   secondaryBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, alignItems: "center", borderRadius: 12, marginTop: 6 },
   secondaryBtnText: { color: "#111827", fontSize: 15, fontWeight: "700" as const },
+  fieldLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const, marginBottom: 6 },
+  imagePickerBtn: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden" as const },
+  profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
+  imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
 });
