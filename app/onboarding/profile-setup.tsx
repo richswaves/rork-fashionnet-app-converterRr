@@ -327,27 +327,18 @@ export default function ProfileSetup() {
     }
   }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
-  const isStep1Valid = userType && role && displayName.trim() && profilePictureUri;
+  const isStep1Valid = userType && role;
   const hasAnsweredQuestions = Object.keys(answers).length > 0;
   const isContinueEnabled = currentStep === 2 
     ? true 
     : (role === "model" ? isStep1Valid : (isStep1Valid && hasAnsweredQuestions));
   
   const onContinue = useCallback(() => {
-    console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep, displayName: displayName.trim(), hasProfilePic: !!profilePictureUri });
+    console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep });
     
     if (currentStep === 1) {
       if (!userType || !role) {
         Alert.alert("Missing info", "Choose your user type and role.");
-        return;
-      }
-      
-      if (!displayName.trim()) {
-        Alert.alert("Missing info", "Please enter your display name.");
-        return;
-      }
-      if (!profilePictureUri) {
-        Alert.alert("Missing info", "Please upload a profile picture.");
         return;
       }
       
@@ -360,7 +351,7 @@ export default function ProfileSetup() {
     
     console.log('[ProfileSetup] Calling onSave');
     onSave();
-  }, [userType, role, displayName, profilePictureUri, currentStep, onSave]);
+  }, [userType, role, currentStep, onSave]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
