@@ -151,10 +151,12 @@ export default function AdminApprovalsScreen() {
 
   const suspendAccountMutation = useMutation({
     mutationFn: async (userId: string) => {
-      await sbUpdate("profiles", { account_status: "rejected" }, { user_id: `eq.${userId}` });
+      console.log(`[Admin] Suspending user ${userId}`);
+      await sbUpdate("profiles", { account_status: "suspended" }, { user_id: `eq.${userId}` });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "suspended-users"] });
       Alert.alert("Success", "Account suspended");
     },
     onError: (error) => {

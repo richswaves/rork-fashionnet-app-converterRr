@@ -155,6 +155,10 @@ export default function AdminDashboard() {
             <Text style={styles.linkText}>Review applications</Text>
             <ChevronRight size={16} color="#9CA3AF" />
           </TouchableOpacity>
+          <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/suspended")}>
+            <Text style={styles.linkText}>Suspended accounts</Text>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/access")}>
             <Text style={styles.linkText}>Manage admin access</Text>
             <ChevronRight size={16} color="#9CA3AF" />
