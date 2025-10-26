@@ -238,8 +238,8 @@ export default function EditProfileScreen() {
     const fileName = /\.[a-zA-Z0-9]+$/.test(rawName) ? rawName : `${rawName}.${extFromType}`;
     const path = `${folder}/${fileName}`;
 
-    let blob: Blob | null = null;
     const mime = (asset as any).mimeType ?? "image/jpeg";
+    let blob: Blob;
 
     try {
       if (asset.base64 && asset.base64.length > 0) {
@@ -247,9 +247,7 @@ export default function EditProfileScreen() {
         const dataUrl = `data:${mime};base64,${asset.base64}`;
         const response = await fetch(dataUrl);
         blob = await response.blob();
-      }
-
-      if (!blob) {
+      } else {
         console.log("[upload] Attempting FileSystem fallback");
         const FileSystem = await import("expo-file-system");
         const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
@@ -258,12 +256,8 @@ export default function EditProfileScreen() {
         blob = await response.blob();
       }
     } catch (err) {
-      console.error("[upload] All blob creation methods failed", err);
+      console.error("[upload] Blob creation failed", err);
       throw new Error(`Could not read selected image: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-
-    if (!blob) {
-      throw new Error("Failed to create blob from image. Please try a different photo.");
     }
 
     const contentType = mime ?? blob.type ?? "image/jpeg";
