@@ -620,6 +620,9 @@ export default function SignupScreen() {
                       if (role === "model") {
                         handleContinueQuestion();
                       } else {
+                        if (fullName.trim().length > 0 && displayName.trim().length === 0) {
+                          setDisplayName(fullName.trim());
+                        }
                         setShowingProfileInfo(true);
                       }
                     }
@@ -656,6 +659,9 @@ export default function SignupScreen() {
               style={styles.secondaryBtn}
               onPress={() => {
                 Keyboard.dismiss();
+                if (fullName.trim().length > 0 && displayName.trim().length === 0) {
+                  setDisplayName(fullName.trim());
+                }
                 setShowingProfileInfo(true);
               }}
             >
