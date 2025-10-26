@@ -239,30 +239,43 @@ export default function EditProfileScreen() {
     const path = `${folder}/${fileName}`;
 
     const mime = (asset as any).mimeType ?? "image/jpeg";
-    let blob: Blob;
+    let base64Data: string;
 
     try {
       if (asset.base64 && asset.base64.length > 0) {
-        console.log("[upload] Using base64 data");
-        const dataUrl = `data:${mime};base64,${asset.base64}`;
-        const response = await fetch(dataUrl);
-        blob = await response.blob();
+        console.log("[upload] Using base64 data from asset");
+        base64Data = asset.base64;
       } else {
-        console.log("[upload] Attempting FileSystem fallback");
+        console.log("[upload] Reading file using FileSystem");
         const FileSystem = await import("expo-file-system");
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
-        const dataUrl = `data:${mime};base64,${base64}`;
-        const response = await fetch(dataUrl);
-        blob = await response.blob();
+        base64Data = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
       }
     } catch (err) {
-      console.error("[upload] Blob creation failed", err);
+      console.error("[upload] Failed to read image data", err);
       throw new Error(`Could not read selected image: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
 
-    const contentType = mime ?? blob.type ?? "image/jpeg";
-    console.log("[upload] Uploading to Supabase Storage", { bucket: "model-photos", path, contentType, size: blob.size });
-    const { error } = await supabase.storage.from("model-photos").upload(path, blob, {
+    const isWeb = Platform.select({ web: true, default: false }) as boolean;
+    let uploadData: Blob | ArrayBuffer;
+
+    if (isWeb) {
+      const dataUrl = `data:${mime};base64,${base64Data}`;
+      const response = await fetch(dataUrl);
+      uploadData = await response.blob();
+      console.log("[upload] Created blob for web", { size: (uploadData as Blob).size });
+    } else {
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      uploadData = bytes.buffer;
+      console.log("[upload] Created ArrayBuffer for native", { size: uploadData.byteLength });
+    }
+
+    const contentType = mime;
+    console.log("[upload] Uploading to Supabase Storage", { bucket: "model-photos", path, contentType });
+    const { error } = await supabase.storage.from("model-photos").upload(path, uploadData, {
       cacheControl: "3600",
       upsert: true,
       contentType,
