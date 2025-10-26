@@ -333,24 +333,26 @@ export default function ProfileSetup() {
   const onContinue = useCallback(() => {
     console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep, displayName: displayName.trim(), hasProfilePic: !!profilePictureUri });
     
-    if (!userType || !role) {
-      Alert.alert("Missing info", "Choose your user type and role.");
-      return;
-    }
-    
-    if (!displayName.trim()) {
-      Alert.alert("Missing info", "Please enter your display name.");
-      return;
-    }
-    if (!profilePictureUri) {
-      Alert.alert("Missing info", "Please upload a profile picture.");
-      return;
-    }
-    
-    if (role === "model" && currentStep === 1) {
-      console.log('[ProfileSetup] Model role on step 1, moving to step 2');
-      setCurrentStep(2);
-      return;
+    if (currentStep === 1) {
+      if (!userType || !role) {
+        Alert.alert("Missing info", "Choose your user type and role.");
+        return;
+      }
+      
+      if (!displayName.trim()) {
+        Alert.alert("Missing info", "Please enter your display name.");
+        return;
+      }
+      if (!profilePictureUri) {
+        Alert.alert("Missing info", "Please upload a profile picture.");
+        return;
+      }
+      
+      if (role === "model") {
+        console.log('[ProfileSetup] Model role on step 1, moving to step 2');
+        setCurrentStep(2);
+        return;
+      }
     }
     
     console.log('[ProfileSetup] Calling onSave');
