@@ -235,7 +235,7 @@ export default function SignupScreen() {
   }, [displayName, profilePictureUri, socialLink]);
 
   const canSubmit = useMemo(() => {
-    const baseValid = email.trim().length > 3 && password.trim().length >= 6 && phoneNumber.trim().length >= 7;
+    const baseValid = email.trim().length > 3 && password.trim().length >= 6 && phoneNumber.trim().length >= 10;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
     return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete;
   }, [email, password, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete]);

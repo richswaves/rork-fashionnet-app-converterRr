@@ -4,9 +4,9 @@ import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, Phone, Bell } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, Phone } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Switch } from "react-native";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -50,7 +50,6 @@ export default function EditProfileScreen() {
     tiktok?: string;
   }>((profile as any)?.social_links ?? {});
   const [phoneNumber, setPhoneNumber] = useState<string>((profile as any)?.phone_number ?? "");
-  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>((profile as any)?.notifications_enabled ?? false);
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -388,11 +387,6 @@ export default function EditProfileScreen() {
         console.log("[onSave] Adding phone_number to updates:", phoneNumber);
       }
 
-      if (notificationsEnabled !== ((profile as any)?.notifications_enabled ?? false)) {
-        (updates as any).notifications_enabled = notificationsEnabled;
-        console.log("[onSave] Adding notifications_enabled to updates:", notificationsEnabled);
-      }
-
       if (Object.keys(updates).length === 0) {
         console.log("[onSave] No changes to save");
         router.back();
@@ -573,25 +567,6 @@ export default function EditProfileScreen() {
             </View>
             <Pencil color="#9CA3AF" size={16} />
           </Pressable>
-
-          <View style={styles.contactCard}>
-            <View style={styles.contactLeft}>
-              <View style={[styles.contactIcon, { backgroundColor: "#8B5CF6" }]}>
-                <Bell color="#fff" size={20} />
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactLabel}>Enable Notifications</Text>
-                <Text style={styles.contactSubLabel}>Get notified about new opportunities</Text>
-              </View>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: "#2C2C33", true: "#8B5CF6" }}
-              thumbColor={notificationsEnabled ? "#E5E7EB" : "#6B7280"}
-              testID="notifications-switch"
-            />
-          </View>
         </View>
 
         <View style={styles.portfolioSection}>
@@ -910,11 +885,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
-  contactSubLabel: {
-    color: "#6B7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
+
 });
 
 function MasonryPortfolio({ items, onDelete }: { items: PortfolioItem[]; onDelete: (id: string) => void }) {
