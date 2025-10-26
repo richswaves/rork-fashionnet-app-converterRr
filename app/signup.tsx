@@ -275,6 +275,7 @@ export default function SignupScreen() {
       try {
         await updateProfileAsync({
           user_id: userId,
+          display_name: displayName.trim() || undefined,
           full_name: displayName.trim() || undefined,
           username: displayName.trim().toLowerCase().replace(/\s+/g, "") || undefined,
           profile_picture: profilePictureUri || undefined,
@@ -317,7 +318,7 @@ export default function SignupScreen() {
           await sbInsert("onboarding_responses", {
             user_id: userId,
             role,
-            question: "Location",
+            question: "location",
             answer: [cityLocation.trim()],
           } as any);
         }
@@ -325,7 +326,7 @@ export default function SignupScreen() {
           await sbInsert("onboarding_responses", {
             user_id: userId,
             role,
-            question: "Date of birth",
+            question: "date_of_birth",
             answer: [dateOfBirth.trim()],
           } as any);
         }
