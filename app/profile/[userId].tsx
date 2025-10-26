@@ -71,6 +71,20 @@ export default function UserProfileScreen() {
   const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState<string>("");
 
+  const { data: isBlocked } = useQuery<boolean>({
+    queryKey: ["is-blocked", currentUserId, userId],
+    queryFn: async () => {
+      if (!currentUserId || !userId || currentUserId === userId) return false;
+      const rows = await sbSelect<{ id: string }>("blocked_users", {
+        select: "id",
+        query: { blocker_id: `eq.${currentUserId}`, blocked_id: `eq.${userId}` },
+        limit: 1,
+      });
+      return rows.length > 0;
+    },
+    enabled: !!currentUserId && !!userId && currentUserId !== userId,
+  });
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opportunitiesAnimHeight, {
@@ -320,6 +334,77 @@ export default function UserProfileScreen() {
     },
   });
 
+  const blockMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (!userId) throw new Error("No user to block");
+      if (currentUserId === userId) throw new Error("Cannot block yourself");
+      
+      console.log(`[Block] User ${currentUserId} blocking user ${userId}`);
+      await sbInsert("blocked_users", {
+        blocker_id: currentUserId,
+        blocked_id: userId,
+      });
+    },
+    onSuccess: () => {
+      console.log("[Block] Successfully blocked user");
+      queryClient.invalidateQueries({ queryKey: ["is-blocked", currentUserId, userId] });
+      Alert.alert("Success", "User blocked");
+    },
+    onError: (error) => {
+      console.error("[Block] Error blocking user:", error);
+      Alert.alert("Error", "Failed to block user");
+    },
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (!userId) throw new Error("No user to unblock");
+      
+      console.log(`[Block] User ${currentUserId} unblocking user ${userId}`);
+      await sbDelete("blocked_users", {
+        blocker_id: currentUserId,
+        blocked_id: userId,
+      });
+    },
+    onSuccess: () => {
+      console.log("[Block] Successfully unblocked user");
+      queryClient.invalidateQueries({ queryKey: ["is-blocked", currentUserId, userId] });
+      Alert.alert("Success", "User unblocked");
+    },
+    onError: (error) => {
+      console.error("[Block] Error unblocking user:", error);
+      Alert.alert("Error", "Failed to unblock user");
+    },
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (!userId) throw new Error("No user to report");
+      if (!reason || reason.trim().length === 0) throw new Error("Reason is required");
+      
+      console.log(`[Report] User ${currentUserId} reporting user ${userId}`);
+      await sbInsert("reports", {
+        reporter_id: currentUserId,
+        reported_user_id: userId,
+        reason: reason.trim(),
+        status: "pending",
+      });
+    },
+    onSuccess: () => {
+      console.log("[Report] Successfully reported user");
+      setReportModalVisible(false);
+      setReportReason("");
+      Alert.alert("Success", "Report submitted. Our team will review it.");
+    },
+    onError: (error) => {
+      console.error("[Report] Error reporting user:", error);
+      Alert.alert("Error", "Failed to submit report");
+    },
+  });
+
   const coverCandidates: (string | undefined)[] = [
     data?.profile_customization?.backgroundImage,
     Array.isArray(data?.model_photos) ? data?.model_photos[0] : undefined,
@@ -540,6 +625,43 @@ export default function UserProfileScreen() {
             );
           })()}
         </View>
+
+        {!isOwn && currentUserId && (
+          <View style={styles.actionRow}>
+            <Pressable
+              onPress={() => {
+                if (isBlocked) {
+                  unblockMutation.mutate();
+                } else {
+                  Alert.alert(
+                    "Block User",
+                    "Are you sure you want to block this user? You won't see their content anymore.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Block", style: "destructive", onPress: () => blockMutation.mutate() },
+                    ]
+                  );
+                }
+              }}
+              style={[styles.actionButton, isBlocked && styles.actionButtonActive]}
+              disabled={blockMutation.isPending || unblockMutation.isPending}
+              testID="block-btn"
+            >
+              <Ban color={isBlocked ? "#10B981" : "#EF4444"} size={16} />
+              <Text style={[styles.actionButtonText, isBlocked && styles.actionButtonTextActive]}>
+                {isBlocked ? "Unblock" : "Block"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setReportModalVisible(true)}
+              style={styles.actionButton}
+              testID="report-btn"
+            >
+              <Flag color="#F59E0B" size={16} />
+              <Text style={styles.actionButtonText}>Report</Text>
+            </Pressable>
+          </View>
+        )}
 
         {!!data?.bio && (
           <Text style={styles.bio}>{data.bio}</Text>
@@ -762,6 +884,59 @@ export default function UserProfileScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      <Modal
+        visible={reportModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setReportModalVisible(false);
+          setReportReason("");
+        }}
+      >
+        <View style={styles.reportModalOverlay}>
+          <View style={styles.reportModalContent}>
+            <Text style={styles.reportModalTitle}>Report User</Text>
+            <Text style={styles.reportModalSubtitle}>Please tell us why you&apos;re reporting this account</Text>
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Reason for reporting..."
+              placeholderTextColor="#6B7280"
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            <View style={styles.reportModalActions}>
+              <TouchableOpacity
+                style={[styles.reportModalButton, styles.reportModalButtonCancel]}
+                onPress={() => {
+                  setReportModalVisible(false);
+                  setReportReason("");
+                }}
+              >
+                <Text style={styles.reportModalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.reportModalButton, styles.reportModalButtonSubmit]}
+                onPress={() => {
+                  if (!reportReason || reportReason.trim().length === 0) {
+                    Alert.alert("Error", "Please provide a reason for reporting");
+                    return;
+                  }
+                  reportMutation.mutate(reportReason);
+                }}
+                disabled={reportMutation.isPending}
+              >
+                <Text style={styles.reportModalButtonTextSubmit}>
+                  {reportMutation.isPending ? "Submitting..." : "Submit Report"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -945,6 +1120,97 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "#FFFFFF",
     fontSize: 24,
+    fontWeight: "700",
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+    paddingHorizontal: 0,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(30, 30, 40, 0.7)",
+    borderWidth: 1.5,
+    borderColor: "#2A2A38",
+  },
+  actionButtonActive: {
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    borderColor: "#10B981",
+  },
+  actionButtonText: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  actionButtonTextActive: {
+    color: "#10B981",
+  },
+  reportModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "flex-end",
+  },
+  reportModalContent: {
+    backgroundColor: "#1A1A24",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  reportModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  reportModalSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  reportInput: {
+    backgroundColor: "#0F0F15",
+    borderWidth: 1.5,
+    borderColor: "#2A2A38",
+    borderRadius: 12,
+    padding: 16,
+    color: "#FFFFFF",
+    fontSize: 15,
+    minHeight: 120,
+  },
+  reportModalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  reportModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  reportModalButtonCancel: {
+    backgroundColor: "#2A2A38",
+  },
+  reportModalButtonTextCancel: {
+    color: "#E5E7EB",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  reportModalButtonSubmit: {
+    backgroundColor: "#EF4444",
+  },
+  reportModalButtonTextSubmit: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "700",
   },
 });
