@@ -153,7 +153,7 @@ export default function AdminReportsScreen() {
     );
   }
 
-  const filteredReports = (reportsQuery.data as Report[] | undefined)?.filter((r: Report) => r.status === activeTab) ?? [];
+  const filteredReports = reportsQuery.data?.filter((r) => r.status === activeTab) ?? [];
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -167,13 +167,16 @@ export default function AdminReportsScreen() {
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.tabsRow}>
-          {(["pending", "reviewing", "resolved", "dismissed"] as StatusTab[]).map((t) => (
-            <TouchableOpacity key={t} onPress={() => setActiveTab(t)} style={[styles.tabBtn, activeTab === t && styles.tabBtnActive]}>
-              <Text style={[styles.tabText, activeTab === t && styles.tabTextActive]}>
-                {t.toUpperCase()} ({(reportsQuery.data as Report[] | undefined)?.filter((r: Report) => r.status === t)?.length ?? 0})
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {(["pending", "reviewing", "resolved", "dismissed"] as StatusTab[]).map((t) => {
+            const count = reportsQuery.data?.filter((r) => r.status === t)?.length ?? 0;
+            return (
+              <TouchableOpacity key={t} onPress={() => setActiveTab(t)} style={[styles.tabBtn, activeTab === t && styles.tabBtnActive]}>
+                <Text style={[styles.tabText, activeTab === t && styles.tabTextActive]}>
+                  {t.toUpperCase()} ({count})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -193,7 +196,7 @@ export default function AdminReportsScreen() {
             <Text style={styles.loadingText}>Loading reports...</Text>
           </View>
         ) : filteredReports.length > 0 ? (
-          filteredReports.map((report: Report) => {
+          filteredReports.map((report) => {
             const reportedName = report.reported_profile?.full_name || report.reported_profile?.username || "Unknown User";
             const reporterName = report.reporter_profile?.full_name || report.reporter_profile?.username || "Unknown User";
             
