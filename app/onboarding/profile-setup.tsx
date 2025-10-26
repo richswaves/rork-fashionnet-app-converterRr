@@ -328,6 +328,7 @@ export default function ProfileSetup() {
   }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
 
   const isStep1Valid = userType && role && displayName.trim() && profilePictureUri;
+  const isContinueEnabled = currentStep === 2 ? true : isStep1Valid;
   
   const onContinue = useCallback(() => {
     if (!userType || !role) {
@@ -558,14 +559,14 @@ export default function ProfileSetup() {
           testID="ps-save" 
           style={[
             styles.primaryBtn,
-            (currentStep === 1 && !isStep1Valid) && styles.primaryBtnDisabled
+            !isContinueEnabled && styles.primaryBtnDisabled
           ]} 
           onPress={onContinue}
-          disabled={currentStep === 1 && !isStep1Valid}
+          disabled={!isContinueEnabled}
         >
           <Text style={[
             styles.primaryBtnText,
-            (currentStep === 1 && !isStep1Valid) && styles.primaryBtnTextDisabled
+            !isContinueEnabled && styles.primaryBtnTextDisabled
           ]}>
             Continue
           </Text>
