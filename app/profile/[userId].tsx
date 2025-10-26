@@ -13,6 +13,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
   user_id: string;
+  display_name?: string;
   full_name?: string;
   username?: string;
   profile_picture?: string;
