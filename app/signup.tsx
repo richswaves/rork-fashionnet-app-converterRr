@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch, Platform, Image, Keyboard } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform, Image, Keyboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
@@ -143,10 +143,7 @@ export default function SignupScreen() {
   const [dobDate, setDobDate] = useState<Date>(new Date(2000, 0, 1));
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [cityLocation, setCityLocation] = useState<string>("");
-  const [notifOptIn, setNotifOptIn] = useState<boolean>(false);
-  const [notifMethod, setNotifMethod] = useState<"sms" | "instagram" | undefined>(undefined);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [instagramLink, setInstagramLink] = useState<string>("");
 
   const [userType, setUserType] = useState<"creative" | "business" | undefined>(undefined);
   const [role, setRole] = useState<string | undefined>(undefined);
@@ -238,11 +235,10 @@ export default function SignupScreen() {
   }, [displayName, profilePictureUri, socialLink]);
 
   const canSubmit = useMemo(() => {
-    const baseValid = email.trim().length > 3 && password.trim().length >= 6;
+    const baseValid = email.trim().length > 3 && password.trim().length >= 6 && phoneNumber.trim().length >= 7;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
-    const notifValid = !notifOptIn || (notifMethod === "sms" ? phoneNumber.trim().length >= 7 : notifMethod === "instagram" ? instagramLink.trim().length > 0 : false);
-    return baseValid && onboardingValid && notifValid && allQuestionsAnswered && profileInfoComplete;
-  }, [email, password, userType, role, availableQuestions, answers, notifOptIn, notifMethod, phoneNumber, instagramLink, allQuestionsAnswered, profileInfoComplete]);
+    return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete;
+  }, [email, password, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete]);
 
   async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
     const supabase = getSupabase();
@@ -336,6 +332,7 @@ export default function SignupScreen() {
           tiktok_link: socialLink.includes("tiktok") ? socialLink : undefined,
           twitter_link: socialLink.includes("twitter") || socialLink.includes("x.com") ? socialLink : undefined,
           youtube_link: socialLink.includes("youtube") ? socialLink : undefined,
+          phone_number: phoneNumber.trim() || undefined,
           ...(role === "model"
             ? {
                 height: height || undefined,
@@ -379,35 +376,13 @@ export default function SignupScreen() {
             answer: [dateOfBirth.trim()],
           } as any);
         }
-        await sbInsert("onboarding_responses", {
-          user_id: userId,
-          role,
-          question: "Notifications opt-in",
-          answer: [notifOptIn ? "enabled" : "disabled"],
-        } as any);
-        if (notifOptIn && notifMethod) {
+        if (phoneNumber.trim().length > 0) {
           await sbInsert("onboarding_responses", {
             user_id: userId,
             role,
-            question: "Notifications channel",
-            answer: [notifMethod],
+            question: "Phone number",
+            answer: [phoneNumber.trim()],
           } as any);
-          if (notifMethod === "sms" && phoneNumber.trim().length > 0) {
-            await sbInsert("onboarding_responses", {
-              user_id: userId,
-              role,
-              question: "Phone number for notifications",
-              answer: [phoneNumber.trim()],
-            } as any);
-          }
-          if (notifMethod === "instagram" && instagramLink.trim().length > 0) {
-            await sbInsert("onboarding_responses", {
-              user_id: userId,
-              role,
-              question: "Instagram for notifications",
-              answer: [instagramLink.trim()],
-            } as any);
-          }
         }
       } catch (e) {
         console.log("Failed inserting onboarding responses", e);
@@ -514,77 +489,18 @@ export default function SignupScreen() {
               <Text style={styles.secondaryBtnText}>Done</Text>
             </TouchableOpacity>
           )}
-          <View style={styles.notifRow}>
-            <Text style={styles.helperText}>enable post notifications</Text>
-            <Switch
-              testID="signup-notif"
-              value={notifOptIn}
-              onValueChange={async (v) => {
-                setNotifOptIn(v);
-                if (!v) {
-                  setNotifMethod(undefined);
-                  setPhoneNumber("");
-                  setInstagramLink("");
-                }
-                if (v) {
-                  console.log("Notifications preference enabled; select a channel");
-                }
-              }}
-            />
-          </View>
+          <TextInput
+            testID="signup-phone"
+            placeholder="Phone number *"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            style={styles.input}
+          />
         </View>
 
-        {notifOptIn && (
-          <View style={[styles.card, { marginTop: -4 }]}> 
-            <Text style={styles.sectionTitle}>Choose how you want to be notified</Text>
-            <View style={styles.rowWrap}>
-              {(["sms", "instagram"] as const).map((m) => {
-                const selected = notifMethod === m;
-                return (
-                  <TouchableOpacity
-                    key={m}
-                    testID={`signup-notif-${m}`}
-                    style={[styles.pill, selected && styles.pillActive]}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setNotifMethod(m);
-                    }}
-                  >
-                    <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                      {m === "sms" ? "SMS" : "Instagram DMs"}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {notifMethod === "sms" && (
-              <TextInput
-                testID="signup-phone"
-                placeholder="Phone number"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="phone-pad"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                style={[styles.input, { marginTop: 10 }]}
-              />
-            )}
-            {notifMethod === "instagram" && (
-              <TextInput
-                testID="signup-ig"
-                placeholder="Instagram profile link (https://instagram.com/username)"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={instagramLink}
-                onChangeText={setInstagramLink}
-                style={[styles.input, { marginTop: 10 }]}
-              />
-            )}
-            {!notifMethod && (
-              <Text style={{ color: "#9CA3AF", marginTop: 6 }}>Select a notification channel</Text>
-            )}
-          </View>
-        )}
+
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>You are joining as</Text>
@@ -837,5 +753,5 @@ const styles = StyleSheet.create({
   socialLinkPlaceholder: { color: "#9CA3AF" },
   pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
-  notifRow: { flexDirection: "row", alignItems: "center", gap: 10, maxWidth: "100%" },
+
 });
