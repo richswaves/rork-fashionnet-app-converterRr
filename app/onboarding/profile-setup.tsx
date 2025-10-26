@@ -151,6 +151,11 @@ export default function ProfileSetup() {
   const [hairColor, setHairColor] = useState<string>("");
   const [eyeColor, setEyeColor] = useState<string>("");
 
+  const [instagram, setInstagram] = useState<string>("");
+  const [youtube, setYoutube] = useState<string>("");
+  const [twitter, setTwitter] = useState<string>("");
+  const [tiktok, setTiktok] = useState<string>("");
+
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   const availableQuestions = useMemo<ChoiceQuestion[]>(() => {
@@ -212,6 +217,16 @@ export default function ProfileSetup() {
         account_status: 'pending',
       };
 
+      const socialLinks: any = {};
+      if (instagram?.trim()) socialLinks.instagram = instagram.trim();
+      if (youtube?.trim()) socialLinks.youtube = youtube.trim();
+      if (twitter?.trim()) socialLinks.twitter = twitter.trim();
+      if (tiktok?.trim()) socialLinks.tiktok = tiktok.trim();
+      
+      if (Object.keys(socialLinks).length > 0) {
+        profileData.social_links = socialLinks;
+      }
+
       if (role === "model") {
         profileData.height = height || undefined;
         profileData.waist = waist || undefined;
@@ -251,7 +266,7 @@ export default function ProfileSetup() {
       const msg = typeof e?.message === "string" ? e.message : "Could not save";
       Alert.alert("Save failed", msg);
     }
-  }, [answers, availableQuestions, bio, bust, chest, currentUserId, eyeColor, fullName, hairColor, height, hips, location, profile?.account_status, recordEvent, role, router, shoeSize, updateProfileAsync, username, waist, userType]);
+  }, [answers, availableQuestions, bio, bust, chest, currentUserId, eyeColor, fullName, hairColor, height, hips, instagram, location, profile?.account_status, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, username, waist, youtube, userType]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -299,6 +314,48 @@ export default function ProfileSetup() {
             <TextInput value={username} onChangeText={setUsername} placeholder="Username" placeholderTextColor="#9CA3AF" style={styles.input} autoCapitalize="none" testID="ps-username" />
             <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
             <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
+          </View>
+        )}
+
+        {!!role && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Social Links (optional)</Text>
+            <TextInput 
+              value={instagram} 
+              onChangeText={setInstagram} 
+              placeholder="Instagram (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-instagram" 
+            />
+            <TextInput 
+              value={youtube} 
+              onChangeText={setYoutube} 
+              placeholder="YouTube (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-youtube" 
+            />
+            <TextInput 
+              value={twitter} 
+              onChangeText={setTwitter} 
+              placeholder="Twitter/X (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-twitter" 
+            />
+            <TextInput 
+              value={tiktok} 
+              onChangeText={setTiktok} 
+              placeholder="TikTok (username or link)" 
+              placeholderTextColor="#9CA3AF" 
+              style={styles.input} 
+              autoCapitalize="none" 
+              testID="ps-tiktok" 
+            />
           </View>
         )}
 
