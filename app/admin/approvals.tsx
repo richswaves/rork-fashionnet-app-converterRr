@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable } from "react-native";
+import { Shield } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -191,7 +192,16 @@ export default function AdminApprovalsScreen() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <GrainTexture />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Application Approvals</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Application Approvals</Text>
+          <TouchableOpacity 
+            style={styles.adminAccessBtn}
+            onPress={() => router.push("/admin/access")}
+          >
+            <Shield size={16} color="#8B5CF6" />
+            <Text style={styles.adminAccessText}>Admin Access</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.tabsRow}>
           {(["pending", "approved", "rejected"] as StatusTab[]).map((t) => (
             <Pressable key={t} onPress={() => setActiveTab(t)} style={[styles.tabBtn, activeTab === t && styles.tabBtnActive]}>
@@ -305,7 +315,24 @@ export default function AdminApprovalsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   header: { paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: "#1F2937" },
-  headerTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "700" as const, marginBottom: 6 },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
+  headerTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "700" as const },
+  adminAccessBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(139, 92, 246, 0.3)",
+  },
+  adminAccessText: {
+    color: "#8B5CF6",
+    fontSize: 13,
+    fontWeight: "700" as const,
+  },
   tabsRow: { flexDirection: "row", gap: 8 as const },
   tabBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "#15151A", borderWidth: 1, borderColor: "#2A2A33" },
   tabBtnActive: { backgroundColor: "#1F2937", borderColor: "#374151" },
