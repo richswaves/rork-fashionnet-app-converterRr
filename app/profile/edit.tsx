@@ -569,12 +569,12 @@ export default function EditProfileScreen() {
           <Text style={styles.dangerZoneTitle}>Account</Text>
           {isAdmin && (
             <Pressable
-              onPress={() => router.push("/admin/access" as any)}
+              onPress={() => router.push("/admin/approvals" as any)}
               style={styles.adminBtn}
               testID="btn-admin-access"
             >
               <Shield color="#8B5CF6" size={18} />
-              <Text style={styles.adminText}>Admin Access</Text>
+              <Text style={styles.adminText}>Admin Panel</Text>
             </Pressable>
           )}
           <Pressable 
