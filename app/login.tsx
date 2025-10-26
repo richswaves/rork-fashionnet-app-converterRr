@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
 
 import { getSupabase } from "@/integrations/supabase/client";
@@ -34,9 +34,19 @@ export default function LoginScreen() {
   const [showLoginForm, setShowLoginForm] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsFocused(true);
+      return () => {
+        setIsFocused(false);
+      };
+    }, [])
+  );
 
   useEffect(() => {
-    if (showLoginForm) return;
+    if (showLoginForm || !isFocused) return;
 
     const currentWord = words[wordIndex];
     const typingSpeed = isDeleting ? 40 : 75;
@@ -67,7 +77,7 @@ export default function LoginScreen() {
     );
 
     return () => clearTimeout(timer);
-  }, [displayedText, isDeleting, wordIndex, showLoginForm]);
+  }, [displayedText, isDeleting, wordIndex, showLoginForm, isFocused]);
 
   const handleAppleLogin = async () => {
     Alert.alert("Coming Soon", "Apple sign-in will be available soon.");
