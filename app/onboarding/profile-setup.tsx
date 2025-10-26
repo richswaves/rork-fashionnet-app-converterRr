@@ -331,21 +331,10 @@ export default function ProfileSetup() {
   const isContinueEnabled = currentStep === 2 ? true : isStep1Valid;
   
   const onContinue = useCallback(() => {
+    console.log('[ProfileSetup] onContinue clicked', { userType, role, currentStep, displayName: displayName.trim(), hasProfilePic: !!profilePictureUri });
+    
     if (!userType || !role) {
       Alert.alert("Missing info", "Choose your user type and role.");
-      return;
-    }
-    
-    if (role === "model" && currentStep === 1) {
-      if (!displayName.trim()) {
-        Alert.alert("Missing info", "Please enter your display name.");
-        return;
-      }
-      if (!profilePictureUri) {
-        Alert.alert("Missing info", "Please upload a profile picture.");
-        return;
-      }
-      setCurrentStep(2);
       return;
     }
     
@@ -358,6 +347,13 @@ export default function ProfileSetup() {
       return;
     }
     
+    if (role === "model" && currentStep === 1) {
+      console.log('[ProfileSetup] Model role on step 1, moving to step 2');
+      setCurrentStep(2);
+      return;
+    }
+    
+    console.log('[ProfileSetup] Calling onSave');
     onSave();
   }, [userType, role, displayName, profilePictureUri, currentStep, onSave]);
 
