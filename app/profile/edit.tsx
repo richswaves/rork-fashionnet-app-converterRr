@@ -242,7 +242,7 @@ export default function EditProfileScreen() {
       console.warn("[upload] Primary blob creation failed, attempting FileSystem fallback", err);
       try {
         const FileSystem = await import("expo-file-system");
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
         const mime = (asset as any).mimeType ?? "image/jpeg";
         const dataUrl = `data:${mime};base64,${base64}`;
         blob = await (await fetch(dataUrl)).blob();
