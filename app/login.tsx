@@ -95,7 +95,7 @@ export default function LoginScreen() {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/signup` : undefined,
+            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent',
@@ -129,24 +129,47 @@ export default function LoginScreen() {
         );
         console.log('OAuth result:', result);
         if (result.type === 'success') {
-          const url = result.url;
-          const parsedUrl = Linking.parse(url);
-          const accessToken = parsedUrl.queryParams?.access_token as string | undefined;
-          const refreshToken = parsedUrl.queryParams?.refresh_token as string | undefined;
-          if (accessToken) {
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            });
-            if (sessionError) throw sessionError;
-            console.log('Google OAuth session set successfully');
-            
+          const url = result.url || '';
+          const parsed = Linking.parse(url);
+          const qp = parsed.queryParams as Record<string, string | undefined> | undefined;
+          const hash = url.includes('#') ? url.split('#')[1] : undefined;
+          const hashParams = (() => {
+            if (!hash) return {} as Record<string, string>;
+            return Object.fromEntries(hash.split('&').map(p => {
+              const [k, v] = p.split('=');
+              return [decodeURIComponent(k ?? ''), decodeURIComponent(v ?? '')];
+            }));
+          })();
+
+          const code = (qp?.code as string | undefined) ?? (hashParams['code'] as string | undefined);
+          const accessToken = (qp?.access_token as string | undefined) ?? (hashParams['access_token'] as string | undefined);
+          const refreshToken = (qp?.refresh_token as string | undefined) ?? (hashParams['refresh_token'] as string | undefined);
+
+          try {
+            if (code) {
+              console.log('Exchanging code for session');
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              if (exchangeError) throw exchangeError;
+            } else if (accessToken) {
+              console.log('Setting session from tokens');
+              const { error: sessionError } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              });
+              if (sessionError) throw sessionError;
+            } else {
+              throw new Error('Missing auth code and access token in redirect URL');
+            }
+
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
               router.replace("/" as any);
+            } else {
+              throw new Error('No user after sign-in');
             }
-          } else {
-            throw new Error("No access token in redirect");
+          } catch (e) {
+            console.error('Post-OAuth session handling failed', e);
+            Alert.alert('Sign-in error', 'We could not complete sign-in. Please try again.');
           }
         } else if (result.type === 'cancel') {
           console.log('User cancelled OAuth');
