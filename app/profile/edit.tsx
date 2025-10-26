@@ -629,17 +629,6 @@ export default function EditProfileScreen() {
           )}
         </View>
 
-        <View style={styles.actions}>
-          <Pressable onPress={() => router.back()} style={styles.cancelBtn} testID="btn-cancel">
-            <X color="#E5E7EB" size={18} />
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
-          <Pressable onPress={onSave} disabled={!canSave || isUpdating} style={[styles.saveBtn, (!canSave || isUpdating) && styles.saveBtnDisabled]} testID="btn-save">
-            {isUpdating ? <Loader2 color="#0B0B0F" size={16} /> : <Check color="#0B0B0F" size={16} />}
-            <Text style={styles.saveText}>{isUpdating ? "Saving..." : "Save"}</Text>
-          </Pressable>
-        </View>
-
         <View style={styles.dangerZone}>
           <Text style={styles.dangerZoneTitle}>Account Information</Text>
           <View style={styles.infoSection}>
@@ -669,6 +658,17 @@ export default function EditProfileScreen() {
               <Text style={[styles.infoValue, styles.infoValueNonEditable]}>{currentUserId ?? "N/A"}</Text>
             </View>
           </View>
+          <View style={styles.actions}>
+            <Pressable onPress={() => router.back()} style={styles.cancelBtn} testID="btn-cancel">
+              <X color="#E5E7EB" size={18} />
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+            <Pressable onPress={onSave} disabled={!canSave || isUpdating} style={[styles.saveBtn, (!canSave || isUpdating) && styles.saveBtnDisabled]} testID="btn-save">
+              {isUpdating ? <Loader2 color="#0B0B0F" size={16} /> : <Check color="#0B0B0F" size={16} />}
+              <Text style={styles.saveText}>{isUpdating ? "Saving..." : "Save"}</Text>
+            </Pressable>
+          </View>
+
           {isAdmin && (
             <Pressable
               onPress={() => router.push("/admin/approvals" as any)}
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   deletePortfolioBtn: { position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", zIndex: 10 },
-  actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 24, paddingHorizontal: 16 },
+  actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16 },
   cancelBtn: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#2C2C33", backgroundColor: "#121218", flexDirection: "row", alignItems: "center", gap: 8 },
   cancelText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
   saveBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB", flexDirection: "row", alignItems: "center", gap: 8 },
@@ -1061,18 +1061,20 @@ const styles = StyleSheet.create({
     textAlign: "right" as const,
   },
   deleteBtn: {
-    backgroundColor: "#7C2D12",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    backgroundColor: "transparent",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     alignItems: "center",
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#DC2626",
   },
   deleteText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 0.3,
+    color: "#DC2626",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
   modalSubtitle: {
     color: "#9CA3AF",
