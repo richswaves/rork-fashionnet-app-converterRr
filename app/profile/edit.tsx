@@ -680,13 +680,6 @@ export default function EditProfileScreen() {
             </Pressable>
           )}
           <Pressable 
-            onPress={() => setEditing("delete_confirm")}
-            style={styles.deleteBtn}
-            testID="btn-delete-account"
-          >
-            <Text style={styles.deleteText}>Delete Account</Text>
-          </Pressable>
-          <Pressable 
             onPress={async () => {
               if (Platform.OS === "web") {
                 if (confirm("Are you sure you want to log out?")) {
@@ -715,6 +708,13 @@ export default function EditProfileScreen() {
             testID="btn-logout"
           >
             <Text style={styles.logoutText}>Log Out</Text>
+          </Pressable>
+          <Pressable 
+            onPress={() => setEditing("delete_confirm")}
+            style={styles.deleteBtn}
+            testID="btn-delete-account"
+          >
+            <Text style={styles.deleteText}>Delete Account</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   deletePortfolioBtn: { position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", zIndex: 10 },
-  actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16 },
+  actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16, marginBottom: 24 },
   cancelBtn: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: "#2C2C33", backgroundColor: "#121218", flexDirection: "row", alignItems: "center", gap: 8 },
   cancelText: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
   saveBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB", flexDirection: "row", alignItems: "center", gap: 8 },
@@ -997,6 +997,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
+    marginBottom: 16,
   },
   logoutText: {
     color: "#FFFFFF",
@@ -1069,6 +1070,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#DC2626",
+    marginTop: 8,
   },
   deleteText: {
     color: "#DC2626",
