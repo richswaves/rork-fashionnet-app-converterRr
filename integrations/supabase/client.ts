@@ -227,3 +227,31 @@ export function setRuntimeSupabaseEnv(url: string, anonKey: string) {
   cachedKey = null;
   client = null;
 }
+
+export function getPublicUrl(bucket: string, path: string): string {
+  const { url } = getEnv();
+  if (!url) {
+    console.warn("Supabase URL not configured for storage");
+    return "";
+  }
+  return `${url}/storage/v1/object/public/${bucket}/${path}`;
+}
+
+export async function listStorageFiles(bucket: string, folder?: string): Promise<string[]> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    console.warn("Supabase not configured");
+    return [];
+  }
+  try {
+    const { data, error } = await supabase.storage.from(bucket).list(folder);
+    if (error) {
+      console.error("Storage list error:", error);
+      return [];
+    }
+    return (data || []).map(file => file.name);
+  } catch (e) {
+    console.error("Failed to list storage files:", e);
+    return [];
+  }
+}

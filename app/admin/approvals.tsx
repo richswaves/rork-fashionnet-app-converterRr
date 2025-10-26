@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Image } from "react-native";
 import { Shield } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbSelect, sbUpdate } from "@/integrations/supabase/client";
+import { sbSelect, sbUpdate, getPublicUrl } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc";
 import GrainTexture from "@/components/GrainTexture";
@@ -294,6 +294,13 @@ export default function AdminApprovalsScreen() {
             return (
               <View key={p.user_id} style={styles.applicationCard}>
                 <View style={styles.applicationHeader}>
+                  {p.profile_picture && (
+                    <Image 
+                      source={{ uri: p.profile_picture.startsWith('http') ? p.profile_picture : getPublicUrl('display', p.profile_picture) }}
+                      style={styles.profilePicture}
+                      resizeMode="cover"
+                    />
+                  )}
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>
                       {p.full_name && p.full_name.trim() && !p.full_name.startsWith("User_") 
@@ -419,7 +426,8 @@ const styles = StyleSheet.create({
   emptyContainer: { padding: 40, alignItems: "center" },
   emptyText: { color: "#9CA3AF", fontSize: 16 },
   applicationCard: { backgroundColor: "rgba(15, 15, 15, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 16, padding: 16, gap: 16 },
-  applicationHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  applicationHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
+  profilePicture: { width: 72, height: 72, borderRadius: 36, backgroundColor: "#1F2937" },
   userInfo: { flex: 1, gap: 6 },
   userName: { color: "#FFFFFF", fontSize: 20, fontWeight: "700" as const },
   userUsername: { color: "#9CA3AF", fontSize: 14, fontWeight: "500" as const, marginTop: -2 },
