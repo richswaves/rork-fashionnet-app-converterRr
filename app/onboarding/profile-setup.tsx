@@ -86,7 +86,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
   ],
   clothing_brand: [
-    { id: "what_make", prompt: "What do you make or sell?", options: ["Skate-Rooted Streetwear", "Hip-Hop / Urban Streetwear", "Luxury Streetwear", "Preppy Streetwear / Street-Prep Hybrid"], multiple: true },
+    { id: "what_make", prompt: "What do you make or sell?", options: ["Skate-Rooted Streetwear", "Hip-Hop / Urban Streetwear", "Luxury Streetwear", "Techwear / Futuristic Streetwear", "Japanese / Eastern Streetwear", "Sneaker-Centric Streetwear", "Sports-Inspired / Ath-Street Hybrid", "Preppy Streetwear / Street-Prep Hybrid"], multiple: true },
     { id: "who_need", prompt: "Who do you need to work with?", options: ["Photographers", "Videographers", "Models", "Designers", "Stylists", "Marketing / promotion partners", "Other brands"], multiple: true },
     { id: "most_help_with", prompt: "What do you most need help with?", options: ["Shoots (photo / video)", "Brand collaborations", "Marketing / promotion", "Talent relationships"], multiple: true },
     { id: "monthly_output", prompt: "Estimated monthly projects or content output?", options: ["0–2", "3–5", "6–10", "10+"] },
