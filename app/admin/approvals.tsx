@@ -6,7 +6,6 @@ import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sbSelect, sbUpdate, getPublicUrl } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc";
 import GrainTexture from "@/components/GrainTexture";
 
 interface SocialLinks {
@@ -150,14 +149,31 @@ export default function AdminApprovalsScreen() {
     },
   });
 
-  const assignAdminMutation = trpc.admin.assignAdminRole.useMutation({
+  const suspendAccountMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await sbUpdate("profiles", { account_status: "suspended" }, { user_id: `eq.${userId}` });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
-      Alert.alert("Success", "Admin role assigned successfully");
+      Alert.alert("Success", "Account suspended");
     },
     onError: (error) => {
-      console.error("[Admin] Assign admin error:", error);
-      Alert.alert("Error", "Failed to assign admin role");
+      console.error("[Admin] Suspend error:", error);
+      Alert.alert("Error", "Failed to suspend account");
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await sbUpdate("profiles", { account_status: "deleted" }, { user_id: `eq.${userId}` });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
+      Alert.alert("Success", "Account deleted");
+    },
+    onError: (error) => {
+      console.error("[Admin] Delete error:", error);
+      Alert.alert("Error", "Failed to delete account");
     },
   });
 
@@ -183,13 +199,24 @@ export default function AdminApprovalsScreen() {
     );
   };
 
-  const handleMakeAdmin = (userId: string, userName?: string) => {
+  const handleSuspendAccount = (userId: string, userName?: string) => {
     Alert.alert(
-      "Make Admin",
-      `Grant admin access to ${userName || "this user"}?`,
+      "Suspend Account",
+      `Suspend ${userName || "this user"}'s account? They will not be able to access the app.`,
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Make Admin", onPress: () => assignAdminMutation.mutate({ userId }), style: "default" },
+        { text: "Suspend", onPress: () => suspendAccountMutation.mutate(userId), style: "destructive" },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = (userId: string, userName?: string) => {
+    Alert.alert(
+      "Delete Account",
+      `Permanently delete ${userName || "this user"}'s account? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", onPress: () => deleteAccountMutation.mutate(userId), style: "destructive" },
       ]
     );
   };
@@ -448,13 +475,24 @@ export default function AdminApprovalsScreen() {
                       </TouchableOpacity>
                     </>
                   )}
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.adminButton]}
-                    onPress={() => handleMakeAdmin(p.user_id, p.full_name || p.username)}
-                    disabled={assignAdminMutation.isPending}
-                  >
-                    <Text style={styles.adminButtonText}>Make Admin</Text>
-                  </TouchableOpacity>
+                  {activeTab === "approved" && (
+                    <>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.suspendButton]}
+                        onPress={() => handleSuspendAccount(p.user_id, p.full_name || p.username)}
+                        disabled={suspendAccountMutation.isPending || deleteAccountMutation.isPending}
+                      >
+                        <Text style={styles.suspendButtonText}>Suspend</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.deleteButton]}
+                        onPress={() => handleDeleteAccount(p.user_id, p.full_name || p.username)}
+                        disabled={suspendAccountMutation.isPending || deleteAccountMutation.isPending}
+                      >
+                        <Text style={styles.deleteButtonText}>Delete</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               </View>
             );
@@ -533,8 +571,10 @@ const styles = StyleSheet.create({
   approveButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
   rejectButton: { backgroundColor: "#EF4444" },
   rejectButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
-  adminButton: { backgroundColor: "#8B5CF6" },
-  adminButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
+  suspendButton: { backgroundColor: "#F59E0B" },
+  suspendButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
+  deleteButton: { backgroundColor: "#DC2626" },
+  deleteButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" as const },
   socialLinksSection: { gap: 8, marginTop: 4 },
   socialLinksLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "600" as const, marginBottom: 4 },
   socialLinksRow: { flexDirection: "row", flexWrap: "wrap" as const, gap: 8 },
