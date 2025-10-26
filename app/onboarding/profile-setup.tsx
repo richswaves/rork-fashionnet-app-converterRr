@@ -32,7 +32,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   model: [
     { id: "shoot_types", prompt: "What types of shoots do you focus on?", options: ["Streetwear campaigns", "Editorial / magazine work", "Commercial / e-commerce", "Music / culture collaborations", "Social media"], multiple: true },
     { id: "showcase_where", prompt: "Where do you showcase most of your work?", options: ["Instagram", "TikTok", "Portfolio / website"], multiple: true },
-    { id: "connect_with", prompt: "Who are you most interested in connecting with?", options: ["Photographers", "Videographers", "Creative directors", "Clothing brands / designers", "Stylists", "Content creators", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "connect_with", prompt: "Who are you most interested in connecting with?", options: ["Photographers", "Videographers", "Models", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
     { id: "audience_size", prompt: "Roughly how many followers / audience reach do you have?", options: sharedFollowerRanges },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -40,7 +40,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   photographer: [
     { id: "primarily_shoot", prompt: "What do you primarily shoot?", options: ["Street/editorial fashion", "Sneakers / products", "Lifestyle / culture", "Artists / events"], multiple: true },
     { id: "aesthetic", prompt: "How would you describe your aesthetic?", options: ["Raw and street-focused", "Clean and luxury-inspired", "Experimental / artistic", "Documentary-style realism"], multiple: true },
-    { id: "connect_with", prompt: "Who would you like to connect with most?", options: ["Models", "Designers / brands", "Videographers", "Content creators", "Stylists", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "connect_with", prompt: "Who would you like to connect with most?", options: ["Models", "Videographers", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
     { id: "projects_per_month", prompt: "Average number of projects per month?", options: ["0–2", "3–5", "6–10", "10+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -48,7 +48,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   videographer: [
     { id: "video_work", prompt: "What type of video work do you create most often?", options: ["Fashion films", "Sneaker or brand promos", "Music x fashion collaborations", "Behind-the-scenes / culture docs"], multiple: true },
     { id: "approach", prompt: "What best describes your approach?", options: ["Cinematic and polished", "Raw handheld", "Fast-cut, short-form edits", "Artistic / experimental"], multiple: true },
-    { id: "prefer_collab", prompt: "Who do you prefer collaborating with?", options: ["Photographers", "Clothing brands", "Models", "Creative directors", "Content creators", "Designers", "Stylists", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "prefer_collab", prompt: "Who do you prefer collaborating with?", options: ["Photographers", "Models", "Videographers", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
     { id: "monthly_output", prompt: "Average monthly content output?", options: ["<5 videos", "5–15 videos", "15–30 videos", "30+ videos"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -56,13 +56,13 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   content_creator: [
     { id: "content_kind", prompt: "What kind of content do you create most?", options: ["Styling / GRWM videos", "Fashion x lifestyle storytelling", "Brand collaborations", "Culture commentary"], multiple: true },
     { id: "audience_strongest", prompt: "Where is your audience strongest?", options: ["TikTok", "Instagram", "YouTube", "Multi-platform"] },
-    { id: "collab_with", prompt: "Who do you want to collaborate with here?", options: ["Clothing brands", "Photographers / videographers", "Stylists", "Other creators", "Models", "Designers", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "collab_with", prompt: "Who do you want to collaborate with here?", options: ["Photographers", "Videographers", "Models", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
     { id: "follower_range", prompt: "Follower range / audience size?", options: ["<1k", "1–10k", "10–50k", "50–200k", "200k+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
   ],
   stylist: [
-    { id: "style_for", prompt: "You mainly style for…", options: ["Editorial shoots", "Artists / music videos", "Personal clients", "Events / live culture moments", "Influencers"], multiple: true },
+    { id: "style_for", prompt: "Who you mostly style for", options: ["Editorial shoots", "Artists / music videos", "Personal clients", "Events / live culture moments", "Influencers"], multiple: true },
     { id: "approach", prompt: "How would you describe your approach?", options: ["Streetwear layering", "Luxury streetwear", "Bold / experimental", "Archive + contemporary mix"], multiple: true },
     { id: "top_collaborators", prompt: "Who are your top collaborators?", options: ["Models", "Designers", "Photographers", "Brands", "Content creators"], multiple: true },
     { id: "projects_per_month", prompt: "Average projects styled per month?", options: ["0–2", "3–5", "6–10", "10+"] },
@@ -72,7 +72,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   designer: [
     { id: "design_focus", prompt: "Your design focus is…", options: ["Streetwear-focused", "Archive-inspired / vintage revivals", "Sustainable / upcycled", "Luxury street", "Experimental / avant-garde", "Minimalist / refined", "Gender-fluid / unisex"], multiple: true },
     { id: "release_where", prompt: "Where do you release?", options: ["Instagram drops", "TikTok previews", "Online shop / Shopify", "In-person pop-ups", "Wholesale / stockists"], multiple: true },
-    { id: "ideal_collaborators", prompt: "Who are your ideal collaborators?", options: ["Models", "Photographers", "Videographers", "Stylists", "Creative directors", "Other designers", "Brands", "Content creators", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "ideal_collaborators", prompt: "Who are your ideal collaborators?", options: ["Models", "Photographers", "Videographers", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
     { id: "pieces_per_year", prompt: "How many pieces or collections do you produce per year?", options: ["1–2", "3–5", "6–10", "10+"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -80,7 +80,7 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
   creative_director: [
     { id: "direct_mainly", prompt: "You mainly direct…", options: ["Campaigns for streetwear brands", "Content teams / fashion shoots", "Music x culture projects", "Concept / visual development"], multiple: true },
     { id: "strongest_contrib", prompt: "What is your strongest contribution?", options: ["Vision + brand storytelling", "Team leadership", "Moodboarding / trend direction", "Brand positioning"], multiple: true },
-    { id: "partnerships_prioritize", prompt: "Who would you like to connect with?", options: ["Models", "Photographers", "Videographers", "Content creators", "Designers", "Stylists", "Clothing brands", "Photography business", "Agency", "Publisher"], multiple: true },
+    { id: "partnerships_prioritize", prompt: "Who would you like to connect with?", options: ["Models", "Photographers", "Videographers", "Content creators", "Stylists", "Designer", "Creative directors", "Photography business", "Agency", "Publisher"], multiple: true },
     { id: "team_size", prompt: "Approximate team size you manage or lead?", options: ["Solo / 1–2", "Small team (3–5)", "Medium team (6–10)", "Large team (10+)"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
     { id: "what_matters_most", prompt: "What matters most to you when choosing who to collaborate with?", options: sharedWhatMattersMost, multiple: true },
@@ -89,7 +89,6 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
     { id: "what_make", prompt: "What do you make or sell?", options: ["Skate-Rooted Streetwear", "Hip-Hop / Urban Streetwear", "Luxury Streetwear", "Techwear / Futuristic Streetwear", "Japanese / Eastern Streetwear", "Sneaker-Centric Streetwear", "Sports-Inspired / Ath-Street Hybrid", "Preppy Streetwear / Street-Prep Hybrid"], multiple: true },
     { id: "who_need", prompt: "Who do you need to work with?", options: ["Photographers", "Videographers", "Models", "Designers", "Stylists", "Marketing / promotion partners", "Other brands"], multiple: true },
     { id: "most_help_with", prompt: "What do you most need help with?", options: ["Shoots (photo / video)", "Brand collaborations", "Marketing / promotion", "Talent relationships"], multiple: true },
-    { id: "monthly_output", prompt: "Estimated monthly projects or content output?", options: ["Weekly", "Bi-weekly", "Monthly", "Quarterly", "Rarely"] },
     { id: "how_often_post", prompt: "How often do you post?", options: ["Weekly", "Bi-weekly", "Monthly", "Quarterly", "Rarely"] },
     { id: "how_often_drop", prompt: "How often do you drop?", options: ["Weekly", "Bi-weekly", "Monthly", "Quarterly", "Rarely"] },
     { id: "what_you_want", prompt: "What do you want most from your connections here?", options: sharedWhatDoYouWant, multiple: true },
