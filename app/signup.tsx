@@ -514,7 +514,7 @@ export default function SignupScreen() {
               <Text style={styles.secondaryBtnText}>Done</Text>
             </TouchableOpacity>
           )}
-          <View style={[styles.row, { alignItems: "center" }]}>
+          <View style={styles.notifRow}>
             <Text style={styles.helperText}>enable post notifications</Text>
             <Switch
               testID="signup-notif"
@@ -837,4 +837,5 @@ const styles = StyleSheet.create({
   socialLinkPlaceholder: { color: "#9CA3AF" },
   pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
+  notifRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
 });
