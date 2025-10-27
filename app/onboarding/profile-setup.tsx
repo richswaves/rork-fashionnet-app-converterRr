@@ -358,78 +358,80 @@ export default function ProfileSetup() {
         <Text style={styles.title}>Set up your profile</Text>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>You are joining as</Text>
-          <View style={styles.row}>
-            {(["creative", "business"] as const).map((t) => (
-              <TouchableOpacity
-                key={t}
-                testID={`type-${t}`}
-                style={[styles.pill, userType === t && styles.pillActive]}
-                onPress={async () => {
-                  const currentScroll = scrollPositionRef.current;
-                  setUserType(t);
-                  setRole(undefined);
-                  await recordEvent(2, "user_type_selection", "complete");
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
-                  }, 50);
-                }}
-              >
-                <Text style={[styles.pillText, userType === t && styles.pillTextActive]}>{t}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {!!userType && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Tell us more</Text>
-            
-            <View style={{ marginBottom: 12 }}>
-              <Text style={styles.prompt}>Select your role</Text>
-              <View style={styles.rowWrap}>
-                {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                  <TouchableOpacity key={r} style={[styles.pill, role === r && styles.pillActive]} onPress={() => {
+          <Text style={styles.sectionTitle}>Tell us more</Text>
+          
+          <View style={{ marginBottom: 12 }}>
+            <Text style={styles.prompt}>You are joining as</Text>
+            <View style={styles.row}>
+              {(["creative", "business"] as const).map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  testID={`type-${t}`}
+                  style={[styles.pill, userType === t && styles.pillActive]}
+                  onPress={async () => {
                     const currentScroll = scrollPositionRef.current;
-                    setRole(r);
+                    setUserType(t);
+                    setRole(undefined);
+                    await recordEvent(2, "user_type_selection", "complete");
                     setTimeout(() => {
                       scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
                     }, 50);
-                  }}>
-                    <Text style={[styles.pillText, role === r && styles.pillTextActive]}>{r.replace(/_/g, " ")}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  }}
+                >
+                  <Text style={[styles.pillText, userType === t && styles.pillTextActive]}>{t}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
+          </View>
 
-            {!!role && availableQuestions.map((q) => (
-              <View key={q.id} style={{ marginBottom: 12 }}>
-                <Text style={styles.prompt}>{q.prompt}</Text>
+          {!!userType && (
+            <>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={styles.prompt}>Select your role</Text>
                 <View style={styles.rowWrap}>
-                  {q.options.map((opt) => {
-                    const selected = (answers[q.id] ?? []).includes(opt);
-                    return (
-                      <TouchableOpacity
-                        key={opt}
-                        testID={`q-${q.id}-${opt}`}
-                        style={[styles.pill, selected && styles.pillActive]}
-                        onPress={() => {
-                          const currentScroll = scrollPositionRef.current;
-                          toggleAnswer(q.id, opt, q.multiple);
-                          setTimeout(() => {
-                            scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
-                          }, 50);
-                        }}
-                      >
-                        <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
+                    <TouchableOpacity key={r} style={[styles.pill, role === r && styles.pillActive]} onPress={() => {
+                      const currentScroll = scrollPositionRef.current;
+                      setRole(r);
+                      setTimeout(() => {
+                        scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
+                      }, 50);
+                    }}>
+                      <Text style={[styles.pillText, role === r && styles.pillTextActive]}>{r.replace(/_/g, " ")}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
-            ))}
-          </View>
-        )}
+
+              {!!role && availableQuestions.map((q) => (
+                <View key={q.id} style={{ marginBottom: 12 }}>
+                  <Text style={styles.prompt}>{q.prompt}</Text>
+                  <View style={styles.rowWrap}>
+                    {q.options.map((opt) => {
+                      const selected = (answers[q.id] ?? []).includes(opt);
+                      return (
+                        <TouchableOpacity
+                          key={opt}
+                          testID={`q-${q.id}-${opt}`}
+                          style={[styles.pill, selected && styles.pillActive]}
+                          onPress={() => {
+                            const currentScroll = scrollPositionRef.current;
+                            toggleAnswer(q.id, opt, q.multiple);
+                            setTimeout(() => {
+                              scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
+                            }, 50);
+                          }}
+                        >
+                          <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+        </View>
 
         {!!role && (
           <View style={styles.card}>
