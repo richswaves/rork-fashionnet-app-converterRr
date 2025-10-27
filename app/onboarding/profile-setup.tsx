@@ -175,8 +175,6 @@ export default function ProfileSetup() {
   const [displayName, setDisplayName] = useState<string>(profile?.full_name ?? "");
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const scrollPositionRef = useRef<number>(0);
 
   const availableQuestions = useMemo<ChoiceQuestion[]>(() => {
     if (!role) return [];
@@ -348,19 +346,15 @@ export default function ProfileSetup() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <GrainTexture />
       <ScrollView 
-        ref={scrollViewRef}
         contentContainerStyle={styles.content}
-        onScroll={(event) => {
-          scrollPositionRef.current = event.nativeEvent.contentOffset.y;
-        }}
-        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={true}
       >
         <Text style={styles.title}>Set up your profile</Text>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Tell us more</Text>
           
-          <View style={{ marginBottom: 12 }}>
+          <View style={styles.questionBlock}>
             <Text style={styles.prompt}>You are joining as</Text>
             <View style={styles.row}>
               {(["creative", "business"] as const).map((t) => (
@@ -369,13 +363,9 @@ export default function ProfileSetup() {
                   testID={`type-${t}`}
                   style={[styles.pill, userType === t && styles.pillActive]}
                   onPress={async () => {
-                    const currentScroll = scrollPositionRef.current;
                     setUserType(t);
                     setRole(undefined);
                     await recordEvent(2, "user_type_selection", "complete");
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
-                    }, 50);
                   }}
                 >
                   <Text style={[styles.pillText, userType === t && styles.pillTextActive]}>{t}</Text>
@@ -385,52 +375,42 @@ export default function ProfileSetup() {
           </View>
 
           {!!userType && (
-            <>
-              <View style={{ marginBottom: 12 }}>
-                <Text style={styles.prompt}>Select your role</Text>
-                <View style={styles.rowWrap}>
-                  {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                    <TouchableOpacity key={r} style={[styles.pill, role === r && styles.pillActive]} onPress={() => {
-                      const currentScroll = scrollPositionRef.current;
-                      setRole(r);
-                      setTimeout(() => {
-                        scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
-                      }, 50);
-                    }}>
-                      <Text style={[styles.pillText, role === r && styles.pillTextActive]}>{r.replace(/_/g, " ")}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+            <View style={styles.questionBlock}>
+              <Text style={styles.prompt}>Select your role</Text>
+              <View style={styles.rowWrap}>
+                {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
+                  <TouchableOpacity 
+                    key={r} 
+                    style={[styles.pill, role === r && styles.pillActive]} 
+                    onPress={() => setRole(r)}
+                  >
+                    <Text style={[styles.pillText, role === r && styles.pillTextActive]}>{r.replace(/_/g, " ")}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-
-              {!!role && availableQuestions.map((q) => (
-                <View key={q.id} style={{ marginBottom: 12 }}>
-                  <Text style={styles.prompt}>{q.prompt}</Text>
-                  <View style={styles.rowWrap}>
-                    {q.options.map((opt) => {
-                      const selected = (answers[q.id] ?? []).includes(opt);
-                      return (
-                        <TouchableOpacity
-                          key={opt}
-                          testID={`q-${q.id}-${opt}`}
-                          style={[styles.pill, selected && styles.pillActive]}
-                          onPress={() => {
-                            const currentScroll = scrollPositionRef.current;
-                            toggleAnswer(q.id, opt, q.multiple);
-                            setTimeout(() => {
-                              scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
-                            }, 50);
-                          }}
-                        >
-                          <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))}
-            </>
+            </View>
           )}
+
+          {!!role && availableQuestions.map((q) => (
+            <View key={q.id} style={styles.questionBlock}>
+              <Text style={styles.prompt}>{q.prompt}</Text>
+              <View style={styles.rowWrap}>
+                {q.options.map((opt) => {
+                  const selected = (answers[q.id] ?? []).includes(opt);
+                  return (
+                    <TouchableOpacity
+                      key={opt}
+                      testID={`q-${q.id}-${opt}`}
+                      style={[styles.pill, selected && styles.pillActive]}
+                      onPress={() => toggleAnswer(q.id, opt, q.multiple)}
+                    >
+                      <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
         </View>
 
         {!!role && (
@@ -524,8 +504,6 @@ export default function ProfileSetup() {
           </View>
         )}
 
-
-
         {role === "model" && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
@@ -562,17 +540,13 @@ const styles = StyleSheet.create({
   title: { color: "#F9FAFB", fontSize: 24, fontWeight: "700" as const, marginBottom: 8 },
   sectionTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" as const, marginBottom: 10 },
   card: { backgroundColor: "rgba(15, 15, 15, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
+  questionBlock: { marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: "#2A2A2A" },
   row: { flexDirection: "row", gap: 10 },
   rowWrap: { flexDirection: "row", gap: 8, flexWrap: "wrap" as const },
-  grid: { flexDirection: "row", flexWrap: "wrap" as const, gap: 8 },
   pill: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: "#404040", backgroundColor: "rgba(20, 20, 20, 0.85)" },
   pillActive: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
   pillText: { color: "#D1D5DB", fontWeight: "600" as const },
   pillTextActive: { color: "#111827", fontWeight: "700" as const },
-  roleItem: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040" },
-  roleItemActive: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
-  roleText: { color: "#D1D5DB" },
-  roleTextActive: { color: "#111827", fontWeight: "700" as const },
   input: { backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1, color: "#FFFFFF", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12 },
   inputHalf: { flex: 1 },
   prompt: { color: "#E5E7EB", marginBottom: 6, fontWeight: "600" as const },
