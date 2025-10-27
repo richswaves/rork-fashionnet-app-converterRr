@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, X, Flag } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Ban, Flag } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -668,7 +668,7 @@ export default function UserProfileScreen() {
               disabled={blockMutation.isPending || unblockMutation.isPending}
               testID="block-btn"
             >
-              <X color={isBlocked ? "#10B981" : "#1F2937"} size={22} strokeWidth={2.5} />
+              <Ban color={isBlocked ? "#10B981" : "#1F2937"} size={22} strokeWidth={2.5} />
             </Pressable>
             <Pressable
               onPress={() => setReportModalVisible(true)}
@@ -1165,13 +1165,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: "rgba(30, 30, 40, 0.7)",
-    borderWidth: 1.5,
-    borderColor: "#2A2A38",
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderColor: "transparent",
   },
   actionButtonActive: {
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
-    borderColor: "#10B981",
+    backgroundColor: "transparent",
+    borderColor: "transparent",
   },
   actionButtonText: {
     color: "#E5E7EB",
