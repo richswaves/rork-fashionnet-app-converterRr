@@ -415,3 +415,102 @@ FOR UPDATE USING (
 -- Grant permissions
 GRANT SELECT, INSERT ON appeals TO authenticated;
 GRANT UPDATE ON appeals TO authenticated;
+
+-- ============================================================================
+-- ACCOUNT DELETION FEEDBACK TABLE
+-- ============================================================================
+
+-- Create account_deletion_feedback table
+CREATE TABLE IF NOT EXISTS public.account_deletion_feedback (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reason text NOT NULL,
+  deleted_at timestamptz DEFAULT now(),
+  created_at timestamptz DEFAULT now()
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_account_deletion_feedback_user ON account_deletion_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_account_deletion_feedback_deleted_at ON account_deletion_feedback(deleted_at);
+
+-- Enable RLS
+ALTER TABLE account_deletion_feedback ENABLE ROW LEVEL SECURITY;
+
+-- Users can insert their own feedback
+CREATE POLICY "Users can insert own deletion feedback" ON account_deletion_feedback
+FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Admins can view all feedback
+CREATE POLICY "Admins can view all deletion feedback" ON account_deletion_feedback
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
+
+-- Grant permissions
+GRANT INSERT ON account_deletion_feedback TO authenticated;
+GRANT SELECT ON account_deletion_feedback TO authenticated;
+
+-- ============================================================================
+-- DELETE USER ACCOUNT FUNCTION
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.delete_user_account(target_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $
+BEGIN
+  -- Verify user is deleting their own account
+  IF target_user_id IS NULL OR target_user_id != auth.uid() THEN
+    RAISE EXCEPTION 'Unauthorized: You can only delete your own account';
+  END IF;
+
+  -- Delete user's data from various tables
+  -- The CASCADE on auth.users will handle most related records
+  -- but we explicitly delete from some tables for clarity
+  
+  DELETE FROM public.profiles WHERE user_id = target_user_id;
+  DELETE FROM public.blocked_users WHERE blocker_id = target_user_id OR blocked_user_id = target_user_id;
+  DELETE FROM public.reports WHERE reporter_id = target_user_id OR reported_user_id = target_user_id;
+  DELETE FROM public.appeals WHERE user_id = target_user_id;
+  
+  -- Delete tables that might exist
+  IF to_regclass('public.follows') IS NOT NULL THEN
+    DELETE FROM public.follows WHERE follower_id = target_user_id OR following_id = target_user_id;
+  END IF;
+  
+  IF to_regclass('public.opportunities') IS NOT NULL THEN
+    DELETE FROM public.opportunities WHERE user_id = target_user_id;
+  END IF;
+  
+  IF to_regclass('public.applications') IS NOT NULL THEN
+    DELETE FROM public.applications WHERE applicant_id = target_user_id;
+  END IF;
+  
+  IF to_regclass('public.saved_opportunities') IS NOT NULL THEN
+    DELETE FROM public.saved_opportunities WHERE user_id = target_user_id;
+  END IF;
+  
+  IF to_regclass('public.portfolio_items') IS NOT NULL THEN
+    DELETE FROM public.portfolio_items WHERE user_id = target_user_id;
+  END IF;
+  
+  IF to_regclass('public.conversations') IS NOT NULL THEN
+    DELETE FROM public.conversations WHERE participant_1 = target_user_id OR participant_2 = target_user_id;
+  END IF;
+  
+  IF to_regclass('public.messages') IS NOT NULL THEN
+    DELETE FROM public.messages WHERE sender_id = target_user_id;
+  END IF;
+
+  -- Finally delete the auth user (this will cascade to remaining tables)
+  DELETE FROM auth.users WHERE id = target_user_id;
+END;
+$;
+
+GRANT EXECUTE ON FUNCTION public.delete_user_account(uuid) TO authenticated;

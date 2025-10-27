@@ -81,15 +81,16 @@ export default createTRPCRouter({
   listBlocked: publicProcedure
     .query(async ({ ctx }) => {
       const url = new URL(`${supabaseUrl()}/rest/v1/blocked_users`);
-      url.searchParams.set("select", "blocked_user_id,created_at");
+      url.searchParams.set("select", "id,blocked_user_id,created_at");
       url.searchParams.set("order", "created_at.desc");
       // RLS ensures we only see own rows
       const res = await fetch(url.toString(), { headers: authHeaders(ctx.req) });
       if (!res.ok) {
         const text = await res.text();
+        console.error("[Block] listBlocked error:", res.status, text);
         throw new Error(text || `Fetch blocked_users failed: ${res.status}`);
       }
-      const rows = (await res.json()) as { blocked_user_id: string; created_at: string }[];
+      const rows = (await res.json()) as { id: string; blocked_user_id: string; created_at: string }[];
       return rows;
     }),
 });
