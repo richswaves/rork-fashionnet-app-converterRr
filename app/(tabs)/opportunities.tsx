@@ -243,16 +243,20 @@ export default function OpportunitiesScreen() {
       });
       return opportunityId;
     },
-    onSuccess: async () => {
-      console.log("[Apply] Success, invalidating queries");
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] }),
-        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
-      ]);
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] }),
-        queryClient.refetchQueries({ queryKey: ["opportunities"] }),
-      ]);
+    onSuccess: async (opportunityId) => {
+      console.log("[Apply] Success, updating cache for opportunity:", opportunityId);
+      
+      queryClient.setQueryData<Record<string, { applied: boolean; status?: string }>>([
+        "applied-ids",
+        currentUserId,
+      ], (old) => {
+        return {
+          ...(old ?? {}),
+          [opportunityId]: { applied: true, status: "pending" },
+        };
+      });
+      
+      await queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] });
     },
   });
 
