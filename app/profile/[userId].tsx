@@ -78,12 +78,21 @@ export default function UserProfileScreen() {
     queryKey: ["is-blocked", currentUserId, userId],
     queryFn: async () => {
       if (!currentUserId || !userId || currentUserId === userId) return false;
-      const rows = await sbSelect<{ id: string }>("blocked_users", {
-        select: "id",
-        query: { blocker_id: `eq.${currentUserId}`, blocked_id: `eq.${userId}` },
-        limit: 1,
-      });
-      return rows.length > 0;
+      try {
+        const rows = await sbSelect<{ id: string }>("blocked_users", {
+          select: "id",
+          query: { blocker_id: `eq.${currentUserId}`, blocked_id: `eq.${userId}` },
+          limit: 1,
+        });
+        return rows.length > 0;
+      } catch (e: any) {
+        const msg = typeof e?.message === "string" ? e.message : "";
+        if (msg.includes("relation") || msg.includes("404")) {
+          console.warn("blocked_users table missing; treating as not blocked");
+          return false;
+        }
+        throw e;
+      }
     },
     enabled: !!currentUserId && !!userId && currentUserId !== userId,
   });
@@ -237,14 +246,23 @@ export default function UserProfileScreen() {
     queryKey: ["rating-average", userId],
     queryFn: async () => {
       if (!userId) return { avg: 0, count: 0 };
-      const ratings = await sbSelect<{ rating: number }>("user_ratings", {
-        select: "rating",
-        query: { rated_user_id: `eq.${userId}` },
-        limit: 1000,
-      });
-      if (ratings.length === 0) return { avg: 0, count: 0 };
-      const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
-      return { avg: sum / ratings.length, count: ratings.length };
+      try {
+        const ratings = await sbSelect<{ rating: number }>("user_ratings", {
+          select: "rating",
+          query: { rated_user_id: `eq.${userId}` },
+          limit: 1000,
+        });
+        if (ratings.length === 0) return { avg: 0, count: 0 };
+        const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+        return { avg: sum / ratings.length, count: ratings.length };
+      } catch (e: any) {
+        const msg = typeof e?.message === "string" ? e.message : "";
+        if (msg.includes("relation") || msg.includes("404")) {
+          console.warn("user_ratings table missing; returning 0 avg/count");
+          return { avg: 0, count: 0 };
+        }
+        throw e;
+      }
     },
     enabled: !!userId,
   });
@@ -253,12 +271,21 @@ export default function UserProfileScreen() {
     queryKey: ["my-rating", currentUserId, userId],
     queryFn: async () => {
       if (!currentUserId || !userId || currentUserId === userId) return null;
-      const ratings = await sbSelect<{ rating: number; explanation?: string }>("user_ratings", {
-        select: "rating,explanation",
-        query: { rater_id: `eq.${currentUserId}`, rated_user_id: `eq.${userId}` },
-        limit: 1,
-      });
-      return ratings[0] ?? null;
+      try {
+        const ratings = await sbSelect<{ rating: number; explanation?: string }>("user_ratings", {
+          select: "rating,explanation",
+          query: { rater_id: `eq.${currentUserId}`, rated_user_id: `eq.${userId}` },
+          limit: 1,
+        });
+        return ratings[0] ?? null;
+      } catch (e: any) {
+        const msg = typeof e?.message === "string" ? e.message : "";
+        if (msg.includes("relation") || msg.includes("404")) {
+          console.warn("user_ratings table missing; treating as no rating");
+          return null;
+        }
+        throw e;
+      }
     },
     enabled: !!currentUserId && !!userId && currentUserId !== userId,
   });
@@ -384,9 +411,15 @@ export default function UserProfileScreen() {
       queryClient.invalidateQueries({ queryKey: ["is-blocked", currentUserId, userId] });
       Alert.alert("Success", "User blocked");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("[Block] Error blocking user:", error);
-      Alert.alert("Error", "Failed to block user");
+      const msg = typeof error?.message === "string" ? error.message : "";
+      Alert.alert(
+        "Error",
+        msg.includes("relation") || msg.includes("404")
+          ? "Blocking is not configured yet. Please run the SQL setup to create the blocked_users table."
+          : "Failed to block user"
+      );
     },
   });
 
@@ -406,9 +439,15 @@ export default function UserProfileScreen() {
       queryClient.invalidateQueries({ queryKey: ["is-blocked", currentUserId, userId] });
       Alert.alert("Success", "User unblocked");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("[Block] Error unblocking user:", error);
-      Alert.alert("Error", "Failed to unblock user");
+      const msg = typeof error?.message === "string" ? error.message : "";
+      Alert.alert(
+        "Error",
+        msg.includes("relation") || msg.includes("404")
+          ? "Blocking is not configured yet. Please run the SQL setup to create the blocked_users table."
+          : "Failed to unblock user"
+      );
     },
   });
 
@@ -494,7 +533,13 @@ export default function UserProfileScreen() {
     },
     onError: (error: any) => {
       console.error("[Rating] Error rating user:", error);
-      Alert.alert("Error", "Failed to submit rating. Please try again.");
+      const msg = typeof error?.message === "string" ? error.message : "";
+      Alert.alert(
+        "Error",
+        msg.includes("relation") || msg.includes("404")
+          ? "Ratings are not configured yet. Please run the SQL setup to create the user_ratings table."
+          : "Failed to submit rating. Please try again."
+      );
     },
   });
 
