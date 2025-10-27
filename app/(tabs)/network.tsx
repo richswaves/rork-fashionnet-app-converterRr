@@ -26,13 +26,15 @@ interface MemberCard {
   profession?: string;
 }
 
-const ROLES: string[] = ["Professional Role", "Photographer", "Model", "Videographer", "Designer", "Other"];
+
 
 export default function NetworkScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedRole, setSelectedRole] = useState<string>(ROLES[0]);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [following, setFollowing] = useState<Record<string, boolean>>({});
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
+  const [locationMenuOpen, setLocationMenuOpen] = useState<boolean>(false);
 
   const { resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
@@ -40,12 +42,53 @@ export default function NetworkScreen() {
 
   const { width: windowWidth } = useWindowDimensions();
 
-  const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "top"],
+  const { data: availableRoles = [] } = useQuery<string[]>({
+    queryKey: ["profiles", "roles"],
     queryFn: async () => {
+      const rows = await sbSelect<{ profession?: string }>("profiles", {
+        select: "profession",
+        query: { account_status: "eq.approved" },
+      });
+      const uniqueRoles = new Set<string>();
+      rows.forEach((r) => {
+        if (r.profession && r.profession.trim() && r.profession.toLowerCase() !== "general") {
+          uniqueRoles.add(r.profession);
+        }
+      });
+      return Array.from(uniqueRoles).sort();
+    },
+  });
+
+  const { data: availableLocations = [] } = useQuery<string[]>({
+    queryKey: ["profiles", "locations"],
+    queryFn: async () => {
+      const rows = await sbSelect<{ location?: string }>("profiles", {
+        select: "location",
+        query: { account_status: "eq.approved" },
+      });
+      const uniqueLocations = new Set<string>();
+      rows.forEach((r) => {
+        if (r.location && r.location.trim()) {
+          uniqueLocations.add(r.location);
+        }
+      });
+      return Array.from(uniqueLocations).sort();
+    },
+  });
+
+  const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
+    queryKey: ["profiles", "top", selectedRole, selectedLocation],
+    queryFn: async () => {
+      let query: Record<string, string> = { account_status: "eq.approved" };
+      if (selectedRole) {
+        query.profession = `eq.${selectedRole}`;
+      }
+      if (selectedLocation) {
+        query.location = `eq.${selectedLocation}`;
+      }
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
-        query: { account_status: "eq.approved" },
+        query,
         order: { column: "created_at", ascending: false },
         limit: 8,
       });
@@ -63,11 +106,18 @@ export default function NetworkScreen() {
   });
 
   const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "new"],
+    queryKey: ["profiles", "new", selectedRole, selectedLocation],
     queryFn: async () => {
+      let query: Record<string, string> = { account_status: "eq.approved" };
+      if (selectedRole) {
+        query.profession = `eq.${selectedRole}`;
+      }
+      if (selectedLocation) {
+        query.location = `eq.${selectedLocation}`;
+      }
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,username,created_at",
-        query: { account_status: "eq.approved" },
+        query,
         order: { column: "created_at", ascending: false },
         limit: 12,
       });
@@ -112,15 +162,28 @@ export default function NetworkScreen() {
       <ScrollView contentContainerStyle={styles.scroll} testID="network-scroll">
         <Text style={styles.sectionHeader}>FILTER NETWORK</Text>
 
-        <Pressable style={styles.selector} onPress={() => setRoleMenuOpen((s) => !s)} testID="role-selector">
+        <Pressable style={styles.selector} onPress={() => {
+          setRoleMenuOpen((s) => !s);
+          setLocationMenuOpen(false);
+        }} testID="role-selector">
           <User color="#E5E7EB" size={18} />
-          <Text style={styles.selectorText}>{selectedRole}</Text>
+          <Text style={styles.selectorText}>{selectedRole ? selectedRole.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) : "All Roles"}</Text>
           <ChevronDown color="#E5E7EB" size={18} />
         </Pressable>
 
         {roleMenuOpen && (
-          <View style={styles.roleChips} testID="role-chips">
-            {ROLES.slice(1).map((r) => (
+          <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="role-chips">
+            <Pressable
+              onPress={() => {
+                setSelectedRole(null);
+                setRoleMenuOpen(false);
+              }}
+              style={[styles.chip, selectedRole === null && styles.chipActive]}
+              testID="chip-all-roles"
+            >
+              <Text style={[styles.chipText, selectedRole === null && styles.chipTextActive]}>All Roles</Text>
+            </Pressable>
+            {availableRoles.map((r) => (
               <Pressable
                 key={r}
                 onPress={() => {
@@ -130,10 +193,47 @@ export default function NetworkScreen() {
                 style={[styles.chip, selectedRole === r && styles.chipActive]}
                 testID={`chip-${r}`}
               >
-                <Text style={[styles.chipText, selectedRole === r && styles.chipTextActive]}>{r}</Text>
+                <Text style={[styles.chipText, selectedRole === r && styles.chipTextActive]}>{r.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
+        )}
+
+        <Pressable style={[styles.selector, { marginTop: 10 }]} onPress={() => {
+          setLocationMenuOpen((s) => !s);
+          setRoleMenuOpen(false);
+        }} testID="location-selector">
+          <MapPin color="#E5E7EB" size={18} />
+          <Text style={styles.selectorText}>{selectedLocation ?? "All Locations"}</Text>
+          <ChevronDown color="#E5E7EB" size={18} />
+        </Pressable>
+
+        {locationMenuOpen && (
+          <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="location-chips">
+            <Pressable
+              onPress={() => {
+                setSelectedLocation(null);
+                setLocationMenuOpen(false);
+              }}
+              style={[styles.chip, selectedLocation === null && styles.chipActive]}
+              testID="chip-all-locations"
+            >
+              <Text style={[styles.chipText, selectedLocation === null && styles.chipTextActive]}>All Locations</Text>
+            </Pressable>
+            {availableLocations.map((loc) => (
+              <Pressable
+                key={loc}
+                onPress={() => {
+                  setSelectedLocation(loc);
+                  setLocationMenuOpen(false);
+                }}
+                style={[styles.chip, selectedLocation === loc && styles.chipActive]}
+                testID={`chip-${loc}`}
+              >
+                <Text style={[styles.chipText, selectedLocation === loc && styles.chipTextActive]}>{loc}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
         )}
 
         <Text style={styles.h1}>Top Members</Text>
@@ -274,7 +374,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   selectorText: { color: "#E5E7EB", fontSize: 15, fontWeight: "600", flex: 1 },
-  roleChips: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 10, marginBottom: 4 },
+  roleChipsScroll: { maxHeight: 200, marginTop: 10, marginBottom: 4 },
+  roleChips: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingBottom: 10 },
   chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderColor: "#2C2C33", borderWidth: 1, backgroundColor: "#0F0F14" },
   chipActive: { backgroundColor: "#1A1A22", borderColor: "#3A3A44" },
   chipText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
