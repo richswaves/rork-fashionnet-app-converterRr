@@ -4,7 +4,7 @@ import { Shield, Instagram, Youtube } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
-import { sbSelect, sbUpdate, getPublicUrl } from "@/integrations/supabase/client";
+import { sbSelect, sbUpdate, sbInsert, getPublicUrl } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import GrainTexture from "@/components/GrainTexture";
 
@@ -124,6 +124,14 @@ export default function AdminApprovalsScreen() {
   const approveMutation = useMutation({
     mutationFn: async (userId: string) => {
       await sbUpdate("profiles", { account_status: "approved" }, { user_id: `eq.${userId}` });
+      
+      await sbInsert("applicant_notifications", {
+        applicant_id: userId,
+        type: "profile_approved",
+        title: "Profile Approved",
+        message: "Your profile has been approved! You can now access the platform.",
+        related_id: null,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
@@ -138,6 +146,14 @@ export default function AdminApprovalsScreen() {
   const rejectMutation = useMutation({
     mutationFn: async (userId: string) => {
       await sbUpdate("profiles", { account_status: "rejected" }, { user_id: `eq.${userId}` });
+      
+      await sbInsert("applicant_notifications", {
+        applicant_id: userId,
+        type: "profile_rejected",
+        title: "Profile Denied",
+        message: "Your profile application has been denied. Please contact support if you have questions.",
+        related_id: null,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });

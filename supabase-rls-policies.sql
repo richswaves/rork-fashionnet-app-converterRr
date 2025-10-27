@@ -711,6 +711,13 @@ FOR INSERT WITH CHECK (
     AND o.user_id = auth.uid()
     AND a.applicant_id = applicant_id
   )
+  OR
+  -- Admins can create notifications for profile approvals/rejections
+  EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid()
+    AND role = 'admin'
+  )
 );
 
 -- Users can update their own notifications (mark as read)
