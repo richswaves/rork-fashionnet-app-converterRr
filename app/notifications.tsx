@@ -39,6 +39,7 @@ interface ApplicationNotification {
   applicant_id: string;
   created_at: string;
   status?: string;
+  note?: string;
   opportunities?: {
     id: string;
     title?: string;
@@ -131,7 +132,7 @@ export default function NotificationsScreen() {
       const oppIds = myOpps.map((o) => o.id);
       if (oppIds.length === 0) return [];
       const idList = `in.(${oppIds.join(",")})`;
-      const apps = await sbSelect<{ id: string; opportunity_id: string; applicant_id: string; created_at: string; status?: string }>("applications", {
+      const apps = await sbSelect<{ id: string; opportunity_id: string; applicant_id: string; created_at: string; status?: string; note?: string }>("applications", {
         select: "*",
         query: { opportunity_id: idList },
         order: { column: "created_at", ascending: false },
@@ -318,33 +319,39 @@ export default function NotificationsScreen() {
             const oppTitle = item.data.opportunities?.title ?? "your opportunity";
             const status = item.data.status;
             const isPending = !status || status === "pending";
+            const note = item.data.note;
             
             return (
-              <View style={styles.notifCard} testID={`notif-app-${item.data.id}`}>
-                <View style={styles.appNotifHeader}>
-                  <Pressable
-                    style={styles.appNotifMainContent}
-                    onPress={() => {
-                      const uid = item.data.profiles?.user_id;
-                      if (uid) {
-                        router.push({ pathname: "/profile/[userId]", params: { userId: uid } });
-                      }
-                    }}
-                  >
-                    <View style={[styles.iconCircle, styles.iconCircleApp]}>
-                      <FileCheck color="#10B981" size={20} />
-                    </View>
-                    <Image source={{ uri: display.avatarUrl }} style={styles.notifAvatar} />
-                    <View style={styles.notifContent}>
-                      <Text style={styles.notifText}>
-                        <Text style={styles.notifTextBold}>{display.displayName}</Text>
-                        {" applied to "}
-                        <Text style={styles.notifTextBold}>{oppTitle}</Text>
-                      </Text>
-                      <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
-                    </View>
-                  </Pressable>
-                </View>
+              <View style={styles.appNotifCard} testID={`notif-app-${item.data.id}`}>
+                <Pressable
+                  style={styles.appNotifHeader}
+                  onPress={() => {
+                    const uid = item.data.profiles?.user_id;
+                    if (uid) {
+                      router.push({ pathname: "/profile/[userId]", params: { userId: uid } });
+                    }
+                  }}
+                >
+                  <View style={[styles.iconCircle, styles.iconCircleApp]}>
+                    <FileCheck color="#10B981" size={20} />
+                  </View>
+                  <Image source={{ uri: display.avatarUrl }} style={styles.notifAvatar} />
+                  <View style={styles.notifContent}>
+                    <Text style={styles.notifText}>
+                      <Text style={styles.notifTextBold}>{display.displayName}</Text>
+                      {" applied to "}
+                      <Text style={styles.notifTextBold}>{oppTitle}</Text>
+                    </Text>
+                    <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
+                  </View>
+                </Pressable>
+                
+                {note && (
+                  <View style={styles.noteContainer}>
+                    <Text style={styles.noteLabel}>Note:</Text>
+                    <Text style={styles.noteText}>{note}</Text>
+                  </View>
+                )}
                 
                 {isPending && (
                   <View style={styles.appActionButtons}>
@@ -390,7 +397,7 @@ export default function NotificationsScreen() {
                       testID={`reject-app-${item.data.id}`}
                     >
                       <XCircle color="#FFFFFF" size={16} />
-                      <Text style={styles.appActionBtnText}>Reject</Text>
+                      <Text style={styles.appActionBtnText}>Deny</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -508,6 +515,17 @@ const styles = StyleSheet.create({
     borderColor: "#23232B",
     marginBottom: 10,
   },
+  appNotifCard: {
+    flexDirection: "column",
+    gap: 12 as const,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#121218",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+    marginBottom: 10,
+  },
   iconCircle: {
     width: 36,
     height: 36,
@@ -547,20 +565,34 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   appNotifHeader: {
-    width: "100%",
-  },
-  appNotifMainContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12 as const,
   },
+  noteContainer: {
+    backgroundColor: "#1A1A22",
+    borderRadius: 8,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#10B981",
+  },
+  noteLabel: {
+    color: "#10B981",
+    fontSize: 11,
+    fontWeight: "800" as const,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  noteText: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "500" as const,
+    lineHeight: 20,
+  },
   appActionButtons: {
     flexDirection: "row",
     gap: 8 as const,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#23232B",
   },
   appActionBtn: {
     flex: 1,
@@ -583,10 +615,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   appStatusBadge: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#23232B",
     alignItems: "center",
   },
   appStatusText: {
