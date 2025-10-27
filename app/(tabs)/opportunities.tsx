@@ -88,7 +88,7 @@ function Dropdown({
               <ChevronUp color="#E5E7EB" size={18} />
             </Pressable>
           </View>
-          <View style={{ maxHeight: maxMenuH - 44 }}>
+          <ScrollView style={{ maxHeight: maxMenuH - 44 }} showsVerticalScrollIndicator={false}>
             <Pressable
               onPress={() => {
                 onChange(null);
@@ -119,7 +119,7 @@ function Dropdown({
                 ))}
               </View>
             ))}
-          </View>
+          </ScrollView>
         </View>
       )}
     </View>
