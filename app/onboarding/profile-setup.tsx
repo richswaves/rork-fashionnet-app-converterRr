@@ -247,6 +247,14 @@ export default function ProfileSetup() {
     return pub.publicUrl as string;
   }
 
+  const canContinueToProfile = useMemo(() => {
+    if (!role) return false;
+    if (!showModelDetails) {
+      return displayName.trim().length > 0 && profilePictureUri.length > 0;
+    }
+    return true;
+  }, [role, showModelDetails, displayName, profilePictureUri]);
+
   const onContinueFromProfile = useCallback(() => {
     if (!displayName.trim()) {
       Alert.alert("Required Field", "Please enter your display name");
@@ -473,7 +481,7 @@ export default function ProfileSetup() {
           </View>
         )}
 
-        {!!role && !showModelDetails && (
+        {!!role && !showModelDetails && canContinueToProfile && (
           <TouchableOpacity testID="ps-continue-profile" style={styles.primaryBtn} onPress={role === "model" ? onContinueFromProfile : onSave}>
             <Text style={styles.primaryBtnText}>Continue</Text>
           </TouchableOpacity>
