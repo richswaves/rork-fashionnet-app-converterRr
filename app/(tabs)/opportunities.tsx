@@ -3,7 +3,7 @@ import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platfor
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
-import { ChevronDown, ChevronUp, Filter, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube, ShieldCheck } from "lucide-react-native";
+import { ChevronDown, Filter, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube, ShieldCheck } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -48,84 +48,6 @@ const VIEW_OPTIONS = [
 ];
 
 type ViewKey = typeof VIEW_OPTIONS[number]["key"];
-type DropdownOption = { label: string; value: string };
-interface DropdownSection { title?: string; options: DropdownOption[] }
-
-function Dropdown({
-  label,
-  sections,
-  value,
-  onChange,
-  testID,
-}: {
-  label: string;
-  sections: DropdownSection[];
-  value: string | null;
-  onChange: (val: string | null) => void;
-  testID: string;
-}) {
-  const [open, setOpen] = useState<boolean>(false);
-  const display = sections
-    .flatMap((s) => s.options)
-    .find((o) => o.value === value)?.label ?? value ?? label;
-  const windowH = Dimensions.get("window").height;
-  const maxMenuH = Math.max(180, Math.min(320, windowH * 0.45));
-
-  return (
-    <View style={styles.ddContainer} testID={`${testID}-container`}>
-      <Pressable
-        style={styles.ddHeader}
-        onPress={() => setOpen((s) => !s)}
-        testID={`${testID}-toggle`}
-      >
-        <Text style={styles.ddLabel}>{display}</Text>
-        {open ? <ChevronUp color="#E5E7EB" size={18} /> : <ChevronDown color="#E5E7EB" size={18} />}
-      </Pressable>
-      {open && (
-        <View style={[styles.ddMenu, { maxHeight: maxMenuH }]} testID={`${testID}-menu`}>
-          <View style={styles.ddMenuHeader}>
-            <Text style={styles.ddMenuTitle}>{label}</Text>
-            <Pressable onPress={() => setOpen(false)} style={styles.ddCollapseBtn} testID={`${testID}-collapse`}>
-              <ChevronUp color="#E5E7EB" size={18} />
-            </Pressable>
-          </View>
-          <ScrollView style={{ maxHeight: maxMenuH - 44 }} showsVerticalScrollIndicator={false}>
-            <Pressable
-              onPress={() => {
-                onChange(null);
-                setOpen(false);
-              }}
-              style={styles.ddItem}
-              testID={`${testID}-clear`}
-            >
-              <Text style={styles.ddItemText}>All</Text>
-            </Pressable>
-            {sections.map((sec) => (
-              <View key={sec.title ?? Math.random().toString()}>
-                {!!sec.title && (
-                  <Text style={styles.ddSectionLabel}>{sec.title.toUpperCase()}</Text>
-                )}
-                {sec.options.map((opt) => (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => {
-                      onChange(opt.value);
-                      setOpen(false);
-                    }}
-                    style={styles.ddItem}
-                    testID={`${testID}-opt-${opt.value}`}
-                  >
-                    <Text style={styles.ddItemText}>{opt.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-    </View>
-  );
-}
 
 function formatRelativeTime(iso?: string) {
   if (!iso) return "";
@@ -173,9 +95,9 @@ export default function OpportunitiesScreen() {
   const queryClient = useQueryClient();
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [city, setCity] = useState<string[]>([]);
-  const [seekingRole, setSeekingRole] = useState<string | null>(null);
-  const [postedByRole, setPostedByRole] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [seekingRole, setSeekingRole] = useState<string[]>([]);
+  const [postedByRole, setPostedByRole] = useState<string[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<string[]>([]);
   const [view, setView] = useState<ViewKey>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
@@ -485,7 +407,7 @@ export default function OpportunitiesScreen() {
           <Filter color="#E5E7EB" size={18} />
           <Text style={styles.filterText}>Filters</Text>
           {(() => {
-            const activeCount = city.length + [seekingRole, postedByRole, paymentStatus].filter((v) => v && v !== "all").length;
+            const activeCount = city.length + seekingRole.length + postedByRole.length + paymentStatus.length;
             return activeCount > 0 ? (
               <View style={styles.filterBadge} testID="opp-filter-badge">
                 <Text style={styles.filterBadgeText}>{activeCount}</Text>
@@ -554,21 +476,34 @@ export default function OpportunitiesScreen() {
               return city.some(c => oppLocation.includes(c.toLowerCase()));
             });
           }
-          if (seekingRole && seekingRole !== "all") {
-            filteredData = filteredData.filter((opp) => (opp.type ?? "").toLowerCase() === (seekingRole ?? "").toLowerCase());
+          if (seekingRole.length > 0) {
+            filteredData = filteredData.filter((opp) => {
+              const oppType = (opp.type ?? "").toLowerCase();
+              return seekingRole.some(role => oppType === role.toLowerCase());
+            });
           }
-          if (paymentStatus === "paid") {
-            filteredData = filteredData.filter((opp) => (opp.budget ?? "").toLowerCase() !== "unpaid" && (opp.budget ?? "") !== "");
-          } else if (paymentStatus === "unpaid") {
-            filteredData = filteredData.filter((opp) => !(opp.budget ?? "") || (opp.budget ?? "").toLowerCase() === "unpaid");
+          if (paymentStatus.length > 0) {
+            filteredData = filteredData.filter((opp) => {
+              const budget = (opp.budget ?? "").toLowerCase();
+              return paymentStatus.some(status => {
+                if (status === "paid") {
+                  return budget !== "unpaid" && budget !== "";
+                } else if (status === "unpaid") {
+                  return !budget || budget === "unpaid";
+                }
+                return false;
+              });
+            });
           }
-          if (postedByRole && postedByRole !== "all") {
+          if (postedByRole.length > 0) {
             filteredData = filteredData.filter((opp) => {
               const profile = opp.profiles as any;
               const profession: string = (profile?.profession ?? "").toLowerCase();
               const professions: string[] = Array.isArray(profile?.professions) ? (profile.professions as string[]).map((p) => p.toLowerCase()) : [];
-              const target = (postedByRole ?? "").toLowerCase();
-              return profession === target || professions.includes(target);
+              return postedByRole.some(role => {
+                const target = role.toLowerCase();
+                return profession === target || professions.includes(target);
+              });
             });
           }
           return filteredData;
@@ -877,35 +812,106 @@ export default function OpportunitiesScreen() {
             </View>
 
             <Text style={styles.fieldLabel}>Seeking a</Text>
-            <Dropdown
-              label="All Roles"
-              sections={ROLE_SECTIONS}
-              value={seekingRole}
-              onChange={setSeekingRole}
-              testID="dd-seeking"
-            />
+            <View style={styles.locationChips}>
+              {ROLE_SECTIONS.flatMap(sec => sec.options).map((opt) => {
+                const isSelected = seekingRole.includes(opt.value);
+                return (
+                  <Pressable
+                    key={opt.value}
+                    style={[
+                      styles.locationChip,
+                      isSelected && styles.locationChipActive,
+                    ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setSeekingRole(seekingRole.filter(r => r !== opt.value));
+                      } else {
+                        setSeekingRole([...seekingRole, opt.value]);
+                      }
+                    }}
+                    testID={`seeking-${opt.value}`}
+                  >
+                    <Text
+                      style={[
+                        styles.locationChipText,
+                        isSelected && styles.locationChipTextActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <Text style={styles.fieldLabel}>Posted by a</Text>
-            <Dropdown
-              label="All Posters"
-              sections={ROLE_SECTIONS}
-              value={postedByRole}
-              onChange={setPostedByRole}
-              testID="dd-postedby"
-            />
+            <View style={styles.locationChips}>
+              {ROLE_SECTIONS.flatMap(sec => sec.options).map((opt) => {
+                const isSelected = postedByRole.includes(opt.value);
+                return (
+                  <Pressable
+                    key={opt.value}
+                    style={[
+                      styles.locationChip,
+                      isSelected && styles.locationChipActive,
+                    ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setPostedByRole(postedByRole.filter(r => r !== opt.value));
+                      } else {
+                        setPostedByRole([...postedByRole, opt.value]);
+                      }
+                    }}
+                    testID={`postedby-${opt.value}`}
+                  >
+                    <Text
+                      style={[
+                        styles.locationChipText,
+                        isSelected && styles.locationChipTextActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <Text style={styles.fieldLabel}>Payment Status</Text>
-            <Dropdown
-              label="All Opportunities"
-              sections={[{ options: [
-                { label: "All Opportunities", value: "all" },
+            <View style={styles.locationChips}>
+              {[
                 { label: "Paid Only", value: "paid" },
                 { label: "Unpaid Only", value: "unpaid" },
-              ]}]}
-              value={paymentStatus}
-              onChange={setPaymentStatus}
-              testID="dd-payment"
-            />
+              ].map((opt) => {
+                const isSelected = paymentStatus.includes(opt.value);
+                return (
+                  <Pressable
+                    key={opt.value}
+                    style={[
+                      styles.locationChip,
+                      isSelected && styles.locationChipActive,
+                    ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setPaymentStatus(paymentStatus.filter(p => p !== opt.value));
+                      } else {
+                        setPaymentStatus([...paymentStatus, opt.value]);
+                      }
+                    }}
+                    testID={`payment-${opt.value}`}
+                  >
+                    <Text
+                      style={[
+                        styles.locationChipText,
+                        isSelected && styles.locationChipTextActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </ScrollView>
 
           <View style={styles.sheetActions}>
@@ -913,9 +919,9 @@ export default function OpportunitiesScreen() {
               style={styles.resetBtn}
               onPress={() => {
                 setCity([]);
-                setSeekingRole(null);
-                setPostedByRole(null);
-                setPaymentStatus(null);
+                setSeekingRole([]);
+                setPostedByRole([]);
+                setPaymentStatus([]);
               }}
               testID="filters-reset"
             >
