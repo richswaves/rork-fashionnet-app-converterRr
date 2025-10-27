@@ -246,6 +246,15 @@ export default function ProfileSetup() {
   }
 
   const onSave = useCallback(async () => {
+    if (!displayName.trim()) {
+      Alert.alert("Required Field", "Please enter your display name");
+      return;
+    }
+    if (!profilePictureUri) {
+      Alert.alert("Required Field", "Please upload a profile picture");
+      return;
+    }
+    
     try {
       console.log("[ProfileSetup] Saving profile with userId:", currentUserId);
       await recordEvent(3, "profile_details", "complete");
