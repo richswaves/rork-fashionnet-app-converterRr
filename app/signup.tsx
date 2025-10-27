@@ -333,14 +333,6 @@ export default function SignupScreen() {
           tiktok_link: socialLink.includes("tiktok") ? socialLink : undefined,
           twitter_link: socialLink.includes("twitter") || socialLink.includes("x.com") ? socialLink : undefined,
           youtube_link: socialLink.includes("youtube") ? socialLink : undefined,
-          linkedin_url: socialLink.includes("linkedin") ? socialLink : undefined,
-          social_links: {
-            instagram: socialLink.includes("instagram") ? socialLink : undefined,
-            tiktok: socialLink.includes("tiktok") ? socialLink : undefined,
-            twitter: socialLink.includes("twitter") || socialLink.includes("x.com") ? socialLink : undefined,
-            youtube: socialLink.includes("youtube") ? socialLink : undefined,
-            linkedin: socialLink.includes("linkedin") ? socialLink : undefined,
-          },
           phone_number: phoneNumber.trim() || undefined,
           ...(role === "model"
             ? {
@@ -693,7 +685,7 @@ export default function SignupScreen() {
               <View style={styles.pasteContainer}>
                 <View style={[styles.input, styles.socialLinkDisplay]}>
                   <Text style={[styles.socialLinkText, !socialLink && styles.socialLinkPlaceholder]} numberOfLines={1}>
-                    {socialLink || "Instagram, TikTok, LinkedIn, or other social profile URL"}
+                    {socialLink || "Instagram, TikTok, or other social profile URL"}
                   </Text>
                 </View>
                 <TouchableOpacity
