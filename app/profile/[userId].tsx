@@ -805,10 +805,7 @@ export default function UserProfileScreen() {
             style={[
               styles.animatedContent,
               { 
-                maxHeight: opportunitiesAnimHeight.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 10000],
-                }),
+                maxHeight: opportunitiesExpanded ? 10000 : 0,
                 opacity: opportunitiesAnimOpacity,
               }
             ]}
@@ -954,10 +951,7 @@ export default function UserProfileScreen() {
               style={[
                 styles.animatedContent,
                 { 
-                  maxHeight: portfolioAnimHeight.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 10000],
-                  }),
+                  maxHeight: portfolioExpanded ? 10000 : 0,
                   opacity: portfolioAnimOpacity,
                 }
               ]}
