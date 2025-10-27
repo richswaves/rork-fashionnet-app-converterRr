@@ -249,8 +249,10 @@ export default function OpportunitiesScreen() {
         queryClient.invalidateQueries({ queryKey: ["applied-ids", currentUserId] }),
         queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
       ]);
-      queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] });
-      queryClient.refetchQueries({ queryKey: ["opportunities"] });
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] }),
+        queryClient.refetchQueries({ queryKey: ["opportunities"] }),
+      ]);
     },
   });
 
@@ -965,9 +967,9 @@ export default function OpportunitiesScreen() {
               </Pressable>
               <Pressable
                 style={styles.applyModalSubmitBtn}
-                onPress={() => {
+                onPress={async () => {
                   if (selectedOpportunityId) {
-                    applyMutation.mutate({ 
+                    await applyMutation.mutateAsync({ 
                       opportunityId: selectedOpportunityId, 
                       note: applicationNote.trim() || undefined 
                     });
