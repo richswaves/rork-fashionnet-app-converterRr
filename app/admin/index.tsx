@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -7,6 +7,7 @@ import { sbSelect, getSupabase } from "@/integrations/supabase/client";
 import GrainTexture from "@/components/GrainTexture";
 import { PieChart, Shield, BarChart3, ChevronRight, AlertTriangle, Scale } from "lucide-react-native";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 function useAdminCheck(userId?: string) {
   return useQuery<boolean>({
@@ -28,6 +29,13 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { currentUserId } = useProfile();
   const { data: isAdmin } = useAdminCheck(currentUserId);
+  const { markAsViewed } = useNotifications();
+
+  useEffect(() => {
+    if (isAdmin) {
+      markAsViewed("admin");
+    }
+  }, [isAdmin, markAsViewed]);
 
   const usersStats = useQuery<{ total: number; recent7: number}>({
     queryKey: ["admin", "users-stats"],

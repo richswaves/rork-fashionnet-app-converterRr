@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, Filter, Layers, CheckCircle2, Send, Bookmark, I
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 interface ProfileRow {
   user_id: string;
@@ -187,63 +188,7 @@ export default function OpportunitiesScreen() {
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
-
-  const { data: isAdmin } = useQuery<boolean>({
-    queryKey: ["is-admin", currentUserId],
-    queryFn: async () => {
-      if (!currentUserId) return false;
-      const rows = await sbSelect<{ user_id: string; role: string }>("user_roles", {
-        select: "user_id,role",
-        query: { user_id: `eq.${currentUserId}`, role: "eq.admin" },
-        limit: 1,
-      });
-      return (rows?.length ?? 0) > 0;
-    },
-    enabled: !!currentUserId,
-  });
-
-  const { data: notificationCount } = useQuery<number>({
-    queryKey: ["notification-count", currentUserId],
-    queryFn: async () => {
-      if (!currentUserId) return 0;
-      const follows = await sbSelect<{ id: string }>("follows", {
-        select: "id",
-        query: { following_id: `eq.${currentUserId}` },
-        limit: 100,
-      });
-      const myOpps = await sbSelect<{ id: string }>("opportunities", {
-        select: "id",
-        query: { user_id: `eq.${currentUserId}` },
-        limit: 200,
-      });
-      const oppIds = myOpps.map((o) => o.id);
-      let appsCount = 0;
-      if (oppIds.length > 0) {
-        const idList = `in.(${oppIds.join(",")})`;
-        const apps = await sbSelect<{ id: string }>("applications", {
-          select: "id",
-          query: { opportunity_id: idList },
-          limit: 100,
-        });
-        appsCount = apps.length;
-      }
-      return follows.length + appsCount;
-    },
-    enabled: !!currentUserId,
-  });
-
-  const { data: adminNotificationCount } = useQuery<number>({
-    queryKey: ["admin-notification-count"],
-    queryFn: async () => {
-      const pendingProfiles = await sbSelect<{ user_id: string }>("profiles", {
-        select: "user_id",
-        query: { account_status: "eq.pending_approval" },
-        limit: 100,
-      });
-      return pendingProfiles.length;
-    },
-    enabled: !!isAdmin,
-  });
+  const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
 
   const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],

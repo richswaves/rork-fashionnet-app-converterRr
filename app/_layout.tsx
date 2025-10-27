@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { getSupabase, setRuntimeSupabaseEnv } from "@/integrations/supabase/client";
 
@@ -71,9 +72,11 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <ProfileProvider>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
-            <RootLayoutNav />
-          </GestureHandlerRootView>
+          <NotificationProvider>
+            <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
+              <RootLayoutNav />
+            </GestureHandlerRootView>
+          </NotificationProvider>
         </ProfileProvider>
       </QueryClientProvider>
     </trpc.Provider>

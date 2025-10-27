@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,6 +14,7 @@ import { X, UserPlus, FileCheck, Clock } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 interface ProfileRow {
   user_id: string;
@@ -78,7 +79,12 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { currentUserId, getDisplayForProfile } = useProfile();
+  const { markAsViewed } = useNotifications();
   const [filter, setFilter] = useState<"all" | "follows" | "applications">("all");
+
+  useEffect(() => {
+    markAsViewed("user");
+  }, [markAsViewed]);
 
   const { data: follows, isLoading: followsLoading } = useQuery<FollowNotification[]>({
     queryKey: ["notifications-follows", currentUserId],
