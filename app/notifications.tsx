@@ -7,12 +7,14 @@ import {
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Stack } from "expo-router";
-import { X, UserPlus, FileCheck, Clock } from "lucide-react-native";
-import { useQuery } from "@tanstack/react-query";
-import { sbSelect } from "@/integrations/supabase/client";
+import { X, UserPlus, FileCheck, Clock, Check, XCircle } from "lucide-react-native";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sbSelect, sbUpdate } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 
@@ -36,6 +38,7 @@ interface ApplicationNotification {
   opportunity_id: string;
   applicant_id: string;
   created_at: string;
+  status?: string;
   opportunities?: {
     id: string;
     title?: string;
@@ -80,6 +83,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { currentUserId, getDisplayForProfile } = useProfile();
   const { markAsViewed } = useNotifications();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "follows" | "applications">("all");
 
   useEffect(() => {
@@ -127,7 +131,7 @@ export default function NotificationsScreen() {
       const oppIds = myOpps.map((o) => o.id);
       if (oppIds.length === 0) return [];
       const idList = `in.(${oppIds.join(",")})`;
-      const apps = await sbSelect<{ id: string; opportunity_id: string; applicant_id: string; created_at: string }>("applications", {
+      const apps = await sbSelect<{ id: string; opportunity_id: string; applicant_id: string; created_at: string; status?: string }>("applications", {
         select: "*",
         query: { opportunity_id: idList },
         order: { column: "created_at", ascending: false },
@@ -158,6 +162,35 @@ export default function NotificationsScreen() {
       }));
     },
     enabled: !!currentUserId,
+    refetchInterval: 30000,
+  });
+
+  const approveApplicationMutation = useMutation({
+    mutationFn: async ({ applicationId }: { applicationId: string }) => {
+      await sbUpdate("applications", { status: "approved" }, { id: `eq.${applicationId}` });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
+      Alert.alert("Success", "Application approved");
+    },
+    onError: (error) => {
+      console.error("[Notifications] Approval error:", error);
+      Alert.alert("Error", "Failed to approve application");
+    },
+  });
+
+  const rejectApplicationMutation = useMutation({
+    mutationFn: async ({ applicationId }: { applicationId: string }) => {
+      await sbUpdate("applications", { status: "rejected" }, { id: `eq.${applicationId}` });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
+      Alert.alert("Success", "Application rejected");
+    },
+    onError: (error) => {
+      console.error("[Notifications] Rejection error:", error);
+      Alert.alert("Error", "Failed to reject application");
+    },
   });
 
   const notifications = useMemo<NotificationItem[]>(() => {
@@ -283,30 +316,97 @@ export default function NotificationsScreen() {
           } else {
             const display = getDisplayForProfile(item.data.profiles);
             const oppTitle = item.data.opportunities?.title ?? "your opportunity";
+            const status = item.data.status;
+            const isPending = !status || status === "pending";
+            
             return (
-              <Pressable
-                style={styles.notifCard}
-                onPress={() => {
-                  const uid = item.data.profiles?.user_id;
-                  if (uid) {
-                    router.push({ pathname: "/profile/[userId]", params: { userId: uid } });
-                  }
-                }}
-                testID={`notif-app-${item.data.id}`}
-              >
-                <View style={[styles.iconCircle, styles.iconCircleApp]}>
-                  <FileCheck color="#10B981" size={20} />
+              <View style={styles.notifCard} testID={`notif-app-${item.data.id}`}>
+                <View style={styles.appNotifHeader}>
+                  <Pressable
+                    style={styles.appNotifMainContent}
+                    onPress={() => {
+                      const uid = item.data.profiles?.user_id;
+                      if (uid) {
+                        router.push({ pathname: "/profile/[userId]", params: { userId: uid } });
+                      }
+                    }}
+                  >
+                    <View style={[styles.iconCircle, styles.iconCircleApp]}>
+                      <FileCheck color="#10B981" size={20} />
+                    </View>
+                    <Image source={{ uri: display.avatarUrl }} style={styles.notifAvatar} />
+                    <View style={styles.notifContent}>
+                      <Text style={styles.notifText}>
+                        <Text style={styles.notifTextBold}>{display.displayName}</Text>
+                        {" applied to "}
+                        <Text style={styles.notifTextBold}>{oppTitle}</Text>
+                      </Text>
+                      <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
+                    </View>
+                  </Pressable>
                 </View>
-                <Image source={{ uri: display.avatarUrl }} style={styles.notifAvatar} />
-                <View style={styles.notifContent}>
-                  <Text style={styles.notifText}>
-                    <Text style={styles.notifTextBold}>{display.displayName}</Text>
-                    {" applied to "}
-                    <Text style={styles.notifTextBold}>{oppTitle}</Text>
-                  </Text>
-                  <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
-                </View>
-              </Pressable>
+                
+                {isPending && (
+                  <View style={styles.appActionButtons}>
+                    <TouchableOpacity
+                      style={[styles.appActionBtn, styles.appApproveBtn]}
+                      onPress={() => {
+                        Alert.alert(
+                          "Approve Application",
+                          `Approve ${display.displayName}'s application to ${oppTitle}?`,
+                          [
+                            { text: "Cancel", style: "cancel" },
+                            {
+                              text: "Approve",
+                              onPress: () => approveApplicationMutation.mutate({ applicationId: item.data.id }),
+                            },
+                          ]
+                        );
+                      }}
+                      disabled={approveApplicationMutation.isPending || rejectApplicationMutation.isPending}
+                      testID={`approve-app-${item.data.id}`}
+                    >
+                      <Check color="#FFFFFF" size={16} />
+                      <Text style={styles.appActionBtnText}>Approve</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.appActionBtn, styles.appRejectBtn]}
+                      onPress={() => {
+                        Alert.alert(
+                          "Reject Application",
+                          `Reject ${display.displayName}'s application to ${oppTitle}?`,
+                          [
+                            { text: "Cancel", style: "cancel" },
+                            {
+                              text: "Reject",
+                              onPress: () => rejectApplicationMutation.mutate({ applicationId: item.data.id }),
+                              style: "destructive",
+                            },
+                          ]
+                        );
+                      }}
+                      disabled={approveApplicationMutation.isPending || rejectApplicationMutation.isPending}
+                      testID={`reject-app-${item.data.id}`}
+                    >
+                      <XCircle color="#FFFFFF" size={16} />
+                      <Text style={styles.appActionBtnText}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                
+                {!isPending && (
+                  <View style={styles.appStatusBadge}>
+                    <Text style={[
+                      styles.appStatusText,
+                      status === "approved" && styles.appStatusApproved,
+                      status === "rejected" && styles.appStatusRejected,
+                    ]}>
+                      {status === "approved" ? "✓ Approved" : status === "rejected" ? "✗ Rejected" : "Pending"}
+                    </Text>
+                  </View>
+                )}
+              </View>
             );
           }
         }}
@@ -445,5 +545,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     marginTop: 4,
+  },
+  appNotifHeader: {
+    width: "100%",
+  },
+  appNotifMainContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12 as const,
+  },
+  appActionButtons: {
+    flexDirection: "row",
+    gap: 8 as const,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#23232B",
+  },
+  appActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6 as const,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  appApproveBtn: {
+    backgroundColor: "#10B981",
+  },
+  appRejectBtn: {
+    backgroundColor: "#EF4444",
+  },
+  appActionBtnText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  appStatusBadge: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#23232B",
+    alignItems: "center",
+  },
+  appStatusText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#6B7280",
+  },
+  appStatusApproved: {
+    color: "#10B981",
+  },
+  appStatusRejected: {
+    color: "#EF4444",
   },
 });
