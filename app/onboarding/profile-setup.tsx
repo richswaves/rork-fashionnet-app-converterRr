@@ -207,8 +207,8 @@ export default function ProfileSetup() {
         user_type: userType,
         specific_role: role,
       } as any);
-    } catch (e) {
-      console.log("onboarding event failed", e);
+    } catch (e: any) {
+      console.error("[Onboarding] Event tracking failed:", e?.message || e);
     }
   }, [currentUserId, role, userType]);
 
@@ -329,8 +329,8 @@ export default function ProfileSetup() {
             question: q.id,
             answer: a,
           } as any);
-        } catch (e) {
-          console.log("response insert failed", q.id, e);
+        } catch (e: any) {
+          console.error("[Onboarding] Response insert failed for question", q.id, ":", e?.message || e);
         }
       }
 

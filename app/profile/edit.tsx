@@ -1002,16 +1002,20 @@ export default function EditProfileScreen() {
                         const supabase = getSupabase();
                         if (!supabase) throw new Error("Supabase not configured");
                         
-                        await sbInsert("account_deletion_feedback", {
-                          user_id: currentUserId,
-                          reason: deleteReason,
-                          deleted_at: new Date().toISOString(),
-                        } as any);
+                        try {
+                          await sbInsert("account_deletion_feedback", {
+                            user_id: currentUserId,
+                            reason: deleteReason,
+                            deleted_at: new Date().toISOString(),
+                          } as any);
+                        } catch (feedbackError: any) {
+                          console.error("[Delete] Feedback logging failed (non-critical):", feedbackError?.message || JSON.stringify(feedbackError));
+                        }
                         
                         const { error } = await supabase.rpc("delete_user_account", { target_user_id: currentUserId });
                         
                         if (error) {
-                          console.error("[Delete] Account deletion failed:", error);
+                          console.error("[Delete] Account deletion failed:", error?.message || JSON.stringify(error));
                           Alert.alert("Error", "Failed to delete account. Please contact support.");
                           return;
                         }
@@ -1020,8 +1024,8 @@ export default function EditProfileScreen() {
                         router.replace("/login");
                         Alert.alert("Account Deleted", "Your account has been successfully deleted.");
                       } catch (e: any) {
-                        console.error("[Delete] Error:", e);
-                        Alert.alert("Error", e.message || "Failed to delete account");
+                        console.error("[Delete] Error:", e?.message || JSON.stringify(e));
+                        Alert.alert("Error", e?.message || "Failed to delete account");
                       }
                     }}
                     style={[styles.saveBtn, { backgroundColor: "#DC2626" }]}
