@@ -175,6 +175,8 @@ export default function ProfileSetup() {
   const [displayName, setDisplayName] = useState<string>(profile?.full_name ?? "");
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollPositionRef = useRef<number>(0);
 
   const availableQuestions = useMemo<ChoiceQuestion[]>(() => {
     if (!role) return [];
@@ -345,7 +347,14 @@ export default function ProfileSetup() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <GrainTexture />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        ref={scrollViewRef}
+        contentContainerStyle={styles.content}
+        onScroll={(event) => {
+          scrollPositionRef.current = event.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
+      >
         <Text style={styles.title}>Set up your profile</Text>
 
         <View style={styles.card}>
@@ -357,9 +366,13 @@ export default function ProfileSetup() {
                 testID={`type-${t}`}
                 style={[styles.pill, userType === t && styles.pillActive]}
                 onPress={async () => {
+                  const currentScroll = scrollPositionRef.current;
                   setUserType(t);
                   setRole(undefined);
                   await recordEvent(2, "user_type_selection", "complete");
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
+                  }, 50);
                 }}
               >
                 <Text style={[styles.pillText, userType === t && styles.pillTextActive]}>{t}</Text>
@@ -373,7 +386,13 @@ export default function ProfileSetup() {
             <Text style={styles.sectionTitle}>Select your role</Text>
             <View style={styles.grid}>
               {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => setRole(r)}>
+                <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => {
+                  const currentScroll = scrollPositionRef.current;
+                  setRole(r);
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
+                  }, 50);
+                }}>
                   <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
                 </TouchableOpacity>
               ))}
@@ -486,7 +505,13 @@ export default function ProfileSetup() {
                         key={opt}
                         testID={`q-${q.id}-${opt}`}
                         style={[styles.pill, selected && styles.pillActive]}
-                        onPress={() => toggleAnswer(q.id, opt, q.multiple)}
+                        onPress={() => {
+                          const currentScroll = scrollPositionRef.current;
+                          toggleAnswer(q.id, opt, q.multiple);
+                          setTimeout(() => {
+                            scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
+                          }, 50);
+                        }}
                       >
                         <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
                       </TouchableOpacity>
