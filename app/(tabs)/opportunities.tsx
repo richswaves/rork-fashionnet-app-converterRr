@@ -89,16 +89,6 @@ function Dropdown({
             </Pressable>
           </View>
           <ScrollView style={{ maxHeight: maxMenuH - 44 }} showsVerticalScrollIndicator={false}>
-            <Pressable
-              onPress={() => {
-                onChange(null);
-                setOpen(false);
-              }}
-              style={styles.ddItem}
-              testID={`${testID}-clear`}
-            >
-              <Text style={styles.ddItemText}>All</Text>
-            </Pressable>
             {sections.map((sec) => (
               <View key={sec.title ?? Math.random().toString()}>
                 {!!sec.title && (
