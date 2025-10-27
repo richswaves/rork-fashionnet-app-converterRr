@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Stack } from "expo-router";
 import { X, UserPlus, FileCheck, Clock, Check, XCircle } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { sbSelect, sbUpdate } from "@/integrations/supabase/client";
+import { sbSelect, sbUpdate, sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 
@@ -48,9 +48,21 @@ interface ApplicationNotification {
   profiles?: ProfileRow;
 }
 
+interface ApplicantNotification {
+  id: string;
+  applicant_id: string;
+  type: string;
+  title: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+  related_id?: string;
+}
+
 type NotificationItem =
   | { type: "follow"; data: FollowNotification }
-  | { type: "application"; data: ApplicationNotification };
+  | { type: "application"; data: ApplicationNotification }
+  | { type: "applicant"; data: ApplicantNotification };
 
 function formatRelativeTime(iso?: string) {
   if (!iso) return "";
@@ -85,7 +97,7 @@ export default function NotificationsScreen() {
   const { currentUserId, getDisplayForProfile } = useProfile();
   const { markAsViewed } = useNotifications();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "follows" | "applications">("all");
+  const [filter, setFilter] = useState<"all" | "follows" | "applications" | "applicant">("all");
 
   useEffect(() => {
     markAsViewed("user");
@@ -166,9 +178,33 @@ export default function NotificationsScreen() {
     refetchInterval: 30000,
   });
 
+  const { data: applicantNotifications, isLoading: applicantNotificationsLoading } = useQuery<ApplicantNotification[]>({
+    queryKey: ["applicant-notifications", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const notifications = await sbSelect<ApplicantNotification>("applicant_notifications", {
+        select: "*",
+        query: { applicant_id: `eq.${currentUserId}` },
+        order: { column: "created_at", ascending: false },
+        limit: 100,
+      });
+      return notifications;
+    },
+    enabled: !!currentUserId,
+    refetchInterval: 30000,
+  });
+
   const approveApplicationMutation = useMutation({
-    mutationFn: async ({ applicationId }: { applicationId: string }) => {
+    mutationFn: async ({ applicationId, applicantId, opportunityTitle }: { applicationId: string; applicantId: string; opportunityTitle: string }) => {
       await sbUpdate("applications", { status: "approved" }, { id: `eq.${applicationId}` });
+      
+      await sbInsert("applicant_notifications", {
+        applicant_id: applicantId,
+        type: "application_approved",
+        title: "Application Approved",
+        message: `Your application to "${opportunityTitle}" has been approved!`,
+        related_id: applicationId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
@@ -181,8 +217,16 @@ export default function NotificationsScreen() {
   });
 
   const rejectApplicationMutation = useMutation({
-    mutationFn: async ({ applicationId }: { applicationId: string }) => {
+    mutationFn: async ({ applicationId, applicantId, opportunityTitle }: { applicationId: string; applicantId: string; opportunityTitle: string }) => {
       await sbUpdate("applications", { status: "rejected" }, { id: `eq.${applicationId}` });
+      
+      await sbInsert("applicant_notifications", {
+        applicant_id: applicantId,
+        type: "application_rejected",
+        title: "Application Denied",
+        message: `Your application to "${opportunityTitle}" has been denied.`,
+        related_id: applicationId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
@@ -202,6 +246,9 @@ export default function NotificationsScreen() {
     if (filter === "all" || filter === "applications") {
       (applications ?? []).forEach((a) => items.push({ type: "application", data: a }));
     }
+    if (filter === "all" || filter === "applicant") {
+      (applicantNotifications ?? []).forEach((n) => items.push({ type: "applicant", data: n }));
+    }
     items.sort((a, b) => {
       const timeA = new Date(
         a.type === "follow" ? a.data.created_at : a.data.created_at
@@ -212,9 +259,9 @@ export default function NotificationsScreen() {
       return timeB - timeA;
     });
     return items;
-  }, [follows, applications, filter]);
+  }, [follows, applications, applicantNotifications, filter]);
 
-  const isLoading = followsLoading || applicationsLoading;
+  const isLoading = followsLoading || applicationsLoading || applicantNotificationsLoading;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -259,6 +306,15 @@ export default function NotificationsScreen() {
             Applications
           </Text>
         </Pressable>
+        <Pressable
+          style={[styles.filterBtn, filter === "applicant" && styles.filterBtnActive]}
+          onPress={() => setFilter("applicant")}
+          testID="filter-applicant"
+        >
+          <Text style={[styles.filterText, filter === "applicant" && styles.filterTextActive]}>
+            My Applications
+          </Text>
+        </Pressable>
       </View>
 
       {isLoading && (
@@ -282,13 +338,32 @@ export default function NotificationsScreen() {
         keyExtractor={(item, index) => {
           if (item.type === "follow") {
             return `follow-${item.data.id}`;
-          } else {
+          } else if (item.type === "application") {
             return `app-${item.data.id}`;
+          } else {
+            return `applicant-${item.data.id}`;
           }
         }}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
-          if (item.type === "follow") {
+          if (item.type === "applicant") {
+            return (
+              <View style={styles.applicantNotifCard} testID={`notif-applicant-${item.data.id}`}>
+                <View style={[styles.iconCircle, item.data.type === "application_approved" ? styles.iconCircleApproved : styles.iconCircleRejected]}>
+                  {item.data.type === "application_approved" ? (
+                    <Check color="#10B981" size={20} />
+                  ) : (
+                    <XCircle color="#EF4444" size={20} />
+                  )}
+                </View>
+                <View style={styles.notifContent}>
+                  <Text style={styles.applicantNotifTitle}>{item.data.title}</Text>
+                  <Text style={styles.applicantNotifMessage}>{item.data.message}</Text>
+                  <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
+                </View>
+              </View>
+            );
+          } else if (item.type === "follow") {
             const display = getDisplayForProfile(item.data.profiles);
             return (
               <Pressable
@@ -365,7 +440,11 @@ export default function NotificationsScreen() {
                             { text: "Cancel", style: "cancel" },
                             {
                               text: "Approve",
-                              onPress: () => approveApplicationMutation.mutate({ applicationId: item.data.id }),
+                              onPress: () => approveApplicationMutation.mutate({ 
+                                applicationId: item.data.id,
+                                applicantId: item.data.applicant_id,
+                                opportunityTitle: oppTitle,
+                              }),
                             },
                           ]
                         );
@@ -387,7 +466,11 @@ export default function NotificationsScreen() {
                             { text: "Cancel", style: "cancel" },
                             {
                               text: "Reject",
-                              onPress: () => rejectApplicationMutation.mutate({ applicationId: item.data.id }),
+                              onPress: () => rejectApplicationMutation.mutate({ 
+                                applicationId: item.data.id,
+                                applicantId: item.data.applicant_id,
+                                opportunityTitle: oppTitle,
+                              }),
                               style: "destructive",
                             },
                           ]
@@ -627,5 +710,36 @@ const styles = StyleSheet.create({
   },
   appStatusRejected: {
     color: "#EF4444",
+  },
+  applicantNotifCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12 as const,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    backgroundColor: "#121218",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+    marginBottom: 10,
+  },
+  iconCircleApproved: {
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
+  },
+  iconCircleRejected: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+  },
+  applicantNotifTitle: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  applicantNotifMessage: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 20,
+    marginBottom: 4,
   },
 });

@@ -667,3 +667,55 @@ FOR DELETE USING (auth.uid() = applicant_id);
 
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON applications TO authenticated;
+
+-- ============================================================================
+-- APPLICANT NOTIFICATIONS TABLE
+-- ============================================================================
+
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view own applicant notifications" ON applicant_notifications;
+DROP POLICY IF EXISTS "System can insert applicant notifications" ON applicant_notifications;
+DROP POLICY IF EXISTS "Users can update own applicant notifications" ON applicant_notifications;
+
+-- Create applicant_notifications table
+CREATE TABLE IF NOT EXISTS public.applicant_notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  applicant_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type text NOT NULL,
+  title text NOT NULL,
+  message text NOT NULL,
+  related_id uuid,
+  read boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_applicant_notifications_applicant ON applicant_notifications(applicant_id);
+CREATE INDEX IF NOT EXISTS idx_applicant_notifications_created_at ON applicant_notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_applicant_notifications_read ON applicant_notifications(read);
+
+-- Enable RLS
+ALTER TABLE applicant_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own notifications
+CREATE POLICY "Users can view own applicant notifications" ON applicant_notifications
+FOR SELECT USING (auth.uid() = applicant_id);
+
+-- Opportunity owners can create notifications (when approving/rejecting)
+CREATE POLICY "Opportunity owners can insert applicant notifications" ON applicant_notifications
+FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM applications a
+    JOIN opportunities o ON o.id = a.opportunity_id
+    WHERE a.id::text = related_id::text
+    AND o.user_id = auth.uid()
+    AND a.applicant_id = applicant_id
+  )
+);
+
+-- Users can update their own notifications (mark as read)
+CREATE POLICY "Users can update own applicant notifications" ON applicant_notifications
+FOR UPDATE USING (auth.uid() = applicant_id);
+
+-- Grant permissions
+GRANT SELECT, INSERT, UPDATE ON applicant_notifications TO authenticated;
