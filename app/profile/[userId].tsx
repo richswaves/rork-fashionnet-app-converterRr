@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -59,6 +59,7 @@ export default function UserProfileScreen() {
 
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { getDisplayForProfile, currentUserId, updateProfileAsync } = useProfile();
   const [opportunitiesExpanded, setOpportunitiesExpanded] = useState<boolean>(true);
   const [portfolioExpanded, setPortfolioExpanded] = useState<boolean>(true);
@@ -71,6 +72,7 @@ export default function UserProfileScreen() {
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState<string>("");
+  const [creatingConversation, setCreatingConversation] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -591,13 +593,69 @@ export default function UserProfileScreen() {
         {!isOwn && currentUserId && (
           <View style={styles.actionRow}>
             <Pressable
-              onPress={() => {
-                Alert.alert("Coming Soon", "Direct messaging will be available soon!");
+              onPress={async () => {
+                if (!currentUserId || !userId) return;
+                
+                setCreatingConversation(true);
+                try {
+                  const supabase = getSupabase();
+                  if (!supabase) {
+                    Alert.alert("Error", "Unable to connect to messaging service");
+                    return;
+                  }
+
+                  const { data: existingConvs, error: convError } = await supabase
+                    .from("conversations")
+                    .select("id")
+                    .or(`and(participant_1.eq.${currentUserId},participant_2.eq.${userId}),and(participant_1.eq.${userId},participant_2.eq.${currentUserId})`)
+                    .limit(1);
+
+                  if (convError) {
+                    console.error("[DM] Error checking existing conversation:", convError);
+                    Alert.alert("Error", "Unable to create conversation");
+                    return;
+                  }
+
+                  let conversationId: string;
+
+                  if (existingConvs && existingConvs.length > 0) {
+                    conversationId = existingConvs[0].id;
+                    console.log("[DM] Found existing conversation:", conversationId);
+                  } else {
+                    const { data: newConv, error: createError } = await supabase
+                      .from("conversations")
+                      .insert({
+                        participant_1: currentUserId,
+                        participant_2: userId,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                      })
+                      .select("id")
+                      .single();
+
+                    if (createError || !newConv) {
+                      console.error("[DM] Error creating conversation:", createError);
+                      Alert.alert("Error", "Unable to create conversation");
+                      return;
+                    }
+
+                    conversationId = newConv.id;
+                    console.log("[DM] Created new conversation:", conversationId);
+                  }
+
+                  router.push("/(tabs)/messages");
+                } catch (error) {
+                  console.error("[DM] Error:", error);
+                  Alert.alert("Error", "Something went wrong");
+                } finally {
+                  setCreatingConversation(false);
+                }
               }}
               style={styles.actionButton}
+              disabled={creatingConversation}
               testID="dm-btn"
             >
-              <Send color="#3B82F6" size={22} strokeWidth={2.5} />
+              <Send color="#FFFFFF" size={22} strokeWidth={2.5} />
             </Pressable>
             <Pressable
               onPress={() => setReportModalVisible(true)}
