@@ -155,6 +155,7 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
         ...(updates.twitter_link !== undefined ? { twitter_link: updates.twitter_link } : {}),
         ...(updates.youtube_link !== undefined ? { youtube_link: updates.youtube_link } : {}),
         ...((updates as any).phone_number !== undefined ? { phone_number: (updates as any).phone_number } : {}),
+        ...((updates as any).custom_links !== undefined ? { custom_links: (updates as any).custom_links } : {}),
       };
 
       console.log("[ProfileContext] Upserting profile payload:", payload);
