@@ -623,12 +623,12 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.saveReminder}>
-          <Text style={styles.saveReminderText}>💡 Remember to select Save at the bottom for changes to apply</Text>
-        </View>
-
         <View style={styles.hero}>
           <View style={styles.heroContent}>
+
+            <View style={styles.saveReminder}>
+              <Text style={styles.saveReminderText}>💡 Remember to select Save at the bottom for changes to apply</Text>
+            </View>
 
             <View style={styles.nameRow}>
               <Text style={styles.nameText}>{fullName || resolvedProfile.displayName || "Your name"}</Text>
@@ -1516,16 +1516,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   saveReminder: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    backgroundColor: "rgba(229, 231, 235, 0.1)",
     borderWidth: 1,
-    borderColor: "rgba(59, 130, 246, 0.3)",
+    borderColor: "rgba(229, 231, 235, 0.2)",
     borderRadius: 12,
     padding: 12,
+    marginBottom: 12,
   },
   saveReminderText: {
-    color: "#93C5FD",
+    color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "600" as const,
     textAlign: "center" as const,
