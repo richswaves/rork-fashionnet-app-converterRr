@@ -381,24 +381,7 @@ export default function ProfileSetup() {
           </View>
         </View>
 
-        {!!userType && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Select your role</Text>
-            <View style={styles.grid}>
-              {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
-                <TouchableOpacity key={r} style={[styles.roleItem, role === r && styles.roleItemActive]} onPress={() => {
-                  const currentScroll = scrollPositionRef.current;
-                  setRole(r);
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
-                  }, 50);
-                }}>
-                  <Text style={[styles.roleText, role === r && styles.roleTextActive]}>{r.replace(/_/g, " ")}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+
 
         {!!role && (
           <View style={styles.card}>
@@ -491,10 +474,28 @@ export default function ProfileSetup() {
           </View>
         )}
 
-        {!!role && availableQuestions.length > 0 && (
+        {!!userType && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Tell us more</Text>
-            {availableQuestions.map((q) => (
+            
+            <View style={{ marginBottom: 12 }}>
+              <Text style={styles.prompt}>Select your role</Text>
+              <View style={styles.rowWrap}>
+                {(userType === "creative" ? creativeRoles : businessRoles).map((r) => (
+                  <TouchableOpacity key={r} style={[styles.pill, role === r && styles.pillActive]} onPress={() => {
+                    const currentScroll = scrollPositionRef.current;
+                    setRole(r);
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: currentScroll, animated: false });
+                    }, 50);
+                  }}>
+                    <Text style={[styles.pillText, role === r && styles.pillTextActive]}>{r.replace(/_/g, " ")}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {!!role && availableQuestions.map((q) => (
               <View key={q.id} style={{ marginBottom: 12 }}>
                 <Text style={styles.prompt}>{q.prompt}</Text>
                 <View style={styles.rowWrap}>
