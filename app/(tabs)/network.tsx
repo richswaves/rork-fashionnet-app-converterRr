@@ -31,8 +31,8 @@ interface MemberCard {
 
 export default function NetworkScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
   const [locationMenuOpen, setLocationMenuOpen] = useState<boolean>(false);
 
@@ -79,22 +79,23 @@ export default function NetworkScreen() {
   });
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "top", selectedRole, selectedLocation],
+    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations)],
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
-      if (selectedRole) {
-        query.profession = `eq.${selectedRole}`;
-      }
-      if (selectedLocation) {
-        query.location = `eq.${selectedLocation}`;
-      }
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
         query,
         order: { column: "created_at", ascending: false },
-        limit: 8,
+        limit: 100,
       });
-      return rows.map((r) => {
+      let filtered = rows;
+      if (selectedRoles.size > 0) {
+        filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+      }
+      if (selectedLocations.size > 0) {
+        filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+      }
+      return filtered.slice(0, 8).map((r) => {
         const d = getDisplayForProfile(r);
         return {
           id: r.user_id,
@@ -108,22 +109,23 @@ export default function NetworkScreen() {
   });
 
   const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "new", selectedRole, selectedLocation],
+    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations)],
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
-      if (selectedRole) {
-        query.profession = `eq.${selectedRole}`;
-      }
-      if (selectedLocation) {
-        query.location = `eq.${selectedLocation}`;
-      }
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,username,created_at",
         query,
         order: { column: "created_at", ascending: false },
-        limit: 12,
+        limit: 100,
       });
-      return rows.map((r) => {
+      let filtered = rows;
+      if (selectedRoles.size > 0) {
+        filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+      }
+      if (selectedLocations.size > 0) {
+        filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+      }
+      return filtered.slice(0, 12).map((r) => {
         const d = getDisplayForProfile(r);
         return {
           id: r.user_id,
@@ -255,76 +257,108 @@ export default function NetworkScreen() {
 
         <Pressable style={styles.selector} onPress={() => {
           setRoleMenuOpen((s) => !s);
-          setLocationMenuOpen(false);
         }} testID="role-selector">
           <User color="#E5E7EB" size={18} />
-          <Text style={styles.selectorText}>{selectedRole ? selectedRole.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) : "All Roles"}</Text>
+          <Text style={styles.selectorText}>
+            {selectedRoles.size === 0 ? "All Roles" : selectedRoles.size === 1 ? Array.from(selectedRoles)[0].replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) : `${selectedRoles.size} Roles Selected`}
+          </Text>
           <ChevronDown color="#E5E7EB" size={18} />
         </Pressable>
 
         {roleMenuOpen && (
-          <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="role-chips">
-            <Pressable
-              onPress={() => {
-                setSelectedRole(null);
-                setRoleMenuOpen(false);
-              }}
-              style={[styles.chip, selectedRole === null && styles.chipActive]}
-              testID="chip-all-roles"
-            >
-              <Text style={[styles.chipText, selectedRole === null && styles.chipTextActive]}>All Roles</Text>
-            </Pressable>
-            {availableRoles.map((r) => (
+          <View style={styles.filterMenuContainer}>
+            <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="role-chips">
+              {availableRoles.map((r) => (
+                <Pressable
+                  key={r}
+                  onPress={() => {
+                    setSelectedRoles((prev) => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(r)) {
+                        newSet.delete(r);
+                      } else {
+                        newSet.add(r);
+                      }
+                      return newSet;
+                    });
+                  }}
+                  style={[styles.chip, selectedRoles.has(r) && styles.chipActive]}
+                  testID={`chip-${r}`}
+                >
+                  <Text style={[styles.chipText, selectedRoles.has(r) && styles.chipTextActive]}>{r.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={styles.filterActions}>
               <Pressable
-                key={r}
-                onPress={() => {
-                  setSelectedRole(r);
-                  setRoleMenuOpen(false);
-                }}
-                style={[styles.chip, selectedRole === r && styles.chipActive]}
-                testID={`chip-${r}`}
+                onPress={() => setSelectedRoles(new Set())}
+                style={styles.clearBtn}
+                testID="clear-roles"
               >
-                <Text style={[styles.chipText, selectedRole === r && styles.chipTextActive]}>{r.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                <Text style={styles.clearBtnText}>Clear All</Text>
               </Pressable>
-            ))}
-          </ScrollView>
+              <Pressable
+                onPress={() => setRoleMenuOpen(false)}
+                style={styles.doneBtn}
+                testID="done-roles"
+              >
+                <Text style={styles.doneBtnText}>Done</Text>
+              </Pressable>
+            </View>
+          </View>
         )}
 
         <Pressable style={[styles.selector, { marginTop: 10 }]} onPress={() => {
           setLocationMenuOpen((s) => !s);
-          setRoleMenuOpen(false);
         }} testID="location-selector">
           <MapPin color="#E5E7EB" size={18} />
-          <Text style={styles.selectorText}>{selectedLocation ?? "All Locations"}</Text>
+          <Text style={styles.selectorText}>
+            {selectedLocations.size === 0 ? "All Locations" : selectedLocations.size === 1 ? Array.from(selectedLocations)[0] : `${selectedLocations.size} Locations Selected`}
+          </Text>
           <ChevronDown color="#E5E7EB" size={18} />
         </Pressable>
 
         {locationMenuOpen && (
-          <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="location-chips">
-            <Pressable
-              onPress={() => {
-                setSelectedLocation(null);
-                setLocationMenuOpen(false);
-              }}
-              style={[styles.chip, selectedLocation === null && styles.chipActive]}
-              testID="chip-all-locations"
-            >
-              <Text style={[styles.chipText, selectedLocation === null && styles.chipTextActive]}>All Locations</Text>
-            </Pressable>
-            {availableLocations.map((loc) => (
+          <View style={styles.filterMenuContainer}>
+            <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="location-chips">
+              {availableLocations.map((loc) => (
+                <Pressable
+                  key={loc}
+                  onPress={() => {
+                    setSelectedLocations((prev) => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(loc)) {
+                        newSet.delete(loc);
+                      } else {
+                        newSet.add(loc);
+                      }
+                      return newSet;
+                    });
+                  }}
+                  style={[styles.chip, selectedLocations.has(loc) && styles.chipActive]}
+                  testID={`chip-${loc}`}
+                >
+                  <Text style={[styles.chipText, selectedLocations.has(loc) && styles.chipTextActive]}>{loc}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={styles.filterActions}>
               <Pressable
-                key={loc}
-                onPress={() => {
-                  setSelectedLocation(loc);
-                  setLocationMenuOpen(false);
-                }}
-                style={[styles.chip, selectedLocation === loc && styles.chipActive]}
-                testID={`chip-${loc}`}
+                onPress={() => setSelectedLocations(new Set())}
+                style={styles.clearBtn}
+                testID="clear-locations"
               >
-                <Text style={[styles.chipText, selectedLocation === loc && styles.chipTextActive]}>{loc}</Text>
+                <Text style={styles.clearBtnText}>Clear All</Text>
               </Pressable>
-            ))}
-          </ScrollView>
+              <Pressable
+                onPress={() => setLocationMenuOpen(false)}
+                style={styles.doneBtn}
+                testID="done-locations"
+              >
+                <Text style={styles.doneBtnText}>Done</Text>
+              </Pressable>
+            </View>
+          </View>
         )}
 
         <Text style={styles.h1}>Top Members</Text>
@@ -508,12 +542,39 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   selectorText: { color: "#E5E7EB", fontSize: 15, fontWeight: "600", flex: 1 },
-  roleChipsScroll: { maxHeight: 200, marginTop: 10, marginBottom: 4 },
+  filterMenuContainer: { marginTop: 10, marginBottom: 8 },
+  roleChipsScroll: { maxHeight: 200 },
   roleChips: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingBottom: 10 },
   chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderColor: "#2C2C33", borderWidth: 1, backgroundColor: "#0F0F14" },
-  chipActive: { backgroundColor: "#1A1A22", borderColor: "#3A3A44" },
+  chipActive: { backgroundColor: "#3B82F6", borderColor: "#3B82F6" },
   chipText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   chipTextActive: { color: "#FFFFFF" },
+  filterActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#23232B",
+  },
+  clearBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#1A1A22",
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+    alignItems: "center",
+  },
+  clearBtnText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
+  doneBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+  },
+  doneBtnText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
 
   h1: { color: "#E5E7EB", fontSize: 24, fontWeight: "900", marginTop: 16, marginBottom: 12 },
 
