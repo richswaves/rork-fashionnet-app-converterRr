@@ -148,9 +148,17 @@ export default function LoginScreen() {
             } else {
               throw new Error('No user after Apple sign-in');
             }
-          } catch (e) {
+          } catch (e: any) {
             console.error('Post-Apple OAuth session handling failed', e);
-            Alert.alert('Sign-in error', 'We could not complete Apple sign-in. Please try again.');
+            const errorMsg = e?.message || String(e);
+            if (errorMsg.includes("Failed to write value") || 
+                errorMsg.includes("out of space") || 
+                errorMsg.includes("NSCocoaErrorDomain Code=640") ||
+                errorMsg.includes("No space left on device")) {
+              Alert.alert('Storage Error', 'Your device is out of storage space. Please free up some space in your device settings and try again.');
+            } else {
+              Alert.alert('Sign-in error', 'We could not complete Apple sign-in. Please try again.');
+            }
           }
         } else if (result.type === 'cancel') {
           console.log('User cancelled Apple OAuth');
@@ -158,8 +166,16 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error('Apple login error:', error);
-      const msg = typeof error?.message === 'string' ? error.message : 'We could not start Apple sign-in.';
-      Alert.alert('Apple Sign-in Failed', msg);
+      const errorMsg = error?.message || String(error);
+      if (errorMsg.includes("Failed to write value") || 
+          errorMsg.includes("out of space") || 
+          errorMsg.includes("NSCocoaErrorDomain Code=640") ||
+          errorMsg.includes("No space left on device")) {
+        Alert.alert('Storage Error', 'Your device is out of storage space. Please free up some space in your device settings and try again.');
+      } else {
+        const msg = typeof error?.message === 'string' ? error.message : 'We could not start Apple sign-in.';
+        Alert.alert('Apple Sign-in Failed', msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -249,9 +265,17 @@ export default function LoginScreen() {
             } else {
               throw new Error('No user after sign-in');
             }
-          } catch (e) {
+          } catch (e: any) {
             console.error('Post-OAuth session handling failed', e);
-            Alert.alert('Sign-in error', 'We could not complete sign-in. Please try again.');
+            const errorMsg = e?.message || String(e);
+            if (errorMsg.includes("Failed to write value") || 
+                errorMsg.includes("out of space") || 
+                errorMsg.includes("NSCocoaErrorDomain Code=640") ||
+                errorMsg.includes("No space left on device")) {
+              Alert.alert('Storage Error', 'Your device is out of storage space. Please free up some space in your device settings and try again.');
+            } else {
+              Alert.alert('Sign-in error', 'We could not complete sign-in. Please try again.');
+            }
           }
         } else if (result.type === 'cancel') {
           console.log('User cancelled OAuth');
@@ -259,8 +283,16 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error("Google login error:", error);
-      const msg = typeof error?.message === "string" ? error.message : "We couldn't start Google sign-in.";
-      Alert.alert("Google Sign-in Failed", msg);
+      const errorMsg = error?.message || String(error);
+      if (errorMsg.includes("Failed to write value") || 
+          errorMsg.includes("out of space") || 
+          errorMsg.includes("NSCocoaErrorDomain Code=640") ||
+          errorMsg.includes("No space left on device")) {
+        Alert.alert('Storage Error', 'Your device is out of storage space. Please free up some space in your device settings and try again.');
+      } else {
+        const msg = typeof error?.message === "string" ? error.message : "We couldn't start Google sign-in.";
+        Alert.alert("Google Sign-in Failed", msg);
+      }
     } finally {
       setIsLoading(false);
     }

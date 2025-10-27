@@ -189,30 +189,45 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     console.log("[Login] Attempting login for:", cleanedEmail);
     console.log("[Login] Email length:", cleanedEmail.length, "Password length:", cleanedPassword.length);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: cleanedEmail,
-      password: cleanedPassword,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanedEmail,
+        password: cleanedPassword,
+      });
 
-    if (error) {
-      console.error("[Login] Supabase auth error:", error);
-      console.error("[Login] Error details:", JSON.stringify(error, null, 2));
+      if (error) {
+        console.error("[Login] Supabase auth error:", error);
+        console.error("[Login] Error details:", JSON.stringify(error, null, 2));
+        
+        const msg = typeof error.message === "string" ? error.message : "Login failed";
+        
+        if (msg.toLowerCase().includes("invalid login credentials")) {
+          throw new Error("Invalid email or password. Please check your credentials and try again.");
+        }
+        
+        if (msg.toLowerCase().includes("email not confirmed")) {
+          throw new Error("Please confirm your email address before logging in. Check your inbox for a confirmation link.");
+        }
+        
+        throw new Error(msg);
+      }
+
+      console.log("[Login] Login successful for user:", data.user?.id);
+      return data;
+    } catch (error: any) {
+      console.error("[Login] Error during login:", error);
       
-      const msg = typeof error.message === "string" ? error.message : "Login failed";
+      const errorMsg = error?.message || String(error);
       
-      if (msg.toLowerCase().includes("invalid login credentials")) {
-        throw new Error("Invalid email or password. Please check your credentials and try again.");
+      if (errorMsg.includes("Failed to write value") || 
+          errorMsg.includes("out of space") || 
+          errorMsg.includes("NSCocoaErrorDomain Code=640") ||
+          errorMsg.includes("No space left on device")) {
+        throw new Error("Your device is out of storage space. Please free up some space in your device settings and try again.");
       }
       
-      if (msg.toLowerCase().includes("email not confirmed")) {
-        throw new Error("Please confirm your email address before logging in. Check your inbox for a confirmation link.");
-      }
-      
-      throw new Error(msg);
+      throw error;
     }
-
-    console.log("[Login] Login successful for user:", data.user?.id);
-    return data;
   }, []);
 
   const logout = useCallback(async () => {
