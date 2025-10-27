@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Ban, Flag } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, X, Flag } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -668,18 +668,14 @@ export default function UserProfileScreen() {
               disabled={blockMutation.isPending || unblockMutation.isPending}
               testID="block-btn"
             >
-              <Ban color={isBlocked ? "#10B981" : "#EF4444"} size={16} />
-              <Text style={[styles.actionButtonText, isBlocked && styles.actionButtonTextActive]}>
-                {isBlocked ? "Unblock" : "Block"}
-              </Text>
+              <X color={isBlocked ? "#10B981" : "#1F2937"} size={22} strokeWidth={2.5} />
             </Pressable>
             <Pressable
               onPress={() => setReportModalVisible(true)}
               style={styles.actionButton}
               testID="report-btn"
             >
-              <Flag color="#F59E0B" size={16} />
-              <Text style={styles.actionButtonText}>Report</Text>
+              <Flag color="#EF4444" size={22} strokeWidth={2.5} />
             </Pressable>
           </View>
         )}
@@ -1166,7 +1162,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
     backgroundColor: "rgba(30, 30, 40, 0.7)",
