@@ -530,7 +530,7 @@ export default function ProfileSetup() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
-  content: { padding: 20, gap: 16 },
+  content: { padding: 20, gap: 16, paddingBottom: 100 },
   title: { color: "#F9FAFB", fontSize: 24, fontWeight: "700" as const, marginBottom: 8 },
   sectionTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" as const, marginBottom: 10 },
   card: { backgroundColor: "rgba(15, 15, 15, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
