@@ -108,6 +108,9 @@ export default function FunnelPage() {
         {funnelQuery.error && (
           <View style={styles.center}>
             <Text style={styles.errorText}>Error: {funnelQuery.error.message}</Text>
+            <Text style={[styles.errorText, { fontSize: 12, marginTop: 8 }]}>
+              {JSON.stringify(funnelQuery.error, null, 2)}
+            </Text>
           </View>
         )}
 
