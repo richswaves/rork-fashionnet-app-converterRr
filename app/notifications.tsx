@@ -97,7 +97,7 @@ export default function NotificationsScreen() {
   const { currentUserId, getDisplayForProfile } = useProfile();
   const { markAsViewed } = useNotifications();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "follows" | "applications" | "applicant">("all");
+  const [filter, setFilter] = useState<"all" | "follows" | "applications">("all");
 
   useEffect(() => {
     markAsViewed("user");
@@ -245,8 +245,6 @@ export default function NotificationsScreen() {
     }
     if (filter === "all" || filter === "applications") {
       (applications ?? []).forEach((a) => items.push({ type: "application", data: a }));
-    }
-    if (filter === "all" || filter === "applicant") {
       (applicantNotifications ?? []).forEach((n) => items.push({ type: "applicant", data: n }));
     }
     items.sort((a, b) => {
@@ -304,15 +302,6 @@ export default function NotificationsScreen() {
         >
           <Text style={[styles.filterText, filter === "applications" && styles.filterTextActive]}>
             Applications
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.filterBtn, filter === "applicant" && styles.filterBtnActive]}
-          onPress={() => setFilter("applicant")}
-          testID="filter-applicant"
-        >
-          <Text style={[styles.filterText, filter === "applicant" && styles.filterTextActive]}>
-            My Applications
           </Text>
         </Pressable>
       </View>
