@@ -361,3 +361,64 @@ FOR UPDATE USING (
 -- Grant permissions
 GRANT SELECT, INSERT ON appeals TO authenticated;
 GRANT UPDATE ON appeals TO authenticated;
+
+-- ============================================================================
+-- USER RATINGS TABLE
+-- ============================================================================
+
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view ratings for any user" ON user_ratings;
+DROP POLICY IF EXISTS "Users can view own given ratings" ON user_ratings;
+DROP POLICY IF EXISTS "Users can insert ratings" ON user_ratings;
+DROP POLICY IF EXISTS "Users can update own ratings" ON user_ratings;
+
+-- Create user_ratings table
+CREATE TABLE IF NOT EXISTS public.user_ratings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  rater_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  rated_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  explanation text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(rater_id, rated_user_id),
+  CHECK (rater_id != rated_user_id)
+);
+
+-- Create indexes for faster lookups
+CREATE INDEX IF NOT EXISTS idx_user_ratings_rater ON user_ratings(rater_id);
+CREATE INDEX IF NOT EXISTS idx_user_ratings_rated ON user_ratings(rated_user_id);
+CREATE INDEX IF NOT EXISTS idx_user_ratings_rating ON user_ratings(rating);
+
+-- Enable RLS
+ALTER TABLE user_ratings ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view all ratings (for calculating averages)
+CREATE POLICY "Users can view ratings for any user" ON user_ratings
+FOR SELECT USING (true);
+
+-- Users can insert their own ratings
+CREATE POLICY "Users can insert ratings" ON user_ratings
+FOR INSERT WITH CHECK (auth.uid() = rater_id);
+
+-- Users can update their own ratings
+CREATE POLICY "Users can update own ratings" ON user_ratings
+FOR UPDATE USING (auth.uid() = rater_id);
+
+-- Create trigger to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_user_ratings_updated_at()
+RETURNS TRIGGER AS $
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS user_ratings_updated_at ON user_ratings;
+CREATE TRIGGER user_ratings_updated_at
+  BEFORE UPDATE ON user_ratings
+  FOR EACH ROW
+  EXECUTE FUNCTION update_user_ratings_updated_at();
+
+-- Grant permissions
+GRANT SELECT, INSERT, UPDATE ON user_ratings TO authenticated;

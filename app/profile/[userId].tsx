@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
-import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
+import { sbSelect, getSupabase, sbInsert, sbDelete, sbUpsert } from "@/integrations/supabase/client";
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -462,23 +462,26 @@ export default function UserProfileScreen() {
       if (rating < 1 || rating > 5) throw new Error("Rating must be between 1 and 5");
       
       console.log(`[Rating] User ${currentUserId} rating user ${userId} with ${rating} stars`);
+      console.log(`[Rating] Explanation: ${explanation}`);
       
-      const supabase = getSupabase();
-      if (!supabase) throw new Error("Supabase not configured");
-      
-      const { error } = await supabase
-        .from("user_ratings")
-        .upsert(
+      try {
+        const result = await sbUpsert(
+          "user_ratings",
           {
             rater_id: currentUserId,
             rated_user_id: userId,
             rating,
             explanation: explanation.trim() || null,
           },
-          { onConflict: "rater_id,rated_user_id" }
+          "rater_id,rated_user_id"
         );
-      
-      if (error) throw error;
+        console.log("[Rating] Upsert result:", result);
+        return result;
+      } catch (err) {
+        console.error("[Rating] Upsert failed:", err);
+        console.error("[Rating] Error details:", JSON.stringify(err, null, 2));
+        throw err;
+      }
     },
     onSuccess: () => {
       console.log("[Rating] Successfully rated user");
