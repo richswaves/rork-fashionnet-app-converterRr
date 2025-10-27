@@ -63,6 +63,7 @@ export default function EditProfileScreen() {
   const [editingLinkIndex, setEditingLinkIndex] = useState<number>(-1);
   const [linkName, setLinkName] = useState<string>("");
   const [linkUrl, setLinkUrl] = useState<string>("");
+  const [inlineEditingIndex, setInlineEditingIndex] = useState<number>(-1);
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -700,33 +701,88 @@ export default function EditProfileScreen() {
             <View style={styles.linksList}>
               {customLinks.map((link, index) => (
                 <View key={index} style={styles.linkCard}>
-                  <View style={styles.linkCardContent}>
-                    <Text style={styles.linkName}>{link.name}</Text>
-                    <Text style={styles.linkUrl} numberOfLines={1}>{link.url}</Text>
-                  </View>
-                  <View style={styles.linkCardActions}>
-                    <Pressable
-                      onPress={() => {
-                        setEditingLinkIndex(index);
-                        setLinkName(link.name);
-                        setLinkUrl(link.url);
-                        openEditor("custom_link");
-                      }}
-                      style={styles.linkEditBtn}
-                      testID={`edit-link-${index}`}
-                    >
-                      <Pencil color="#9CA3AF" size={16} />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => {
-                        setCustomLinks(prev => prev.filter((_, i) => i !== index));
-                      }}
-                      style={styles.linkDeleteBtn}
-                      testID={`delete-link-${index}`}
-                    >
-                      <Trash2 color="#EF4444" size={16} />
-                    </Pressable>
-                  </View>
+                  {inlineEditingIndex === index ? (
+                    <View style={styles.linkCardEditMode}>
+                      <TextInput
+                        value={link.name}
+                        onChangeText={(text) => {
+                          setCustomLinks(prev => prev.map((l, i) => 
+                            i === index ? { ...l, name: text } : l
+                          ));
+                        }}
+                        placeholder="Link Name"
+                        placeholderTextColor="#6B7280"
+                        style={styles.inlineLinkInput}
+                        autoFocus
+                      />
+                      <TextInput
+                        value={link.url}
+                        onChangeText={(text) => {
+                          setCustomLinks(prev => prev.map((l, i) => 
+                            i === index ? { ...l, url: text } : l
+                          ));
+                        }}
+                        placeholder="URL"
+                        placeholderTextColor="#6B7280"
+                        style={styles.inlineLinkInput}
+                        autoCapitalize="none"
+                        keyboardType="url"
+                      />
+                      <View style={styles.inlineEditActions}>
+                        <Pressable
+                          onPress={() => {
+                            if (!link.name.trim() || !link.url.trim()) {
+                              Alert.alert("Error", "Please fill in both name and URL");
+                              return;
+                            }
+                            setInlineEditingIndex(-1);
+                            Alert.alert("Remember", "Select Save on profile page for changes to apply");
+                          }}
+                          style={styles.inlineSaveBtn}
+                          testID={`save-inline-link-${index}`}
+                        >
+                          <Check color="#0B0B0F" size={16} />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => {
+                            setCustomLinks(prev => prev.filter((_, i) => i !== index));
+                            setInlineEditingIndex(-1);
+                          }}
+                          style={styles.inlineDeleteBtn}
+                          testID={`delete-inline-link-${index}`}
+                        >
+                          <Trash2 color="#FFF" size={16} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : (
+                    <>
+                      <View style={styles.linkCardContent}>
+                        <Text style={styles.linkName}>{link.name}</Text>
+                        <Text style={styles.linkUrl} numberOfLines={1}>{link.url}</Text>
+                      </View>
+                      <View style={styles.linkCardActions}>
+                        <Pressable
+                          onPress={() => {
+                            setInlineEditingIndex(index);
+                          }}
+                          style={styles.linkEditBtn}
+                          testID={`edit-link-${index}`}
+                        >
+                          <Pencil color="#9CA3AF" size={16} />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => {
+                            setCustomLinks(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          style={styles.linkDeleteBtn}
+                          testID={`delete-link-${index}`}
+                        >
+                          <Trash2 color="#EF4444" size={16} />
+                        </Pressable>
+                      </View>
+                    </>
+                  )}
                 </View>
               ))}
             </View>
@@ -1528,6 +1584,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600" as const,
     textAlign: "center" as const,
+  },
+  linkCardEditMode: {
+    flex: 1,
+    gap: 8,
+  },
+  inlineLinkInput: {
+    backgroundColor: "#14141C",
+    borderColor: "#23232B",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "600" as const,
+  },
+  inlineEditActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+  },
+  inlineSaveBtn: {
+    flex: 1,
+    backgroundColor: "#E5E7EB",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inlineDeleteBtn: {
+    width: 44,
+    backgroundColor: "#DC2626",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
 });
