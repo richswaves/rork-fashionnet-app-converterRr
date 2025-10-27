@@ -202,6 +202,49 @@ export default function OpportunitiesScreen() {
     enabled: !!currentUserId,
   });
 
+  const { data: notificationCount } = useQuery<number>({
+    queryKey: ["notification-count", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return 0;
+      const follows = await sbSelect<{ id: string }>("follows", {
+        select: "id",
+        query: { following_id: `eq.${currentUserId}` },
+        limit: 100,
+      });
+      const myOpps = await sbSelect<{ id: string }>("opportunities", {
+        select: "id",
+        query: { user_id: `eq.${currentUserId}` },
+        limit: 200,
+      });
+      const oppIds = myOpps.map((o) => o.id);
+      let appsCount = 0;
+      if (oppIds.length > 0) {
+        const idList = `in.(${oppIds.join(",")})`;
+        const apps = await sbSelect<{ id: string }>("applications", {
+          select: "id",
+          query: { opportunity_id: idList },
+          limit: 100,
+        });
+        appsCount = apps.length;
+      }
+      return follows.length + appsCount;
+    },
+    enabled: !!currentUserId,
+  });
+
+  const { data: adminNotificationCount } = useQuery<number>({
+    queryKey: ["admin-notification-count"],
+    queryFn: async () => {
+      const pendingProfiles = await sbSelect<{ user_id: string }>("profiles", {
+        select: "user_id",
+        query: { account_status: "eq.pending_approval" },
+        limit: 100,
+      });
+      return pendingProfiles.length;
+    },
+    enabled: !!isAdmin,
+  });
+
   const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],
     queryFn: async () => {
@@ -454,13 +497,31 @@ export default function OpportunitiesScreen() {
           <Pressable onPress={() => setSearchVisible((s) => !s)} style={styles.iconBtn} testID="opp-top-search">
             <Search color="#E5E7EB" size={20} />
           </Pressable>
-          <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
-            <Bell color="#E5E7EB" size={20} />
-          </Pressable>
-          {isAdmin ? (
-            <Pressable onPress={() => router.push("/admin")} style={styles.iconBtn} testID="opp-top-admin">
-              <ShieldCheck color="#34D399" size={20} />
+          <View style={styles.iconBadgeWrap}>
+            <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="opp-top-bell">
+              <Bell color="#E5E7EB" size={20} />
             </Pressable>
+            {(notificationCount ?? 0) > 0 && (
+              <View style={styles.notificationBadge} testID="notification-badge">
+                <Text style={styles.notificationBadgeText}>
+                  {(notificationCount ?? 0) > 99 ? "99+" : String(notificationCount ?? 0)}
+                </Text>
+              </View>
+            )}
+          </View>
+          {isAdmin ? (
+            <View style={styles.iconBadgeWrap}>
+              <Pressable onPress={() => router.push("/admin")} style={styles.iconBtn} testID="opp-top-admin">
+                <ShieldCheck color="#34D399" size={20} />
+              </Pressable>
+              {(adminNotificationCount ?? 0) > 0 && (
+                <View style={styles.adminBadge} testID="admin-badge">
+                  <Text style={styles.adminBadgeText}>
+                    {(adminNotificationCount ?? 0) > 99 ? "99+" : String(adminNotificationCount ?? 0)}
+                  </Text>
+                </View>
+              )}
+            </View>
           ) : null}
         </View>
       </View>
@@ -1045,6 +1106,47 @@ const styles = StyleSheet.create({
   topName: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" },
   topIcons: { flexDirection: "row", alignItems: "center", gap: 4 as const },
   iconBtn: { padding: 8, borderRadius: 999 },
+  iconBadgeWrap: { position: "relative" as const },
+  notificationBadge: {
+    position: "absolute" as const,
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#EF4444",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#000000",
+  },
+  notificationBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800" as const,
+    lineHeight: 12,
+  },
+  adminBadge: {
+    position: "absolute" as const,
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#34D399",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#000000",
+  },
+  adminBadgeText: {
+    color: "#000000",
+    fontSize: 10,
+    fontWeight: "800" as const,
+    lineHeight: 12,
+  },
 
   header: {
     paddingHorizontal: 12,
