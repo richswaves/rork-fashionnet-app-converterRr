@@ -761,11 +761,12 @@ export default function OpportunitiesScreen() {
                 {(item.user_id !== currentUserId) && (() => {
                   const appInfo = applications?.[item.id];
                   const isApproved = appInfo?.status === "approved";
+                  const isRejected = appInfo?.status === "rejected";
                   const isApplied = appInfo?.applied;
                   return (
                   <View style={styles.actionButtons}>
                     <Pressable
-                      style={[styles.actionBtn, (isApplied || isApproved) && styles.actionBtnActive]}
+                      style={[styles.actionBtn, (isApplied || isApproved) && styles.actionBtnActive, isRejected && styles.actionBtnRejected]}
                       onPress={() => {
                         if (!currentUserId) {
                           console.log("Must be logged in to apply");
@@ -775,6 +776,10 @@ export default function OpportunitiesScreen() {
                           console.log("Cannot unapply from approved opportunity");
                           return;
                         }
+                        if (isRejected) {
+                          console.log("Cannot unapply from rejected opportunity");
+                          return;
+                        }
                         if (isApplied) {
                           unapplyMutation.mutate(item.id);
                         } else {
@@ -782,12 +787,12 @@ export default function OpportunitiesScreen() {
                           setApplyModalVisible(true);
                         }
                       }}
-                      disabled={applyMutation.isPending || unapplyMutation.isPending || isApproved}
+                      disabled={applyMutation.isPending || unapplyMutation.isPending || isApproved || isRejected}
                       testID={`apply-${item.id}`}
                     >
-                      <CheckCircle2 color={(isApplied || isApproved) ? "#4CB963" : "#E5E7EB"} size={16} />
-                      <Text style={[styles.actionText, (isApplied || isApproved) && styles.actionTextActive]}>
-                        {isApproved ? "Approved" : isApplied ? "Applied" : "Apply"}
+                      <CheckCircle2 color={isRejected ? "#EF4444" : ((isApplied || isApproved) ? "#4CB963" : "#E5E7EB")} size={16} />
+                      <Text style={[styles.actionText, (isApplied || isApproved) && styles.actionTextActive, isRejected && styles.actionTextRejected]}>
+                        {isApproved ? "Approved" : isRejected ? "Rejected" : isApplied ? "Applied" : "Apply"}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -1176,8 +1181,16 @@ const styles = StyleSheet.create({
     shadowColor: "#4CB963",
     shadowOpacity: 0.25,
   },
+  actionBtnRejected: {
+    backgroundColor: "#1A1A24",
+    borderColor: "#EF4444",
+    borderWidth: 2,
+    shadowColor: "#EF4444",
+    shadowOpacity: 0.25,
+  },
   actionText: { color: "#D1D5DB", fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   actionTextActive: { color: "#4CB963", fontWeight: "800" },
+  actionTextRejected: { color: "#EF4444", fontWeight: "800" },
   actionTextSaved: { color: "#FFFFFF", fontWeight: "800" },
   loaderRow: { paddingVertical: 10, alignItems: "center" },
   errorText: { color: "#ef4444", fontSize: 13, fontWeight: "700" },
