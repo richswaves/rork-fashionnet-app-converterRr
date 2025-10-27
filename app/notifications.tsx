@@ -59,10 +59,22 @@ interface ApplicantNotification {
   related_id?: string;
 }
 
+interface MyApplication {
+  id: string;
+  opportunity_id: string;
+  status?: string;
+  created_at: string;
+  opportunities?: {
+    id: string;
+    title?: string;
+  };
+}
+
 type NotificationItem =
   | { type: "follow"; data: FollowNotification }
   | { type: "application"; data: ApplicationNotification }
-  | { type: "applicant"; data: ApplicantNotification };
+  | { type: "applicant"; data: ApplicantNotification }
+  | { type: "myApplication"; data: MyApplication };
 
 function formatRelativeTime(iso?: string) {
   if (!iso) return "";
@@ -204,6 +216,36 @@ export default function NotificationsScreen() {
     refetchInterval: 30000,
   });
 
+  const { data: myApplications, isLoading: myApplicationsLoading } = useQuery<MyApplication[]>({
+    queryKey: ["my-applications", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const apps = await sbSelect<{ id: string; opportunity_id: string; status?: string; created_at: string }>("applications", {
+        select: "*",
+        query: { applicant_id: `eq.${currentUserId}` },
+        order: { column: "created_at", ascending: false },
+        limit: 100,
+      });
+
+      if (apps.length === 0) return [];
+
+      const oppIds = apps.map(a => a.opportunity_id);
+      const opportunities = await sbSelect<{ id: string; title?: string }>("opportunities", {
+        select: "id,title",
+        query: { id: `in.(${oppIds.join(",")})` },
+      });
+
+      const oppMap = new Map(opportunities.map(o => [o.id, o]));
+
+      return apps.map(app => ({
+        ...app,
+        opportunities: oppMap.get(app.opportunity_id),
+      }));
+    },
+    enabled: !!currentUserId,
+    refetchInterval: 30000,
+  });
+
   const approveApplicationMutation = useMutation({
     mutationFn: async ({ applicationId, applicantId, opportunityTitle }: { applicationId: string; applicantId: string; opportunityTitle: string }) => {
       await sbUpdate("applications", { status: "approved" }, { id: `eq.${applicationId}` });
@@ -218,6 +260,8 @@ export default function NotificationsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["applicant-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
       Alert.alert("Success", "Application approved");
     },
     onError: (error) => {
@@ -240,6 +284,8 @@ export default function NotificationsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["applicant-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
       Alert.alert("Success", "Application rejected");
     },
     onError: (error) => {
@@ -256,6 +302,7 @@ export default function NotificationsScreen() {
     if (filter === "all" || filter === "applications") {
       (applications ?? []).forEach((a) => items.push({ type: "application", data: a }));
       (applicantNotifications ?? []).forEach((n) => items.push({ type: "applicant", data: n }));
+      (myApplications ?? []).forEach((app) => items.push({ type: "myApplication", data: app }));
     }
     items.sort((a, b) => {
       const timeA = new Date(
@@ -267,9 +314,9 @@ export default function NotificationsScreen() {
       return timeB - timeA;
     });
     return items;
-  }, [follows, applications, applicantNotifications, filter]);
+  }, [follows, applications, applicantNotifications, myApplications, filter]);
 
-  const isLoading = followsLoading || applicationsLoading || applicantNotificationsLoading;
+  const isLoading = followsLoading || applicationsLoading || applicantNotificationsLoading || myApplicationsLoading;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -327,7 +374,11 @@ export default function NotificationsScreen() {
           <Clock color="#6B7280" size={48} />
           <Text style={styles.emptyTitle}>No notifications yet</Text>
           <Text style={styles.emptyText}>
-            When someone follows you or applies to your opportunities, you&apos;ll see it here
+            {filter === "follows" 
+              ? "When someone follows you, you'll see it here"
+              : filter === "applications"
+              ? "When someone applies to your opportunities or you receive application updates, you'll see it here"
+              : "When someone follows you or applies to your opportunities, you'll see it here"}
           </Text>
         </View>
       )}
@@ -339,15 +390,61 @@ export default function NotificationsScreen() {
             return `follow-${item.data.id}`;
           } else if (item.type === "application") {
             return `app-${item.data.id}`;
-          } else {
+          } else if (item.type === "applicant") {
             return `applicant-${item.data.id}`;
+          } else {
+            return `myapp-${item.data.id}`;
           }
         }}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
-          if (item.type === "applicant") {
+          if (item.type === "myApplication") {
+            const oppTitle = item.data.opportunities?.title ?? "an opportunity";
+            const status = item.data.status || "pending";
+            const isApproved = status === "approved";
+            const isRejected = status === "rejected";
+            
             return (
-              <View style={styles.applicantNotifCard} testID={`notif-applicant-${item.data.id}`}>
+              <View style={styles.myAppCard} testID={`notif-myapp-${item.data.id}`}>
+                <View style={[
+                  styles.iconCircle,
+                  isApproved ? styles.iconCircleApproved : isRejected ? styles.iconCircleRejected : styles.iconCirclePending
+                ]}>
+                  {isApproved ? (
+                    <Check color="#10B981" size={20} />
+                  ) : isRejected ? (
+                    <XCircle color="#EF4444" size={20} />
+                  ) : (
+                    <Clock color="#F59E0B" size={20} />
+                  )}
+                </View>
+                <View style={styles.notifContent}>
+                  <Text style={styles.myAppTitle}>
+                    Application to <Text style={styles.notifTextBold}>{oppTitle}</Text>
+                  </Text>
+                  <Text style={[
+                    styles.myAppStatus,
+                    isApproved && styles.myAppStatusApproved,
+                    isRejected && styles.myAppStatusRejected,
+                    !isApproved && !isRejected && styles.myAppStatusPending,
+                  ]}>
+                    {isApproved ? "✓ Approved" : isRejected ? "✗ Denied" : "⏳ Pending"}
+                  </Text>
+                  <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
+                </View>
+              </View>
+            );
+          } else if (item.type === "applicant") {
+            return (
+              <Pressable 
+                style={styles.applicantNotifCard} 
+                testID={`notif-applicant-${item.data.id}`}
+                onPress={() => {
+                  if (item.data.related_id) {
+                    console.log('[Notifications] Application notification tapped:', item.data.related_id);
+                  }
+                }}
+              >
                 <View style={[styles.iconCircle, item.data.type === "application_approved" ? styles.iconCircleApproved : styles.iconCircleRejected]}>
                   {item.data.type === "application_approved" ? (
                     <Check color="#10B981" size={20} />
@@ -360,7 +457,7 @@ export default function NotificationsScreen() {
                   <Text style={styles.applicantNotifMessage}>{item.data.message}</Text>
                   <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
                 </View>
-              </View>
+              </Pressable>
             );
           } else if (item.type === "follow") {
             const display = getDisplayForProfile(item.data.profiles);
@@ -740,5 +837,41 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     lineHeight: 20,
     marginBottom: 4,
+  },
+  myAppCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12 as const,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    backgroundColor: "#121218",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+    marginBottom: 10,
+  },
+  iconCirclePending: {
+    backgroundColor: "rgba(245, 158, 11, 0.15)",
+  },
+  myAppTitle: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  myAppStatus: {
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  myAppStatusApproved: {
+    color: "#10B981",
+  },
+  myAppStatusRejected: {
+    color: "#EF4444",
+  },
+  myAppStatusPending: {
+    color: "#F59E0B",
   },
 });
