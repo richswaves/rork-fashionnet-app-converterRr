@@ -84,13 +84,27 @@ export default function NotificationsScreen() {
     queryKey: ["notifications-follows", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return [];
-      const rows = await sbSelect<FollowNotification>("follows", {
-        select: "*,profiles:follower_id(*)",
+      const rows = await sbSelect<{ id: string; follower_id: string; following_id: string; created_at: string }>("follows", {
+        select: "*",
         query: { following_id: `eq.${currentUserId}` },
         order: { column: "created_at", ascending: false },
         limit: 100,
       });
-      return rows;
+      
+      const profileIds = rows.map(r => r.follower_id).filter(Boolean);
+      if (profileIds.length === 0) return [];
+      
+      const profiles = await sbSelect<ProfileRow>("profiles", {
+        select: "*",
+        query: { user_id: `in.(${profileIds.join(",")})` },
+      });
+      
+      const profileMap = new Map(profiles.map(p => [p.user_id, p]));
+      
+      return rows.map(row => ({
+        ...row,
+        profiles: profileMap.get(row.follower_id),
+      }));
     },
     enabled: !!currentUserId,
   });
@@ -107,13 +121,35 @@ export default function NotificationsScreen() {
       const oppIds = myOpps.map((o) => o.id);
       if (oppIds.length === 0) return [];
       const idList = `in.(${oppIds.join(",")})`;
-      const apps = await sbSelect<ApplicationNotification>("applications", {
-        select: "*,opportunities:opportunity_id(id,title,user_id),profiles:applicant_id(*)",
+      const apps = await sbSelect<{ id: string; opportunity_id: string; applicant_id: string; created_at: string }>("applications", {
+        select: "*",
         query: { opportunity_id: idList },
         order: { column: "created_at", ascending: false },
         limit: 100,
       });
-      return apps;
+      
+      const applicantIds = apps.map(a => a.applicant_id).filter(Boolean);
+      
+      if (applicantIds.length === 0) return [];
+      
+      const profiles = await sbSelect<ProfileRow>("profiles", {
+        select: "*",
+        query: { user_id: `in.(${applicantIds.join(",")})` },
+      });
+      
+      const opportunities = await sbSelect<{ id: string; title?: string; user_id?: string }>("opportunities", {
+        select: "id,title,user_id",
+        query: { id: idList },
+      });
+      
+      const profileMap = new Map(profiles.map(p => [p.user_id, p]));
+      const oppMap = new Map(opportunities.map(o => [o.id, o]));
+      
+      return apps.map(app => ({
+        ...app,
+        profiles: profileMap.get(app.applicant_id),
+        opportunities: oppMap.get(app.opportunity_id),
+      }));
     },
     enabled: !!currentUserId,
   });
