@@ -4,7 +4,7 @@ import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, Phone } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, Phone, Ban } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -61,6 +61,57 @@ export default function EditProfileScreen() {
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
+
+  const { data: blockedUsers = [], refetch: refetchBlockedUsers } = useQuery<Array<{ blocked_user_id: string; user: { full_name?: string; username?: string; profile_picture?: string } }>>({    queryKey: ["blocked-users", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const rows = await sbSelect<any>("blocked_users", {
+        select: "blocked_user_id,user:profiles!blocked_user_id(full_name,username,profile_picture)",
+        query: { blocker_id: `eq.${currentUserId}` },
+        order: { column: "created_at", ascending: false },
+      });
+      return rows ?? [];
+    },
+    enabled: !!currentUserId,
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: async (blockedUserId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("blocked_users", {
+        blocker_id: currentUserId,
+        blocked_user_id: blockedUserId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blocked-users", currentUserId] });
+      refetchBlockedUsers();
+    },
+    onError: (error: any) => {
+      console.error("[Unblock] Error:", error);
+      Alert.alert("Error", "Failed to unblock user");
+    },
+  });
+
+  function handleUnblock(blockedUserId: string, userName: string) {
+    if (Platform.OS === "web") {
+      if (confirm(`Are you sure you want to unblock ${userName}?`)) {
+        unblockMutation.mutate(blockedUserId);
+      }
+    } else {
+      Alert.alert(
+        "Unblock User",
+        `Are you sure you want to unblock ${userName}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Unblock",
+            onPress: () => unblockMutation.mutate(blockedUserId),
+          },
+        ]
+      );
+    }
+  }
 
   const { data: isAdmin } = useQuery<boolean>({
     queryKey: ["is-admin", currentUserId],
@@ -635,6 +686,41 @@ export default function EditProfileScreen() {
           )}
         </View>
 
+        {blockedUsers.length > 0 && (
+          <View style={styles.blockedSection}>
+            <Text style={styles.blockedSectionTitle}>Blocked Users</Text>
+            {blockedUsers.map((block) => {
+              const user = (block as any).user;
+              const displayName = user?.full_name || user?.username || "Unknown User";
+              const avatarUrl = user?.profile_picture || "";
+              
+              return (
+                <View key={block.blocked_user_id} style={styles.blockedUserCard}>
+                  <View style={styles.blockedUserLeft}>
+                    <Image 
+                      source={{ uri: avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" }}
+                      style={styles.blockedUserAvatar}
+                    />
+                    <Text style={styles.blockedUserName}>{displayName}</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => handleUnblock(block.blocked_user_id, displayName)}
+                    disabled={unblockMutation.isPending}
+                    style={styles.unblockBtn}
+                    testID={`unblock-${block.blocked_user_id}`}
+                  >
+                    {unblockMutation.isPending ? (
+                      <Loader2 color="#E5E7EB" size={16} />
+                    ) : (
+                      <Text style={styles.unblockText}>Unblock</Text>
+                    )}
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
         <View style={styles.dangerZone}>
           <Text style={styles.dangerZoneTitle}>Account Information</Text>
           <View style={styles.infoSection}>
@@ -1164,6 +1250,58 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontSize: 13,
     marginTop: 2,
+  },
+  blockedSection: {
+    marginTop: 24,
+    marginHorizontal: 16,
+  },
+  blockedSectionTitle: {
+    color: "#E5E7EB",
+    fontSize: 18,
+    fontWeight: "900" as const,
+    marginBottom: 12,
+  },
+  blockedUserCard: {
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  blockedUserLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  blockedUserAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#14141C",
+  },
+  blockedUserName: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "600" as const,
+    flex: 1,
+  },
+  unblockBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: "#14141C",
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  unblockText: {
+    color: "#E5E7EB",
+    fontSize: 13,
+    fontWeight: "700" as const,
   },
 
 });
