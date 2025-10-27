@@ -199,7 +199,7 @@ export default function ProfileSetup() {
   const recordEvent = useCallback(async (step: number, name: string, type: string) => {
     try {
       await sbInsert("onboarding_step_events", {
-        session_id: (sessionIdRef.current as unknown as string) || `${Date.now()}`,
+        session_id: sessionIdRef.current,
         user_id: currentUserId,
         step_number: step,
         step_name: name,
@@ -212,7 +212,7 @@ export default function ProfileSetup() {
     }
   }, [currentUserId, role, userType]);
 
-  async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
+  const uploadToSupabase = useCallback(async (asset: ImagePicker.ImagePickerAsset): Promise<string> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured");
     const uri = asset.uri;
@@ -232,7 +232,7 @@ export default function ProfileSetup() {
       } else {
         blob = await (await fetch(uri)).blob();
       }
-    } catch (e) {
+    } catch {
       throw new Error("Could not read selected image on this device");
     }
 
@@ -245,12 +245,7 @@ export default function ProfileSetup() {
     if (error) throw error as Error;
     const { data: pub } = supabase.storage.from("model-photos").getPublicUrl(path);
     return pub.publicUrl as string;
-  }
-
-  const canContinueToProfile = useMemo(() => {
-    if (!role) return false;
-    return true;
-  }, [role]);
+  }, []);
 
   const onContinueFromProfile = useCallback(() => {
     setShowModelDetails(true);
@@ -350,7 +345,18 @@ export default function ProfileSetup() {
       const msg = typeof e?.message === "string" ? e.message : "Could not save";
       Alert.alert("Save failed", msg);
     }
-  }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
+  }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, uploadToSupabase]);
+
+  if (!currentUserId) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <GrainTexture />
+        <View style={styles.content}>
+          <Text style={styles.title}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
