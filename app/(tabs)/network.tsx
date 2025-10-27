@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useActivityTracking } from "@/hooks/useActivityTracking";
 
 interface ProfileRow {
   user_id: string;
@@ -41,6 +42,7 @@ export default function NetworkScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
+  const { trackSearch, trackNetworkInteraction } = useActivityTracking();
 
   const { width: windowWidth } = useWindowDimensions();
 
@@ -81,6 +83,13 @@ export default function NetworkScreen() {
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
     queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations)],
     queryFn: async () => {
+      const hasFilters = selectedRoles.size > 0 || selectedLocations.size > 0;
+      if (hasFilters) {
+        const filters: Record<string, any> = {};
+        if (selectedRoles.size > 0) filters.roles = Array.from(selectedRoles);
+        if (selectedLocations.size > 0) filters.locations = Array.from(selectedLocations);
+        trackSearch({ page: "network", filters, results_count: 0 });
+      }
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
@@ -202,8 +211,10 @@ export default function NetworkScreen() {
       return;
     }
     if (followingIds?.has(id)) {
+      trackNetworkInteraction({ target_user_id: id, interaction_type: "unfollow" });
       unfollowMutation.mutate(id);
     } else {
+      trackNetworkInteraction({ target_user_id: id, interaction_type: "follow" });
       followMutation.mutate(id);
     }
   }
@@ -394,7 +405,10 @@ export default function NetworkScreen() {
                         key={m.id}
                         style={[styles.card, { width: cardW }, idx % 2 === 0 ? { marginRight: 12 } : null]}
                         testID={`top-${m.id}`}
-                        onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}
+                        onPress={() => {
+                          trackNetworkInteraction({ target_user_id: m.id, interaction_type: "view_profile" });
+                          router.push({ pathname: "/profile/[userId]", params: { userId: m.id } });
+                        }}
                       >
                         <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
                         <View style={styles.cardBody}>
@@ -439,7 +453,10 @@ export default function NetworkScreen() {
         )}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
           {(newProfiles ?? []).map((m) => (
-            <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => router.push({ pathname: "/profile/[userId]", params: { userId: m.id } })}>
+            <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => {
+              trackNetworkInteraction({ target_user_id: m.id, interaction_type: "view_profile" });
+              router.push({ pathname: "/profile/[userId]", params: { userId: m.id } });
+            }}>
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
               <View style={styles.cardBody}>
                 <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>

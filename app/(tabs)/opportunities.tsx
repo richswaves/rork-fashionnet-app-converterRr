@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useActivityTracking } from "@/hooks/useActivityTracking";
 
 interface ProfileRow {
   user_id: string;
@@ -111,6 +112,7 @@ export default function OpportunitiesScreen() {
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
+  const { trackSearch, trackOpportunityInteraction } = useActivityTracking();
 
   const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],
@@ -146,6 +148,7 @@ export default function OpportunitiesScreen() {
   const applyMutation = useMutation({
     mutationFn: async ({ opportunityId, note }: { opportunityId: string; note?: string }) => {
       if (!currentUserId) throw new Error("Must be logged in");
+      trackOpportunityInteraction({ opportunity_id: opportunityId, interaction_type: "apply", metadata: { has_note: !!note } });
       await sbInsert("applications", {
         opportunity_id: opportunityId,
         applicant_id: currentUserId,
@@ -173,6 +176,7 @@ export default function OpportunitiesScreen() {
   const unapplyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
+      trackOpportunityInteraction({ opportunity_id: opportunityId, interaction_type: "unapply" });
       await sbDelete("applications", {
         opportunity_id: opportunityId,
         applicant_id: currentUserId,
@@ -193,6 +197,7 @@ export default function OpportunitiesScreen() {
   const saveMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
+      trackOpportunityInteraction({ opportunity_id: opportunityId, interaction_type: "save" });
       await sbInsert("saved_opportunities", {
         opportunity_id: opportunityId,
         user_id: currentUserId,
@@ -213,6 +218,7 @@ export default function OpportunitiesScreen() {
   const unsaveMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
+      trackOpportunityInteraction({ opportunity_id: opportunityId, interaction_type: "unsave" });
       await sbDelete("saved_opportunities", {
         opportunity_id: opportunityId,
         user_id: currentUserId,
@@ -426,6 +432,11 @@ export default function OpportunitiesScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onSubmitEditing={() => {
+              if (searchQuery.trim()) {
+                trackSearch({ page: "opportunities", search_query: searchQuery.trim() });
+              }
+            }}
             testID="opp-search-input"
           />
         </View>
@@ -930,6 +941,14 @@ export default function OpportunitiesScreen() {
             <Pressable
               style={styles.applyFiltersBtn}
               onPress={() => {
+                const filters: Record<string, any> = {};
+                if (city.length > 0) filters.cities = city;
+                if (seekingRole.length > 0) filters.seeking_roles = seekingRole;
+                if (postedByRole.length > 0) filters.posted_by_roles = postedByRole;
+                if (paymentStatus.length > 0) filters.payment_status = paymentStatus;
+                if (Object.keys(filters).length > 0) {
+                  trackSearch({ page: "opportunities", filters });
+                }
                 setShowFilters(false);
                 console.log("apply filters", { city, seekingRole, postedByRole, paymentStatus });
               }}
