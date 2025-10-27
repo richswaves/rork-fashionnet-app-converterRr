@@ -108,6 +108,9 @@ export default function AdminApprovalsScreen() {
           order: { column: "created_at", ascending: false },
         });
         console.log(`[Admin] ${status} users:`, rows.length);
+        rows.forEach((user) => {
+          console.log(`[Admin] User ${user.user_id} social_links:`, user.social_links);
+        });
         return rows;
       };
 
