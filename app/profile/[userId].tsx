@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -590,6 +590,15 @@ export default function UserProfileScreen() {
 
         {!isOwn && currentUserId && (
           <View style={styles.actionRow}>
+            <Pressable
+              onPress={() => {
+                Alert.alert("Coming Soon", "Direct messaging will be available soon!");
+              }}
+              style={styles.actionButton}
+              testID="dm-btn"
+            >
+              <Send color="#3B82F6" size={22} strokeWidth={2.5} />
+            </Pressable>
             <Pressable
               onPress={() => setReportModalVisible(true)}
               style={styles.actionButton}
