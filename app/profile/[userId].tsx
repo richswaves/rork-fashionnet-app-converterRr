@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
+import { trpc } from "@/lib/trpc";
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -71,24 +72,12 @@ export default function UserProfileScreen() {
   const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState<string>("");
 
-  const { data: isBlocked } = useQuery<boolean>({
-    queryKey: ["is-blocked", currentUserId, userId],
-    queryFn: async () => {
-      if (!currentUserId || !userId || currentUserId === userId) return false;
-      try {
-        const rows = await sbSelect<{ id: string }>("blocked_users", {
-          select: "id",
-          query: { blocker_id: `eq.${currentUserId}`, blocked_user_id: `eq.${userId}` },
-          limit: 1,
-        });
-        return rows.length > 0;
-      } catch (error: any) {
-        console.log("[Block] Table may not exist yet:", error?.message);
-        return false;
-      }
-    },
-    enabled: !!currentUserId && !!userId && currentUserId !== userId,
-  });
+  const trpcUtils = trpc.useUtils();
+  const isBlockedQuery = trpc.block.isBlocked.useQuery(
+    { targetUserId: userId as string },
+    { enabled: !!currentUserId && !!userId && currentUserId !== userId }
+  );
+  const isBlocked = isBlockedQuery.data ?? false;
 
   useEffect(() => {
     const animations = [
@@ -341,21 +330,9 @@ export default function UserProfileScreen() {
     },
   });
 
-  const blockMutation = useMutation({
-    mutationFn: async () => {
-      if (!currentUserId) throw new Error("Must be logged in");
-      if (!userId) throw new Error("No user to block");
-      if (currentUserId === userId) throw new Error("Cannot block yourself");
-      
-      console.log(`[Block] User ${currentUserId} blocking user ${userId}`);
-      await sbInsert("blocked_users", {
-        blocker_id: currentUserId,
-        blocked_user_id: userId,
-      });
-    },
+  const blockMutation = trpc.block.block.useMutation({
     onSuccess: () => {
-      console.log("[Block] Successfully blocked user");
-      queryClient.invalidateQueries({ queryKey: ["is-blocked", currentUserId, userId] });
+      trpcUtils.block.isBlocked.invalidate({ targetUserId: userId as string });
       Alert.alert("Success", "User blocked");
     },
     onError: (error) => {
@@ -364,20 +341,9 @@ export default function UserProfileScreen() {
     },
   });
 
-  const unblockMutation = useMutation({
-    mutationFn: async () => {
-      if (!currentUserId) throw new Error("Must be logged in");
-      if (!userId) throw new Error("No user to unblock");
-      
-      console.log(`[Block] User ${currentUserId} unblocking user ${userId}`);
-      await sbDelete("blocked_users", {
-        blocker_id: currentUserId,
-        blocked_user_id: userId,
-      });
-    },
+  const unblockMutation = trpc.block.unblock.useMutation({
     onSuccess: () => {
-      console.log("[Block] Successfully unblocked user");
-      queryClient.invalidateQueries({ queryKey: ["is-blocked", currentUserId, userId] });
+      trpcUtils.block.isBlocked.invalidate({ targetUserId: userId as string });
       Alert.alert("Success", "User unblocked");
     },
     onError: (error) => {
@@ -654,14 +620,14 @@ export default function UserProfileScreen() {
             <Pressable
               onPress={() => {
                 if (isBlocked) {
-                  unblockMutation.mutate();
+                  unblockMutation.mutate({ targetUserId: userId as string });
                 } else {
                   Alert.alert(
                     "Block User",
                     "Are you sure you want to block this user? You won't see their content anymore.",
                     [
                       { text: "Cancel", style: "cancel" },
-                      { text: "Block", style: "destructive", onPress: () => blockMutation.mutate() },
+                      { text: "Block", style: "destructive", onPress: () => blockMutation.mutate({ targetUserId: userId as string }) },
                     ]
                   );
                 }

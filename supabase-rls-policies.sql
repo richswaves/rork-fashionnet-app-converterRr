@@ -194,8 +194,8 @@ DROP POLICY IF EXISTS "Admins can view all blocks" ON blocked_users;
 -- Create blocked_users table
 CREATE TABLE IF NOT EXISTS public.blocked_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  blocker_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  blocked_user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  blocker_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocked_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now(),
   UNIQUE(blocker_id, blocked_user_id),
   CHECK (blocker_id != blocked_user_id)
@@ -229,6 +229,60 @@ FOR SELECT USING (
     AND user_roles.role = 'admin'
   )
 );
+
+-- ============================================================================
+-- BLOCK/UNBLOCK RPC FUNCTIONS AND TRIGGERS
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.is_blocked(target_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $
+  SELECT EXISTS (
+    SELECT 1 FROM public.blocked_users
+    WHERE blocker_id = auth.uid() AND blocked_user_id = target_user_id
+  );
+$;
+
+CREATE OR REPLACE FUNCTION public.block_user(target_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $
+BEGIN
+  IF target_user_id IS NULL OR target_user_id = auth.uid() THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO public.blocked_users (blocker_id, blocked_user_id)
+  VALUES (auth.uid(), target_user_id)
+  ON CONFLICT (blocker_id, blocked_user_id) DO NOTHING;
+
+  IF to_regclass('public.follows') IS NOT NULL THEN
+    DELETE FROM public.follows
+    WHERE (follower_id = auth.uid() AND following_id = target_user_id)
+       OR (follower_id = target_user_id AND following_id = auth.uid());
+  END IF;
+END;
+$;
+
+CREATE OR REPLACE FUNCTION public.unblock_user(target_user_id uuid)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $
+  DELETE FROM public.blocked_users
+  WHERE blocker_id = auth.uid() AND blocked_user_id = target_user_id;
+$;
+
+GRANT EXECUTE ON FUNCTION public.is_blocked(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.block_user(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.unblock_user(uuid) TO authenticated;
 
 -- ============================================================================
 -- REPORTS TABLE
