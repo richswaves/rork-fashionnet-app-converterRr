@@ -704,19 +704,23 @@ FOR SELECT USING (auth.uid() = applicant_id);
 -- Opportunity owners can create notifications (when approving/rejecting)
 CREATE POLICY "Opportunity owners can insert applicant notifications" ON applicant_notifications
 FOR INSERT WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM applications a
-    JOIN opportunities o ON o.id = a.opportunity_id
-    WHERE a.id::text = related_id::text
-    AND o.user_id = auth.uid()
-    AND a.applicant_id = applicant_id
-  )
-  OR
   -- Admins can create notifications for profile approvals/rejections
   EXISTS (
     SELECT 1 FROM user_roles
     WHERE user_id = auth.uid()
     AND role = 'admin'
+  )
+  OR
+  -- Opportunity owners can create notifications when approving/rejecting applications
+  (
+    related_id IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM applications a
+      JOIN opportunities o ON o.id = a.opportunity_id
+      WHERE a.id::text = related_id::text
+      AND o.user_id = auth.uid()
+      AND a.applicant_id = applicant_id
+    )
   )
 );
 
