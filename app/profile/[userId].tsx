@@ -91,7 +91,7 @@ export default function UserProfileScreen() {
   });
 
   useEffect(() => {
-    Animated.parallel([
+    const animations = [
       Animated.timing(opportunitiesAnimHeight, {
         toValue: opportunitiesExpanded ? 1 : 0,
         duration: 300,
@@ -102,11 +102,12 @@ export default function UserProfileScreen() {
         duration: 250,
         useNativeDriver: false,
       }),
-    ]).start();
-  }, [opportunitiesExpanded]);
+    ];
+    Animated.parallel(animations).start();
+  }, [opportunitiesExpanded, opportunitiesAnimHeight, opportunitiesAnimOpacity]);
 
   useEffect(() => {
-    Animated.parallel([
+    const animations = [
       Animated.timing(portfolioAnimHeight, {
         toValue: portfolioExpanded ? 1 : 0,
         duration: 300,
@@ -117,8 +118,9 @@ export default function UserProfileScreen() {
         duration: 250,
         useNativeDriver: false,
       }),
-    ]).start();
-  }, [portfolioExpanded]);
+    ];
+    Animated.parallel(animations).start();
+  }, [portfolioExpanded, portfolioAnimHeight, portfolioAnimOpacity]);
 
   const { data, isLoading, error } = useQuery<ProfileRow | null>({
     queryKey: ["profile", userId],
