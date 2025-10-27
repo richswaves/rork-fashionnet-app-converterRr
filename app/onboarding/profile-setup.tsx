@@ -174,6 +174,8 @@ export default function ProfileSetup() {
   const [profilePictureUri, setProfilePictureUri] = useState<string>(profile?.profile_picture ?? "");
   const [displayName, setDisplayName] = useState<string>(profile?.full_name ?? "");
 
+  const [showModelDetails, setShowModelDetails] = useState<boolean>(false);
+
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   const availableQuestions = useMemo<ChoiceQuestion[]>(() => {
@@ -244,6 +246,18 @@ export default function ProfileSetup() {
     const { data: pub } = supabase.storage.from("model-photos").getPublicUrl(path);
     return pub.publicUrl as string;
   }
+
+  const onContinueFromProfile = useCallback(() => {
+    if (!displayName.trim()) {
+      Alert.alert("Required Field", "Please enter your display name");
+      return;
+    }
+    if (!profilePictureUri) {
+      Alert.alert("Required Field", "Please upload a profile picture");
+      return;
+    }
+    setShowModelDetails(true);
+  }, [displayName, profilePictureUri]);
 
   const onSave = useCallback(async () => {
     if (!displayName.trim()) {
@@ -412,7 +426,7 @@ export default function ProfileSetup() {
           ))}
         </View>
 
-        {!!role && (
+        {!!role && !showModelDetails && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Profile Information</Text>
             <Text style={styles.fieldLabel}>Display Name *</Text>
@@ -456,12 +470,41 @@ export default function ProfileSetup() {
               )}
             </TouchableOpacity>
             
+          </View>
+        )}
+
+        {!!role && !showModelDetails && (
+          <TouchableOpacity testID="ps-continue-profile" style={styles.primaryBtn} onPress={role === "model" ? onContinueFromProfile : onSave}>
+            <Text style={styles.primaryBtnText}>Continue</Text>
+          </TouchableOpacity>
+        )}
+
+        {!!role && showModelDetails && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Profile Information</Text>
+            <Text style={styles.fieldLabel}>Display Name *</Text>
+            <TextInput
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Your name"
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+              testID="ps-display-name-2"
+              autoCapitalize="words"
+              editable={false}
+            />
+            
+            <Text style={styles.fieldLabel}>Profile Picture *</Text>
+            {profilePictureUri && (
+              <Image source={{ uri: profilePictureUri }} style={styles.profilePreviewSmall} />
+            )}
+            
             <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
             <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
           </View>
         )}
 
-        {!!role && (
+        {!!role && showModelDetails && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Social Links (optional)</Text>
             <TextInput 
@@ -503,7 +546,7 @@ export default function ProfileSetup() {
           </View>
         )}
 
-        {role === "model" && (
+        {role === "model" && showModelDetails && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
             <View style={styles.row}>
@@ -525,9 +568,11 @@ export default function ProfileSetup() {
           </View>
         )}
 
-        <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
-          <Text style={styles.primaryBtnText}>Continue</Text>
-        </TouchableOpacity>
+        {!!role && showModelDetails && (
+          <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
+            <Text style={styles.primaryBtnText}>Continue</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -556,4 +601,5 @@ const styles = StyleSheet.create({
   profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
+  profilePreviewSmall: { width: 80, height: 80, borderRadius: 12, marginBottom: 6 },
 });
