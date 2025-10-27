@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send, ExternalLink } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -35,6 +35,7 @@ interface ProfileRow {
     twitter?: string;
     tiktok?: string;
   } | null;
+  custom_links?: Array<{ name: string; url: string }> | null;
 }
 
 interface OpportunityRow {
@@ -671,6 +672,34 @@ export default function UserProfileScreen() {
           <Text style={styles.bio}>{data.bio}</Text>
         )}
 
+        {data?.custom_links && data.custom_links.length > 0 && (
+          <View style={styles.customLinksSection}>
+            {data.custom_links.map((link, index) => (
+              <Pressable
+                key={index}
+                onPress={() => {
+                  const url = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+                  if (Platform.OS === "web") {
+                    window.open(url, "_blank");
+                  } else {
+                    Linking.openURL(url).catch(() => {
+                      Alert.alert("Error", "Could not open link");
+                    });
+                  }
+                }}
+                style={styles.customLinkCard}
+                testID={`custom-link-${index}`}
+              >
+                <View style={styles.customLinkContent}>
+                  <Text style={styles.customLinkName}>{link.name}</Text>
+                  <Text style={styles.customLinkUrl} numberOfLines={1}>{link.url}</Text>
+                </View>
+                <ExternalLink color="#9CA3AF" size={20} />
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         <View style={styles.section} testID="profile-opportunities-section">
           <Pressable 
             onPress={() => setOpportunitiesExpanded(prev => !prev)}
@@ -1227,6 +1256,36 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+  customLinksSection: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    gap: 8,
+  },
+  customLinkCard: {
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  customLinkContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  customLinkName: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "700" as const,
+    marginBottom: 4,
+  },
+  customLinkUrl: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "500" as const,
   },
 });
 

@@ -45,6 +45,7 @@ export default function EditProfileScreen() {
     | "password"
     | "delete_confirm"
     | "delete_reason"
+    | "custom_link"
   >(null);
   const [temp, setTemp] = useState<string>("");
   const [socialLinks, setSocialLinks] = useState<{
@@ -58,6 +59,10 @@ export default function EditProfileScreen() {
   const [password, setPassword] = useState<string>("");
   const [oldPassword, setOldPassword] = useState<string>("");
   const [deleteReason, setDeleteReason] = useState<string>("");
+  const [customLinks, setCustomLinks] = useState<Array<{ name: string; url: string }>>((profile as any)?.custom_links ?? []);
+  const [editingLinkIndex, setEditingLinkIndex] = useState<number>(-1);
+  const [linkName, setLinkName] = useState<string>("");
+  const [linkUrl, setLinkUrl] = useState<string>("");
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -242,6 +247,11 @@ export default function EditProfileScreen() {
         setOldPassword("");
         setPassword("");
         setTemp("");
+        break;
+      case "custom_link":
+        setLinkName("");
+        setLinkUrl("");
+        setEditingLinkIndex(-1);
         break;
       default:
         setTemp("");
@@ -507,6 +517,13 @@ export default function EditProfileScreen() {
         setOldPassword("");
       }
 
+      const existingLinks = (profile as any)?.custom_links ?? [];
+      const hasChangedLinks = JSON.stringify(customLinks) !== JSON.stringify(existingLinks);
+      if (hasChangedLinks) {
+        updates.custom_links = customLinks;
+        console.log("[onSave] Adding custom_links to updates:", customLinks);
+      }
+
       if (Object.keys(updates).length === 0) {
         console.log("[onSave] No changes to save");
         router.back();
@@ -657,6 +674,59 @@ export default function EditProfileScreen() {
               </Pressable>
             </View>
           </View>
+        </View>
+
+        <View style={styles.linksSection}>
+          <View style={styles.linksSectionHeader}>
+            <Text style={styles.linksSectionTitle}>Custom Links</Text>
+            <Pressable
+              onPress={() => {
+                setEditingLinkIndex(-1);
+                openEditor("custom_link");
+              }}
+              style={styles.addLinkBtn}
+              testID="add-link-btn"
+            >
+              <Plus color="#E5E7EB" size={18} />
+            </Pressable>
+          </View>
+          {customLinks.length === 0 ? (
+            <Text style={styles.emptyLinksText}>No custom links added yet</Text>
+          ) : (
+            <View style={styles.linksList}>
+              {customLinks.map((link, index) => (
+                <View key={index} style={styles.linkCard}>
+                  <View style={styles.linkCardContent}>
+                    <Text style={styles.linkName}>{link.name}</Text>
+                    <Text style={styles.linkUrl} numberOfLines={1}>{link.url}</Text>
+                  </View>
+                  <View style={styles.linkCardActions}>
+                    <Pressable
+                      onPress={() => {
+                        setEditingLinkIndex(index);
+                        setLinkName(link.name);
+                        setLinkUrl(link.url);
+                        openEditor("custom_link");
+                      }}
+                      style={styles.linkEditBtn}
+                      testID={`edit-link-${index}`}
+                    >
+                      <Pencil color="#9CA3AF" size={16} />
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setCustomLinks(prev => prev.filter((_, i) => i !== index));
+                      }}
+                      style={styles.linkDeleteBtn}
+                      testID={`delete-link-${index}`}
+                    >
+                      <Trash2 color="#EF4444" size={16} />
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         <View style={styles.portfolioSection}>
@@ -898,6 +968,60 @@ export default function EditProfileScreen() {
                     disabled={!deleteReason}
                   >
                     <Text style={[styles.saveText, { color: "#FFF" }]}>Delete Account</Text>
+                  </Pressable>
+                </View>
+              </>
+            ) : editing === "custom_link" ? (
+              <>
+                <Text style={styles.modalTitle}>
+                  {editingLinkIndex === -1 ? "Add Custom Link" : "Edit Custom Link"}
+                </Text>
+                <Text style={styles.fieldLabel}>Link Name</Text>
+                <TextInput
+                  value={linkName}
+                  onChangeText={setLinkName}
+                  placeholder="e.g., Portfolio, Website, Store"
+                  placeholderTextColor="#6B7280"
+                  style={[styles.input, styles.modalInput]}
+                  autoCapitalize="words"
+                />
+                <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Link URL</Text>
+                <TextInput
+                  value={linkUrl}
+                  onChangeText={setLinkUrl}
+                  placeholder="https://example.com"
+                  placeholderTextColor="#6B7280"
+                  style={[styles.input, styles.modalInput]}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
+                    <X color="#E5E7EB" size={18} />
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      if (!linkName.trim() || !linkUrl.trim()) {
+                        Alert.alert("Error", "Please fill in both name and URL");
+                        return;
+                      }
+                      if (editingLinkIndex === -1) {
+                        setCustomLinks(prev => [...prev, { name: linkName.trim(), url: linkUrl.trim() }]);
+                      } else {
+                        setCustomLinks(prev => prev.map((link, i) => 
+                          i === editingLinkIndex ? { name: linkName.trim(), url: linkUrl.trim() } : link
+                        ));
+                      }
+                      setEditing(null);
+                      setLinkName("");
+                      setLinkUrl("");
+                      setEditingLinkIndex(-1);
+                    }}
+                    style={styles.saveBtn}
+                  >
+                    <Check color="#0B0B0F" size={16} />
+                    <Text style={styles.saveText}>{editingLinkIndex === -1 ? "Add" : "Save"}</Text>
                   </Pressable>
                 </View>
               </>
@@ -1302,6 +1426,89 @@ const styles = StyleSheet.create({
     color: "#E5E7EB",
     fontSize: 13,
     fontWeight: "700" as const,
+  },
+  linksSection: {
+    marginTop: 24,
+    marginHorizontal: 16,
+  },
+  linksSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  linksSectionTitle: {
+    color: "#E5E7EB",
+    fontSize: 18,
+    fontWeight: "900" as const,
+  },
+  addLinkBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#14141C",
+    borderWidth: 1,
+    borderColor: "#23232B",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyLinksText: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    textAlign: "center" as const,
+    paddingVertical: 20,
+  },
+  linksList: {
+    gap: 8,
+  },
+  linkCard: {
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  linkCardContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  linkName: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "700" as const,
+    marginBottom: 4,
+  },
+  linkUrl: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "500" as const,
+  },
+  linkCardActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  linkEditBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#14141C",
+    borderWidth: 1,
+    borderColor: "#23232B",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  linkDeleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#14141C",
+    borderWidth: 1,
+    borderColor: "#23232B",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
 });
