@@ -188,6 +188,16 @@ export default function NotificationsScreen() {
         order: { column: "created_at", ascending: false },
         limit: 100,
       });
+      
+      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      if (unreadIds.length > 0) {
+        await sbUpdate(
+          "applicant_notifications", 
+          { read: true }, 
+          { id: `in.(${unreadIds.join(",")})` }
+        );
+      }
+      
       return notifications;
     },
     enabled: !!currentUserId,

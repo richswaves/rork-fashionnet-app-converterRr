@@ -73,7 +73,15 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
         appsCount = recentApps.length;
       }
       
-      return recentFollows.length + appsCount;
+      const applicantNotifications = await sbSelect<{ id: string; read: boolean }>("applicant_notifications", {
+        select: "id,read",
+        query: { applicant_id: `eq.${currentUserId}`, read: "eq.false" },
+        limit: 100,
+      });
+      
+      const unreadApplicantNotifs = applicantNotifications.length;
+      
+      return recentFollows.length + appsCount + unreadApplicantNotifs;
     },
     enabled: !!currentUserId,
     refetchInterval: 30000,
