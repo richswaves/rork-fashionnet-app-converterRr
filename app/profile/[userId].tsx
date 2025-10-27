@@ -1259,7 +1259,6 @@ const styles = StyleSheet.create({
   },
   customLinksSection: {
     marginTop: 16,
-    marginHorizontal: 16,
     gap: 8,
   },
   customLinkCard: {
