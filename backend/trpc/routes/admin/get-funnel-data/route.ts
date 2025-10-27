@@ -1,14 +1,27 @@
-import { publicProcedure } from "../../create-context";
-import { getSupabase } from "@/integrations/supabase/client";
+import { publicProcedure } from "../../../create-context";
+import { createClient } from "@supabase/supabase-js";
+
+function resolveEnv(key: string): string | undefined {
+  const fromProcess = typeof process !== "undefined" ? (process.env as Record<string, string | undefined>)[key] : undefined;
+  if (typeof fromProcess === "string") {
+    const trimmed = fromProcess.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  return fromProcess;
+}
 
 export const getFunnelDataProcedure = publicProcedure.query(async () => {
   console.log("[getFunnelData] Starting funnel data fetch");
   try {
-    const supabase = getSupabase();
-    if (!supabase) {
+    const supabaseUrl = resolveEnv("EXPO_PUBLIC_SUPABASE_URL");
+    const supabaseKey = resolveEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY");
+    
+    if (!supabaseUrl || !supabaseKey) {
       console.error("Supabase not configured");
       return [];
     }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: responses, error } = await supabase
       .from("onboarding_responses")
