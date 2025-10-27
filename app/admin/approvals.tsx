@@ -103,7 +103,7 @@ export default function AdminApprovalsScreen() {
       
       const fetchByStatus = async (status: StatusTab) => {
         const rows = await sbSelect<AdminUser>("profiles", {
-          select: "*",
+          select: "user_id,full_name,username,profile_picture,profession,location,bio,account_status,created_at,email,social_links",
           query: { account_status: `eq.${status}` },
           order: { column: "created_at", ascending: false },
         });
@@ -112,7 +112,26 @@ export default function AdminApprovalsScreen() {
           console.log(`[Admin] User ${user.user_id}:`);
           console.log(`  - full_name: ${user.full_name}`);
           console.log(`  - social_links type:`, typeof user.social_links);
-          console.log(`  - social_links value:`, JSON.stringify(user.social_links));
+          console.log(`  - social_links raw:`, user.social_links);
+          console.log(`  - social_links stringified:`, JSON.stringify(user.social_links));
+          
+          if (user.social_links) {
+            let parsed = user.social_links;
+            if (typeof parsed === 'string') {
+              try {
+                parsed = JSON.parse(parsed);
+                console.log(`  - social_links parsed:`, parsed);
+              } catch (e) {
+                console.log(`  - Failed to parse social_links`);
+              }
+            }
+            if (typeof parsed === 'object') {
+              console.log(`  - Instagram:`, (parsed as any)?.instagram);
+              console.log(`  - YouTube:`, (parsed as any)?.youtube);
+              console.log(`  - Twitter:`, (parsed as any)?.twitter);
+              console.log(`  - TikTok:`, (parsed as any)?.tiktok);
+            }
+          }
         });
         return rows;
       };
