@@ -158,14 +158,7 @@ export default function ProfileSetup() {
   const [location, setLocation] = useState<string>(profile?.location ?? "");
   const [bio, setBio] = useState<string>(profile?.bio ?? "");
 
-  const [height, setHeight] = useState<string>("");
-  const [waist, setWaist] = useState<string>("");
-  const [hips, setHips] = useState<string>("");
-  const [bust, setBust] = useState<string>("");
-  const [chest, setChest] = useState<string>("");
-  const [shoeSize, setShoeSize] = useState<string>("");
-  const [hairColor, setHairColor] = useState<string>("");
-  const [eyeColor, setEyeColor] = useState<string>("");
+
 
   const [instagram, setInstagram] = useState<string>(profile?.social_links?.instagram ?? "");
   const [youtube, setYoutube] = useState<string>(profile?.social_links?.youtube ?? "");
@@ -174,7 +167,7 @@ export default function ProfileSetup() {
   const [profilePictureUri, setProfilePictureUri] = useState<string>(profile?.profile_picture ?? "");
   const [displayName, setDisplayName] = useState<string>(profile?.full_name ?? "");
 
-  const [showModelDetails, setShowModelDetails] = useState<boolean>(false);
+
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
@@ -247,17 +240,7 @@ export default function ProfileSetup() {
     return pub.publicUrl as string;
   }
 
-  const onContinueFromProfile = useCallback(() => {
-    if (!displayName.trim()) {
-      Alert.alert("Required Field", "Please enter your display name");
-      return;
-    }
-    if (!profilePictureUri) {
-      Alert.alert("Required Field", "Please upload a profile picture");
-      return;
-    }
-    setShowModelDetails(true);
-  }, [displayName, profilePictureUri]);
+
 
   const onSave = useCallback(async () => {
     if (!displayName.trim()) {
@@ -314,17 +297,6 @@ export default function ProfileSetup() {
         profileData.social_links = socialLinks;
       }
 
-      if (role === "model") {
-        profileData.height = height || undefined;
-        profileData.waist = waist || undefined;
-        profileData.hips = hips || undefined;
-        profileData.bust = bust || undefined;
-        profileData.chest = chest || undefined;
-        profileData.shoe_size = shoeSize || undefined;
-        profileData.hair_color = hairColor || undefined;
-        profileData.eye_color = eyeColor || undefined;
-      }
-
       await updateProfileAsync(profileData);
 
       const qs = availableQuestions;
@@ -353,7 +325,7 @@ export default function ProfileSetup() {
       const msg = typeof e?.message === "string" ? e.message : "Could not save";
       Alert.alert("Save failed", msg);
     }
-  }, [answers, availableQuestions, bio, bust, chest, currentUserId, displayName, eyeColor, hairColor, height, hips, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, shoeSize, tiktok, twitter, updateProfileAsync, waist, youtube, userType]);
+  }, [answers, availableQuestions, bio, currentUserId, displayName, instagram, location, profile?.account_status, profilePictureUri, recordEvent, role, router, tiktok, twitter, updateProfileAsync, youtube, userType]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -426,7 +398,7 @@ export default function ProfileSetup() {
           ))}
         </View>
 
-        {!!role && !showModelDetails && (
+        {!!role && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Profile Information</Text>
             <Text style={styles.fieldLabel}>Display Name *</Text>
@@ -470,41 +442,12 @@ export default function ProfileSetup() {
               )}
             </TouchableOpacity>
             
-          </View>
-        )}
-
-        {!!role && !showModelDetails && (
-          <TouchableOpacity testID="ps-continue-profile" style={styles.primaryBtn} onPress={role === "model" ? onContinueFromProfile : onSave}>
-            <Text style={styles.primaryBtnText}>Continue</Text>
-          </TouchableOpacity>
-        )}
-
-        {!!role && showModelDetails && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Profile Information</Text>
-            <Text style={styles.fieldLabel}>Display Name *</Text>
-            <TextInput
-              value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Your name"
-              placeholderTextColor="#9CA3AF"
-              style={styles.input}
-              testID="ps-display-name-2"
-              autoCapitalize="words"
-              editable={false}
-            />
-            
-            <Text style={styles.fieldLabel}>Profile Picture *</Text>
-            {profilePictureUri && (
-              <Image source={{ uri: profilePictureUri }} style={styles.profilePreviewSmall} />
-            )}
-            
             <TextInput value={location} onChangeText={setLocation} placeholder="Location" placeholderTextColor="#9CA3AF" style={styles.input} testID="ps-location" />
             <TextInput value={bio} onChangeText={setBio} placeholder="Bio" placeholderTextColor="#9CA3AF" style={[styles.input, { height: 90 }]} multiline testID="ps-bio" />
           </View>
         )}
 
-        {!!role && showModelDetails && (
+        {!!role && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Social Links (optional)</Text>
             <TextInput 
@@ -546,29 +489,7 @@ export default function ProfileSetup() {
           </View>
         )}
 
-        {role === "model" && showModelDetails && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Physical & Appearance Details</Text>
-            <View style={styles.row}>
-              <TextInput value={height} onChangeText={setHeight} placeholder="Height" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-height" />
-              <TextInput value={waist} onChangeText={setWaist} placeholder="Waist" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-waist" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={hips} onChangeText={setHips} placeholder="Hips" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hips" />
-              <TextInput value={bust} onChangeText={setBust} placeholder="Bust" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-bust" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={chest} onChangeText={setChest} placeholder="Chest" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-chest" />
-              <TextInput value={shoeSize} onChangeText={setShoeSize} placeholder="Shoe size" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-shoe" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={hairColor} onChangeText={setHairColor} placeholder="Hair color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-hair" />
-              <TextInput value={eyeColor} onChangeText={setEyeColor} placeholder="Eye color" placeholderTextColor="#9CA3AF" style={[styles.input, styles.inputHalf]} testID="ps-eye" />
-            </View>
-          </View>
-        )}
-
-        {!!role && showModelDetails && (
+        {!!role && (
           <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
             <Text style={styles.primaryBtnText}>Continue</Text>
           </TouchableOpacity>
@@ -601,5 +522,5 @@ const styles = StyleSheet.create({
   profilePreview: { width: "100%", height: "100%", resizeMode: "cover" as const },
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
-  profilePreviewSmall: { width: 80, height: 80, borderRadius: 12, marginBottom: 6 },
+
 });
