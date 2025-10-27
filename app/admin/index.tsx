@@ -199,10 +199,13 @@ export default function AdminDashboard() {
         </Section>
 
         <Section title="Funnel">
-          <View style={styles.placeholderCard}>
-            <BarChart3 size={18} color="#8B5CF6" />
-            <Text style={styles.placeholderText}>Detailed funnel via RPC coming soon</Text>
-          </View>
+          <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/funnel")}>
+            <View style={styles.linkLeftContent}>
+              <BarChart3 size={18} color="#8B5CF6" />
+              <Text style={styles.linkText}>View detailed funnel analytics</Text>
+            </View>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
         </Section>
       </ScrollView>
     </SafeAreaView>
