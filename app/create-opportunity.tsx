@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, ChevronDown, Eye, ImagePlus, ThumbsUp, Bookmark, CheckCircle2, Instagram, Youtube } from "lucide-react-native";
+import { X, ChevronDown, Eye, ImagePlus, Bookmark, CheckCircle2, Instagram, Youtube } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbInsert } from "@/integrations/supabase/client";
@@ -1591,10 +1591,6 @@ export default function CreateOpportunityScreen() {
               </View>
 
               <View style={styles.previewFooterRow}>
-                <View style={styles.previewUpvote}>
-                  <ThumbsUp color="#E5E7EB" size={16} />
-                  <Text style={styles.previewUpvoteText}>0</Text>
-                </View>
                 <View style={styles.previewActionButtons}>
                   <View style={styles.previewActionBtn}>
                     <CheckCircle2 color="#E5E7EB" size={16} />
@@ -2044,20 +2040,10 @@ const styles = StyleSheet.create({
   previewFooterRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: 12,
     marginTop: 4,
     marginBottom: 10,
-  },
-  previewUpvote: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  previewUpvoteText: {
-    color: "#E5E7EB",
-    fontSize: 12,
-    fontWeight: "800",
   },
   previewActionButtons: {
     flexDirection: "row",

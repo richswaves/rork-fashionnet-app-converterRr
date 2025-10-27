@@ -3,7 +3,7 @@ import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platfor
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
-import { ChevronDown, ChevronUp, Filter, ThumbsUp, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube, ShieldCheck } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Filter, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube, ShieldCheck } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -170,7 +170,6 @@ function formatBudget(budget: string): string {
 export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [city, setCity] = useState<string[]>([]);
   const [seekingRole, setSeekingRole] = useState<string | null>(null);
@@ -181,6 +180,9 @@ export default function OpportunitiesScreen() {
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [searchVisible, setSearchVisible] = useState<boolean>(false);
+  const [applyModalVisible, setApplyModalVisible] = useState<boolean>(false);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
+  const [applicationNote, setApplicationNote] = useState<string>("");
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
@@ -232,11 +234,12 @@ export default function OpportunitiesScreen() {
   });
 
   const applyMutation = useMutation({
-    mutationFn: async (opportunityId: string) => {
+    mutationFn: async ({ opportunityId, note }: { opportunityId: string; note?: string }) => {
       if (!currentUserId) throw new Error("Must be logged in");
       await sbInsert("applications", {
         opportunity_id: opportunityId,
         applicant_id: currentUserId,
+        note: note || null,
       });
       return opportunityId;
     },
@@ -427,9 +430,7 @@ export default function OpportunitiesScreen() {
     },
   });
 
-  function toggleUpvote(id: string) {
-    setLiked((s) => ({ ...s, [id]: !s[id] }));
-  }
+
 
   return (
     <View style={container} testID="opportunities-screen">
@@ -566,7 +567,6 @@ export default function OpportunitiesScreen() {
           const title = item.title ?? "";
           const display = getDisplayForProfile(item.profiles);
           const imageUri = item.cover_image ?? (item as any).image_url;
-          const upvotes = 0;
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
               <Pressable style={styles.postHeader} onPress={() => { const uid = item.profiles?.user_id ?? item.user_id; if (uid) { router.push({ pathname: "/profile/[userId]", params: { userId: uid } }); } }} testID={`opp-user-${item.profiles?.user_id ?? item.user_id}`}>
@@ -752,10 +752,6 @@ export default function OpportunitiesScreen() {
               </View>
 
               <View style={styles.footerRow}>
-                <Pressable style={styles.upvote} onPress={() => toggleUpvote(item.id)} testID={`upvote-${item.id}`}>
-                  <ThumbsUp color={liked[item.id] ? "#10B981" : "#E5E7EB"} size={16} />
-                  <Text style={[styles.upvoteText, liked[item.id] && styles.upvoteActive]}>{upvotes + (liked[item.id] ? 1 : 0)}</Text>
-                </Pressable>
                 {(item.user_id !== currentUserId) && (() => {
                   const appInfo = applications?.[item.id];
                   const isApproved = appInfo?.status === "approved";
@@ -776,7 +772,8 @@ export default function OpportunitiesScreen() {
                         if (isApplied) {
                           unapplyMutation.mutate(item.id);
                         } else {
-                          applyMutation.mutate(item.id);
+                          setSelectedOpportunityId(item.id);
+                          setApplyModalVisible(true);
                         }
                       }}
                       disabled={applyMutation.isPending || unapplyMutation.isPending || isApproved}
@@ -917,6 +914,78 @@ export default function OpportunitiesScreen() {
             >
               <Text style={styles.applyFiltersText}>Apply</Text>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={applyModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setApplyModalVisible(false);
+          setApplicationNote("");
+        }}
+      >
+        <Pressable 
+          style={styles.backdrop} 
+          onPress={() => {
+            setApplyModalVisible(false);
+            setApplicationNote("");
+          }} 
+          testID="apply-modal-backdrop" 
+        />
+        <View style={styles.applyModal} testID="apply-modal">
+          <View style={styles.applyModalContent}>
+            <Text style={styles.applyModalTitle}>Apply to Opportunity</Text>
+            <Text style={styles.applyModalSubtitle}>Add an optional note to your application</Text>
+            
+            <TextInput
+              style={styles.applyModalInput}
+              placeholder="Tell them why you're a great fit... (optional)"
+              placeholderTextColor="#6B7280"
+              value={applicationNote}
+              onChangeText={setApplicationNote}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              testID="apply-note-input"
+            />
+
+            <View style={styles.applyModalActions}>
+              <Pressable
+                style={styles.applyModalCancelBtn}
+                onPress={() => {
+                  setApplyModalVisible(false);
+                  setApplicationNote("");
+                }}
+                testID="apply-cancel"
+              >
+                <Text style={styles.applyModalCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={styles.applyModalSubmitBtn}
+                onPress={() => {
+                  if (selectedOpportunityId) {
+                    applyMutation.mutate({ 
+                      opportunityId: selectedOpportunityId, 
+                      note: applicationNote.trim() || undefined 
+                    });
+                    setApplyModalVisible(false);
+                    setApplicationNote("");
+                    setSelectedOpportunityId(null);
+                  }
+                }}
+                disabled={applyMutation.isPending}
+                testID="apply-submit"
+              >
+                {applyMutation.isPending ? (
+                  <ActivityIndicator color="#0B0B0F" size="small" />
+                ) : (
+                  <Text style={styles.applyModalSubmitText}>Apply</Text>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1076,10 +1145,7 @@ const styles = StyleSheet.create({
   requirementsSection: { marginTop: 8, gap: 4 },
   requirementsTitle: { color: "#9CA3AF", fontSize: 12, fontWeight: "700", marginBottom: 4 },
   requirementItem: { color: "#D1D5DB", fontSize: 13, fontWeight: "400", lineHeight: 18 },
-  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, marginTop: 4, marginBottom: 10 },
-  upvote: { flexDirection: "row", alignItems: "center", gap: 6 as const },
-  upvoteText: { color: "#E5E7EB", fontSize: 12, fontWeight: "800" },
-  upvoteActive: { color: "#10B981" },
+  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 12, marginTop: 4, marginBottom: 10 },
   actionButtons: { flexDirection: "row", alignItems: "center", gap: 10 as const },
   actionBtn: { 
     flexDirection: "row", 
@@ -1209,6 +1275,82 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tiktokIconText: {
+    color: "#000000",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  applyModal: {
+    position: "absolute" as const,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    top: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  applyModalContent: {
+    backgroundColor: "rgba(15, 15, 15, 0.98)",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    width: "100%",
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: "#404040",
+  },
+  applyModalTitle: {
+    color: "#E5E7EB",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+  applyModalSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  applyModalInput: {
+    backgroundColor: "#14141C",
+    borderColor: "#404040",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: "#E5E7EB",
+    fontSize: 14,
+    minHeight: 100,
+    marginBottom: 20,
+  },
+  applyModalActions: {
+    flexDirection: "row",
+    gap: 12 as const,
+  },
+  applyModalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: "rgba(20, 20, 20, 0.85)",
+    borderColor: "#404040",
+    borderWidth: 1,
+    alignItems: "center",
+  },
+  applyModalCancelText: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  applyModalSubmitBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: "#4CB963",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  applyModalSubmitText: {
     color: "#000000",
     fontSize: 14,
     fontWeight: "900",
