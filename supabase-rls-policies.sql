@@ -514,3 +514,156 @@ END;
 $;
 
 GRANT EXECUTE ON FUNCTION public.delete_user_account(uuid) TO authenticated;
+
+-- ============================================================================
+-- FOLLOWS TABLE
+-- ============================================================================
+
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view all follows" ON follows;
+DROP POLICY IF EXISTS "Users can create follows" ON follows;
+DROP POLICY IF EXISTS "Users can delete own follows" ON follows;
+
+-- Create follows table
+CREATE TABLE IF NOT EXISTS public.follows (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  following_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(follower_id, following_id),
+  CHECK (follower_id != following_id)
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+CREATE INDEX IF NOT EXISTS idx_follows_created_at ON follows(created_at DESC);
+
+-- Enable RLS
+ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
+
+-- Everyone can view all follows (public)
+CREATE POLICY "Users can view all follows" ON follows
+FOR SELECT USING (true);
+
+-- Users can create their own follows
+CREATE POLICY "Users can create follows" ON follows
+FOR INSERT WITH CHECK (auth.uid() = follower_id);
+
+-- Users can delete their own follows
+CREATE POLICY "Users can delete own follows" ON follows
+FOR DELETE USING (auth.uid() = follower_id);
+
+-- Grant permissions
+GRANT SELECT, INSERT, DELETE ON follows TO authenticated;
+GRANT SELECT ON follows TO anon;
+
+-- ============================================================================
+-- OPPORTUNITIES TABLE (if not exists)
+-- ============================================================================
+
+-- Create opportunities table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.opportunities (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  description text,
+  category text,
+  location text,
+  compensation text,
+  requirements text,
+  status text DEFAULT 'active' CHECK (status IN ('active', 'closed', 'draft')),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_opportunities_user ON opportunities(user_id);
+CREATE INDEX IF NOT EXISTS idx_opportunities_status ON opportunities(status);
+CREATE INDEX IF NOT EXISTS idx_opportunities_created_at ON opportunities(created_at DESC);
+
+-- Enable RLS
+ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view all active opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Users can view own opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Users can create opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Users can update own opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Users can delete own opportunities" ON opportunities;
+
+-- Everyone can view active opportunities
+CREATE POLICY "Users can view all active opportunities" ON opportunities
+FOR SELECT USING (status = 'active' OR user_id = auth.uid());
+
+-- Users can create their own opportunities
+CREATE POLICY "Users can create opportunities" ON opportunities
+FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own opportunities
+CREATE POLICY "Users can update own opportunities" ON opportunities
+FOR UPDATE USING (auth.uid() = user_id);
+
+-- Users can delete their own opportunities
+CREATE POLICY "Users can delete own opportunities" ON opportunities
+FOR DELETE USING (auth.uid() = user_id);
+
+-- Grant permissions
+GRANT SELECT ON opportunities TO authenticated, anon;
+GRANT INSERT, UPDATE, DELETE ON opportunities TO authenticated;
+
+-- ============================================================================
+-- APPLICATIONS TABLE
+-- ============================================================================
+
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view applications for their opportunities" ON applications;
+DROP POLICY IF EXISTS "Users can view their own applications" ON applications;
+DROP POLICY IF EXISTS "Users can create applications" ON applications;
+DROP POLICY IF EXISTS "Users can update own applications" ON applications;
+DROP POLICY IF EXISTS "Users can delete own applications" ON applications;
+
+-- Create applications table
+CREATE TABLE IF NOT EXISTS public.applications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  opportunity_id uuid NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
+  applicant_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  message text,
+  status text DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(opportunity_id, applicant_id)
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_applications_opportunity ON applications(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
+CREATE INDEX IF NOT EXISTS idx_applications_created_at ON applications(created_at DESC);
+
+-- Enable RLS
+ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+
+-- Users can view applications for their opportunities
+CREATE POLICY "Users can view applications for their opportunities" ON applications
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM opportunities 
+    WHERE opportunities.id = applications.opportunity_id 
+    AND opportunities.user_id = auth.uid()
+  ) OR applicant_id = auth.uid()
+);
+
+-- Users can create applications
+CREATE POLICY "Users can create applications" ON applications
+FOR INSERT WITH CHECK (auth.uid() = applicant_id);
+
+-- Users can update their own applications
+CREATE POLICY "Users can update own applications" ON applications
+FOR UPDATE USING (auth.uid() = applicant_id);
+
+-- Users can delete their own applications
+CREATE POLICY "Users can delete own applications" ON applications
+FOR DELETE USING (auth.uid() = applicant_id);
+
+-- Grant permissions
+GRANT SELECT, INSERT, UPDATE, DELETE ON applications TO authenticated;
