@@ -78,7 +78,7 @@ export default function UserProfileScreen() {
       try {
         const rows = await sbSelect<{ id: string }>("blocked_users", {
           select: "id",
-          query: { blocker_id: `eq.${currentUserId}`, blocked_id: `eq.${userId}` },
+          query: { blocker_id: `eq.${currentUserId}`, blocked_user_id: `eq.${userId}` },
           limit: 1,
         });
         return rows.length > 0;
@@ -350,7 +350,7 @@ export default function UserProfileScreen() {
       console.log(`[Block] User ${currentUserId} blocking user ${userId}`);
       await sbInsert("blocked_users", {
         blocker_id: currentUserId,
-        blocked_id: userId,
+        blocked_user_id: userId,
       });
     },
     onSuccess: () => {
@@ -372,7 +372,7 @@ export default function UserProfileScreen() {
       console.log(`[Block] User ${currentUserId} unblocking user ${userId}`);
       await sbDelete("blocked_users", {
         blocker_id: currentUserId,
-        blocked_id: userId,
+        blocked_user_id: userId,
       });
     },
     onSuccess: () => {

@@ -194,16 +194,16 @@ DROP POLICY IF EXISTS "Admins can view all blocks" ON blocked_users;
 -- Create blocked_users table
 CREATE TABLE IF NOT EXISTS public.blocked_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  blocker_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  blocked_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocker_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  blocked_user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now(),
-  UNIQUE(blocker_id, blocked_id),
-  CHECK (blocker_id != blocked_id)
+  UNIQUE(blocker_id, blocked_user_id),
+  CHECK (blocker_id != blocked_user_id)
 );
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_blocked_users_blocker ON blocked_users(blocker_id);
-CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked ON blocked_users(blocked_id);
+CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked_user ON blocked_users(blocked_user_id);
 
 -- Enable RLS
 ALTER TABLE blocked_users ENABLE ROW LEVEL SECURITY;
