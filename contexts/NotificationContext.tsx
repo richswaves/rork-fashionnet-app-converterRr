@@ -38,7 +38,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     enabled: !!currentUserId,
   });
 
-  const { data: notificationCount = 0, refetch: refetchUserNotifications } = useQuery<number>({
+  const { data: notificationCount = 0, refetch: refetchUser } = useQuery<number>({
     queryKey: ["notification-count", currentUserId, lastViewedAt],
     queryFn: async () => {
       if (!currentUserId) return 0;
@@ -79,7 +79,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     refetchInterval: 30000,
   });
 
-  const { data: adminNotificationCount = 0, refetch: refetchAdminNotifications } = useQuery<number>({
+  const { data: adminNotificationCount = 0, refetch: refetchAdmin } = useQuery<number>({
     queryKey: ["admin-notification-count", lastViewedAt],
     queryFn: async () => {
       const cutoffDate = lastViewedAt || new Date(0).toISOString();
@@ -111,19 +111,19 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
 
     setTimeout(() => {
       if (type === "user") {
-        refetchUserNotifications();
+        refetchUser();
       } else {
-        refetchAdminNotifications();
+        refetchAdmin();
       }
     }, 100);
-  }, [currentUserId, refetchUserNotifications, refetchAdminNotifications]);
+  }, [currentUserId, refetchUser, refetchAdmin]);
 
   const refetchAll = useCallback(() => {
-    refetchUserNotifications();
+    refetchUser();
     if (isAdmin) {
-      refetchAdminNotifications();
+      refetchAdmin();
     }
-  }, [refetchUserNotifications, refetchAdminNotifications, isAdmin]);
+  }, [refetchUser, refetchAdmin, isAdmin]);
 
   return useMemo(
     () => ({
