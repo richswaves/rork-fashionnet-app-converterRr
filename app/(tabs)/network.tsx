@@ -23,6 +23,7 @@ interface MemberCard {
   name: string;
   image: string;
   location?: string;
+  profession?: string;
 }
 
 const ROLES: string[] = ["Professional Role", "Photographer", "Model", "Videographer", "Designer", "Other"];
@@ -39,7 +40,7 @@ export default function NetworkScreen() {
 
   const { width: windowWidth } = useWindowDimensions();
 
-  const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<{ id: string; name: string; image: string; location?: string }[]>({
+  const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
     queryKey: ["profiles", "top"],
     queryFn: async () => {
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -55,6 +56,7 @@ export default function NetworkScreen() {
           name: d.displayName,
           image: d.avatarUrl,
           location: r.location ?? undefined,
+          profession: r.profession ?? undefined,
         };
       });
     },
@@ -64,7 +66,7 @@ export default function NetworkScreen() {
     queryKey: ["profiles", "new"],
     queryFn: async () => {
       const rows = await sbSelect<ProfileRow>("profiles", {
-        select: "user_id,full_name,profile_picture,location,username,created_at",
+        select: "user_id,full_name,profile_picture,location,profession,username,created_at",
         query: { account_status: "eq.approved" },
         order: { column: "created_at", ascending: false },
         limit: 12,
@@ -76,6 +78,7 @@ export default function NetworkScreen() {
           name: d.displayName,
           image: d.avatarUrl,
           location: r.location ?? undefined,
+          profession: r.profession ?? undefined,
         };
       });
     },
@@ -171,6 +174,9 @@ export default function NetworkScreen() {
                         <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
                         <View style={styles.cardBody}>
                           <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>
+                          {!!m.profession && (
+                            <Text numberOfLines={1} style={styles.cardProfession}>{m.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                          )}
                           {!!m.location && (
                             <View style={styles.locationRow}>
                               <MapPin color="#9CA3AF" size={14} />
@@ -211,6 +217,9 @@ export default function NetworkScreen() {
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
               <View style={styles.cardBody}>
                 <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>
+                {!!m.profession && (
+                  <Text numberOfLines={1} style={styles.cardProfession}>{m.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                )}
                 {!!m.location && (
                   <View style={styles.locationRow}>
                     <MapPin color="#9CA3AF" size={14} />
@@ -280,6 +289,7 @@ const styles = StyleSheet.create({
   cardImage: { width: "100%", height: 140 },
   cardBody: { padding: 12 },
   cardTitle: { color: "#E5E7EB", fontSize: 16, fontWeight: "800", marginBottom: 6 },
+  cardProfession: { color: "#9CA3AF", fontSize: 12, fontWeight: "600", marginBottom: 4, textTransform: "capitalize" as const },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 8 },
   locationText: { color: "#9CA3AF", fontSize: 12, flexShrink: 1 },
   followBtn: { borderColor: "#3A3A44", borderWidth: 1, paddingVertical: 10, borderRadius: 20, alignItems: "center" },

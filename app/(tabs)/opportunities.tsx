@@ -573,6 +573,9 @@ export default function OpportunitiesScreen() {
                 <Image key={item.profiles?.user_id ?? item.user_id} source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
                   <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
+                  {item.profiles?.profession && (
+                    <Text numberOfLines={1} style={styles.postProfession}>{item.profiles.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                  )}
                   <Text numberOfLines={1} style={styles.postTime}>{formatRelativeTime(item.created_at)}</Text>
                 </View>
                 {item.user_id === currentUserId && (
@@ -1026,6 +1029,7 @@ const styles = StyleSheet.create({
   postAvatar: { width: 32, height: 32, borderRadius: 16 },
   postHeaderInfo: { flex: 1 },
   postUsername: { color: "#E5E7EB", fontSize: 14, fontWeight: "800" },
+  postProfession: { color: "#9CA3AF", fontSize: 11, fontWeight: "600", textTransform: "capitalize" as const },
   postTime: { color: "#9CA3AF", fontSize: 11, fontWeight: "700" },
   mediaWrap: { paddingHorizontal: 8, paddingTop: 6 },
   cover: { width: "100%", height: 320, borderRadius: 14 },
