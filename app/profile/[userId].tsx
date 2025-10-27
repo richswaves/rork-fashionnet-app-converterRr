@@ -2,13 +2,13 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Ban, Flag } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
-import { trpc } from "@/lib/trpc";
+
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -72,12 +72,6 @@ export default function UserProfileScreen() {
   const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState<string>("");
 
-  const trpcUtils = trpc.useUtils();
-  const isBlockedQuery = trpc.block.isBlocked.useQuery(
-    { targetUserId: userId as string },
-    { enabled: !!currentUserId && !!userId && currentUserId !== userId }
-  );
-  const isBlocked = isBlockedQuery.data ?? false;
 
   useEffect(() => {
     const animations = [
@@ -111,7 +105,7 @@ export default function UserProfileScreen() {
     Animated.parallel(animations).start();
   }, [portfolioExpanded, portfolioAnimHeight, portfolioAnimOpacity]);
 
-  const { data, isLoading, error } = useQuery<ProfileRow | null>({
+  const { data } = useQuery<ProfileRow | null>({
     queryKey: ["profile", userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -330,27 +324,6 @@ export default function UserProfileScreen() {
     },
   });
 
-  const blockMutation = trpc.block.block.useMutation({
-    onSuccess: () => {
-      trpcUtils.block.isBlocked.invalidate({ targetUserId: userId as string });
-      Alert.alert("Success", "User blocked");
-    },
-    onError: (error) => {
-      console.error("[Block] Error blocking user:", error);
-      Alert.alert("Error", "Failed to block user");
-    },
-  });
-
-  const unblockMutation = trpc.block.unblock.useMutation({
-    onSuccess: () => {
-      trpcUtils.block.isBlocked.invalidate({ targetUserId: userId as string });
-      Alert.alert("Success", "User unblocked");
-    },
-    onError: (error) => {
-      console.error("[Block] Error unblocking user:", error);
-      Alert.alert("Error", "Failed to unblock user");
-    },
-  });
 
   const reportMutation = useMutation({
     mutationFn: async (reason: string) => {
@@ -617,27 +590,6 @@ export default function UserProfileScreen() {
 
         {!isOwn && currentUserId && (
           <View style={styles.actionRow}>
-            <Pressable
-              onPress={() => {
-                if (isBlocked) {
-                  unblockMutation.mutate({ targetUserId: userId as string });
-                } else {
-                  Alert.alert(
-                    "Block User",
-                    "Are you sure you want to block this user? You won't see their content anymore.",
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      { text: "Block", style: "destructive", onPress: () => blockMutation.mutate({ targetUserId: userId as string }) },
-                    ]
-                  );
-                }
-              }}
-              style={[styles.actionButton, isBlocked && styles.actionButtonActive]}
-              disabled={blockMutation.isPending || unblockMutation.isPending}
-              testID="block-btn"
-            >
-              <Ban color={isBlocked ? "#10B981" : "#1F2937"} size={22} strokeWidth={2.5} />
-            </Pressable>
             <Pressable
               onPress={() => setReportModalVisible(true)}
               style={styles.actionButton}
