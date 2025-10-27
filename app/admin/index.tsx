@@ -207,6 +207,16 @@ export default function AdminDashboard() {
             <ChevronRight size={16} color="#9CA3AF" />
           </TouchableOpacity>
         </Section>
+
+        <Section title="Question Analytics">
+          <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/question-analytics")}>
+            <View style={styles.linkLeftContent}>
+              <BarChart3 size={18} color="#22D3EE" />
+              <Text style={styles.linkText}>Answers distribution by question</Text>
+            </View>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+        </Section>
       </ScrollView>
     </SafeAreaView>
   );
