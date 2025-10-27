@@ -3,8 +3,8 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
-import { sbSelect } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface ProfileRow {
@@ -32,11 +32,11 @@ export default function NetworkScreen() {
   const insets = useSafeAreaInsets();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [following, setFollowing] = useState<Record<string, boolean>>({});
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
   const [locationMenuOpen, setLocationMenuOpen] = useState<boolean>(false);
 
-  const { resolvedProfile, getDisplayForProfile } = useProfile();
+  const { resolvedProfile, getDisplayForProfile, currentUserId } = useProfile();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
 
@@ -134,8 +134,74 @@ export default function NetworkScreen() {
     },
   });
 
+  const { data: followingIds } = useQuery<Set<string>>({
+    queryKey: ["following-ids", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return new Set<string>();
+      const follows = await sbSelect<{ following_id: string }>("follows", {
+        select: "following_id",
+        query: { follower_id: `eq.${currentUserId}` },
+        limit: 1000,
+      });
+      return new Set(follows.map((f) => f.following_id));
+    },
+    enabled: !!currentUserId,
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (currentUserId === userId) throw new Error("Cannot follow yourself");
+      
+      console.log(`[Follow] User ${currentUserId} following user ${userId}`);
+      await sbInsert("follows", {
+        follower_id: currentUserId,
+        following_id: userId,
+      });
+    },
+    onSuccess: (_, userId) => {
+      console.log("[Follow] Successfully followed user");
+      queryClient.invalidateQueries({ queryKey: ["following-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["follower-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["following-count", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["notifications-follows", userId] });
+    },
+    onError: (error) => {
+      console.error("[Follow] Error following user:", error);
+    },
+  });
+
+  const unfollowMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      
+      console.log(`[Follow] User ${currentUserId} unfollowing user ${userId}`);
+      await sbDelete("follows", {
+        follower_id: currentUserId,
+        following_id: userId,
+      });
+    },
+    onSuccess: (_, userId) => {
+      console.log("[Follow] Successfully unfollowed user");
+      queryClient.invalidateQueries({ queryKey: ["following-ids", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["follower-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["following-count", currentUserId] });
+    },
+    onError: (error) => {
+      console.error("[Follow] Error unfollowing user:", error);
+    },
+  });
+
   function toggleFollow(id: string) {
-    setFollowing((cur) => ({ ...cur, [id]: !cur[id] }));
+    if (!currentUserId) {
+      console.log("[Follow] User not logged in");
+      return;
+    }
+    if (followingIds?.has(id)) {
+      unfollowMutation.mutate(id);
+    } else {
+      followMutation.mutate(id);
+    }
   }
 
   return (
@@ -285,11 +351,12 @@ export default function NetworkScreen() {
                           )}
                           <Pressable
                             onPress={() => toggleFollow(m.id)}
-                            style={[styles.followBtn, following[m.id] && styles.followBtnActive]}
+                            style={[styles.followBtn, followingIds?.has(m.id) && styles.followBtnActive]}
                             testID={`follow-${m.id}`}
+                            disabled={followMutation.isPending || unfollowMutation.isPending}
                           >
-                            <Text style={[styles.followLabel, following[m.id] && styles.followLabelActive]}>
-                              {following[m.id] ? "Following" : "Follow"}
+                            <Text style={[styles.followLabel, followingIds?.has(m.id) && styles.followLabelActive]}>
+                              {followingIds?.has(m.id) ? "Following" : "Follow"}
                             </Text>
                           </Pressable>
                         </View>
@@ -328,11 +395,12 @@ export default function NetworkScreen() {
                 )}
                 <Pressable
                   onPress={() => toggleFollow(m.id)}
-                  style={[styles.followBtn, following[m.id] && styles.followBtnActive]}
+                  style={[styles.followBtn, followingIds?.has(m.id) && styles.followBtnActive]}
                   testID={`follow-${m.id}`}
+                  disabled={followMutation.isPending || unfollowMutation.isPending}
                 >
-                  <Text style={[styles.followLabel, following[m.id] && styles.followLabelActive]}>
-                    {following[m.id] ? "Following" : "Follow"}
+                  <Text style={[styles.followLabel, followingIds?.has(m.id) && styles.followLabelActive]}>
+                    {followingIds?.has(m.id) ? "Following" : "Follow"}
                   </Text>
                 </Pressable>
               </View>
