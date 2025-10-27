@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Ban, Flag } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Ban, Flag, Star } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -70,6 +70,9 @@ export default function UserProfileScreen() {
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState<string>("");
+  const [ratingModalVisible, setRatingModalVisible] = useState<boolean>(false);
+  const [ratingValue, setRatingValue] = useState<number>(0);
+  const [ratingExplanation, setRatingExplanation] = useState<string>("");
 
   const { data: isBlocked } = useQuery<boolean>({
     queryKey: ["is-blocked", currentUserId, userId],
@@ -228,6 +231,36 @@ export default function UserProfileScreen() {
       return items;
     },
     enabled: !!userId,
+  });
+
+  const { data: avgRating } = useQuery<{ avg: number; count: number }>({
+    queryKey: ["rating-average", userId],
+    queryFn: async () => {
+      if (!userId) return { avg: 0, count: 0 };
+      const ratings = await sbSelect<{ rating: number }>("user_ratings", {
+        select: "rating",
+        query: { rated_user_id: `eq.${userId}` },
+        limit: 1000,
+      });
+      if (ratings.length === 0) return { avg: 0, count: 0 };
+      const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+      return { avg: sum / ratings.length, count: ratings.length };
+    },
+    enabled: !!userId,
+  });
+
+  const { data: myRating } = useQuery<{ rating: number; explanation?: string } | null>({
+    queryKey: ["my-rating", currentUserId, userId],
+    queryFn: async () => {
+      if (!currentUserId || !userId || currentUserId === userId) return null;
+      const ratings = await sbSelect<{ rating: number; explanation?: string }>("user_ratings", {
+        select: "rating,explanation",
+        query: { rater_id: `eq.${currentUserId}`, rated_user_id: `eq.${userId}` },
+        limit: 1,
+      });
+      return ratings[0] ?? null;
+    },
+    enabled: !!currentUserId && !!userId && currentUserId !== userId,
   });
 
   const applyMutation = useMutation({
@@ -421,6 +454,47 @@ export default function UserProfileScreen() {
     },
   });
 
+  const ratingMutation = useMutation({
+    mutationFn: async ({ rating, explanation }: { rating: number; explanation: string }) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      if (!userId) throw new Error("No user to rate");
+      if (currentUserId === userId) throw new Error("Cannot rate yourself");
+      if (rating < 1 || rating > 5) throw new Error("Rating must be between 1 and 5");
+      
+      console.log(`[Rating] User ${currentUserId} rating user ${userId} with ${rating} stars`);
+      
+      const supabase = getSupabase();
+      if (!supabase) throw new Error("Supabase not configured");
+      
+      const { error } = await supabase
+        .from("user_ratings")
+        .upsert(
+          {
+            rater_id: currentUserId,
+            rated_user_id: userId,
+            rating,
+            explanation: explanation.trim() || null,
+          },
+          { onConflict: "rater_id,rated_user_id" }
+        );
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      console.log("[Rating] Successfully rated user");
+      setRatingModalVisible(false);
+      setRatingValue(0);
+      setRatingExplanation("");
+      queryClient.invalidateQueries({ queryKey: ["rating-average", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-rating", currentUserId, userId] });
+      Alert.alert("Success", "Rating submitted successfully");
+    },
+    onError: (error: any) => {
+      console.error("[Rating] Error rating user:", error);
+      Alert.alert("Error", "Failed to submit rating. Please try again.");
+    },
+  });
+
   const coverCandidates: (string | undefined)[] = [
     data?.profile_customization?.backgroundImage,
     Array.isArray(data?.model_photos) ? data?.model_photos[0] : undefined,
@@ -548,6 +622,34 @@ export default function UserProfileScreen() {
           </View>
         )}
         <View style={styles.inner}>
+          {!isOwn && currentUserId && (
+            <Pressable
+              onPress={() => {
+                if (myRating) {
+                  setRatingValue(myRating.rating);
+                  setRatingExplanation(myRating.explanation || "");
+                }
+                setRatingModalVisible(true);
+              }}
+              style={styles.ratingButton}
+              testID="open-rating"
+            >
+              {avgRating && avgRating.count > 0 ? (
+                <>
+                  <Star color="#FCD34D" size={14} fill="#FCD34D" />
+                  <Text style={styles.ratingText}>
+                    {avgRating.avg.toFixed(1)}
+                  </Text>
+                  <Text style={styles.ratingCount}>({avgRating.count})</Text>
+                </>
+              ) : (
+                <>
+                  <Star color="#6B7280" size={14} />
+                  <Text style={styles.ratingTextEmpty}>Rate</Text>
+                </>
+              )}
+            </Pressable>
+          )}
           <View style={[styles.headerColumn, !cover && styles.headerColumnNoCover]}>
           <Pressable
             onPress={() => {
@@ -964,6 +1066,96 @@ export default function UserProfileScreen() {
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
+
+      <Modal
+        visible={ratingModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setRatingModalVisible(false);
+          setRatingValue(0);
+          setRatingExplanation("");
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            style={styles.ratingModalOverlay}
+            onPress={() => {
+              setRatingModalVisible(false);
+              setRatingValue(0);
+              setRatingExplanation("");
+            }}
+          >
+            <Pressable style={styles.ratingModalContent} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.ratingModalTitle}>Rate {display.displayName}</Text>
+              <Text style={styles.ratingModalSubtitle}>How would you rate your experience?</Text>
+              
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setRatingValue(star)}
+                    style={styles.starButton}
+                    testID={`star-${star}`}
+                  >
+                    <Star
+                      color={star <= ratingValue ? "#FCD34D" : "#4B5563"}
+                      size={40}
+                      fill={star <= ratingValue ? "#FCD34D" : "transparent"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TextInput
+                style={styles.ratingInput}
+                placeholder="Add an explanation (optional)..."
+                placeholderTextColor="#6B7280"
+                value={ratingExplanation}
+                onChangeText={setRatingExplanation}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+
+              <View style={styles.ratingModalActions}>
+                <TouchableOpacity
+                  style={[styles.ratingModalButton, styles.ratingModalButtonCancel]}
+                  onPress={() => {
+                    setRatingModalVisible(false);
+                    setRatingValue(0);
+                    setRatingExplanation("");
+                  }}
+                >
+                  <Text style={styles.ratingModalButtonTextCancel}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.ratingModalButton,
+                    styles.ratingModalButtonSubmit,
+                    ratingValue === 0 && styles.ratingModalButtonDisabled,
+                  ]}
+                  onPress={() => {
+                    if (ratingValue === 0) {
+                      Alert.alert("Error", "Please select a rating");
+                      return;
+                    }
+                    ratingMutation.mutate({ rating: ratingValue, explanation: ratingExplanation });
+                  }}
+                  disabled={ratingValue === 0 || ratingMutation.isPending}
+                >
+                  <Text style={styles.ratingModalButtonTextSubmit}>
+                    {ratingMutation.isPending ? "Submitting..." : "Submit Rating"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -1237,6 +1429,109 @@ const styles = StyleSheet.create({
   },
   reportModalButtonTextSubmit: {
     color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  ratingButton: {
+    position: "absolute" as const,
+    top: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: "rgba(17, 17, 23, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(252, 211, 77, 0.3)",
+    zIndex: 10,
+  },
+  ratingText: {
+    color: "#FCD34D",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  ratingCount: {
+    color: "#9CA3AF",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  ratingTextEmpty: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  ratingModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "flex-end",
+  },
+  ratingModalContent: {
+    backgroundColor: "#1A1A24",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  ratingModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  ratingModalSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  starsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+    marginVertical: 12,
+  },
+  starButton: {
+    padding: 4,
+  },
+  ratingInput: {
+    backgroundColor: "#0F0F15",
+    borderWidth: 1.5,
+    borderColor: "#2A2A38",
+    borderRadius: 12,
+    padding: 16,
+    color: "#FFFFFF",
+    fontSize: 15,
+    minHeight: 100,
+  },
+  ratingModalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  ratingModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  ratingModalButtonCancel: {
+    backgroundColor: "#2A2A38",
+  },
+  ratingModalButtonTextCancel: {
+    color: "#E5E7EB",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  ratingModalButtonSubmit: {
+    backgroundColor: "#FCD34D",
+  },
+  ratingModalButtonDisabled: {
+    backgroundColor: "#4B5563",
+    opacity: 0.5,
+  },
+  ratingModalButtonTextSubmit: {
+    color: "#0F0F15",
     fontSize: 16,
     fontWeight: "700",
   },
