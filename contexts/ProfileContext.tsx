@@ -242,6 +242,17 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     return { user_id: p.user_id, displayName, username, avatarUrl } as ResolvedProfile;
   }, [resolved, session?.user?.id]);
 
+  const mutateProfile = updateProfileMutation.mutate;
+  const mutateProfileAsync = updateProfileMutation.mutateAsync;
+
+  const updateProfile = useCallback((updates: Partial<Profile>) => {
+    mutateProfile(updates);
+  }, [mutateProfile]);
+
+  const updateProfileAsync = useCallback(async (updates: Partial<Profile>) => {
+    return mutateProfileAsync(updates);
+  }, [mutateProfileAsync]);
+
   return useMemo(() => ({
     currentUserId,
     session,
@@ -250,10 +261,10 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     getDisplayForProfile,
     isLoading: profileQuery.isLoading,
     error: profileQuery.error,
-    updateProfile: updateProfileMutation.mutate,
-    updateProfileAsync: updateProfileMutation.mutateAsync,
+    updateProfile,
+    updateProfileAsync,
     isUpdating: updateProfileMutation.isPending,
     login,
     logout,
-  }), [currentUserId, session, profileQuery.data, resolved, getDisplayForProfile, profileQuery.isLoading, profileQuery.error, updateProfileMutation.mutate, updateProfileMutation.mutateAsync, updateProfileMutation.isPending, login, logout]);
+  }), [currentUserId, session, profileQuery.data, resolved, getDisplayForProfile, profileQuery.isLoading, profileQuery.error, updateProfile, updateProfileAsync, updateProfileMutation.isPending, login, logout]);
 });

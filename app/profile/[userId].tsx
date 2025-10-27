@@ -75,12 +75,17 @@ export default function UserProfileScreen() {
     queryKey: ["is-blocked", currentUserId, userId],
     queryFn: async () => {
       if (!currentUserId || !userId || currentUserId === userId) return false;
-      const rows = await sbSelect<{ id: string }>("blocked_users", {
-        select: "id",
-        query: { blocker_id: `eq.${currentUserId}`, blocked_id: `eq.${userId}` },
-        limit: 1,
-      });
-      return rows.length > 0;
+      try {
+        const rows = await sbSelect<{ id: string }>("blocked_users", {
+          select: "id",
+          query: { blocker_id: `eq.${currentUserId}`, blocked_id: `eq.${userId}` },
+          limit: 1,
+        });
+        return rows.length > 0;
+      } catch (error: any) {
+        console.log("[Block] Table may not exist yet:", error?.message);
+        return false;
+      }
     },
     enabled: !!currentUserId && !!userId && currentUserId !== userId,
   });
