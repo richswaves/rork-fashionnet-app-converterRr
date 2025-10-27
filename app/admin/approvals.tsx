@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Image } from "react-native";
-import { Shield, Instagram, Youtube } from "lucide-react-native";
+import { Shield, Instagram, Youtube, Linkedin } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -13,6 +13,7 @@ interface SocialLinks {
   youtube?: string;
   twitter?: string;
   tiktok?: string;
+  linkedin?: string;
 }
 
 interface AdminUser {
@@ -450,6 +451,22 @@ export default function AdminApprovalsScreen() {
                           <Text style={styles.socialIcon}>♪</Text>
                           <Text style={styles.socialLinkText} numberOfLines={1}>
                             {p.social_links.tiktok}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {p.social_links.linkedin && (
+                        <TouchableOpacity 
+                          style={styles.socialLinkBtn}
+                          onPress={() => {
+                            const url = p.social_links?.linkedin?.startsWith('http') 
+                              ? p.social_links.linkedin 
+                              : `https://linkedin.com/in/${p.social_links?.linkedin}`;
+                            console.log('[Social] Opening LinkedIn:', url);
+                          }}
+                        >
+                          <Linkedin size={16} color="#0077B5" />
+                          <Text style={styles.socialLinkText} numberOfLines={1}>
+                            {p.social_links.linkedin}
                           </Text>
                         </TouchableOpacity>
                       )}
