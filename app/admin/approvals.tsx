@@ -109,7 +109,10 @@ export default function AdminApprovalsScreen() {
         });
         console.log(`[Admin] ${status} users:`, rows.length);
         rows.forEach((user) => {
-          console.log(`[Admin] User ${user.user_id} social_links:`, user.social_links);
+          console.log(`[Admin] User ${user.user_id}:`);
+          console.log(`  - full_name: ${user.full_name}`);
+          console.log(`  - social_links type:`, typeof user.social_links);
+          console.log(`  - social_links value:`, JSON.stringify(user.social_links));
         });
         return rows;
       };
@@ -388,77 +391,100 @@ export default function AdminApprovalsScreen() {
                   </View>
                 )}
 
-                {p.social_links && (Object.keys(p.social_links).length > 0) && (
+                {(() => {
+                  console.log(`[Admin UI] Rendering user ${p.user_id}, social_links:`, p.social_links);
+                  
+                  let socialLinks = p.social_links;
+                  
+                  if (typeof socialLinks === 'string') {
+                    try {
+                      socialLinks = JSON.parse(socialLinks);
+                      console.log(`[Admin UI] Parsed social_links from string:`, socialLinks);
+                    } catch (e) {
+                      console.error(`[Admin UI] Failed to parse social_links:`, e);
+                      socialLinks = null;
+                    }
+                  }
+                  
+                  if (!socialLinks || typeof socialLinks !== 'object' || Object.keys(socialLinks).length === 0) {
+                    console.log(`[Admin UI] No valid social links for user ${p.user_id}`);
+                    return null;
+                  }
+                  
+                  console.log(`[Admin UI] Displaying social links for user ${p.user_id}:`, Object.keys(socialLinks));
+                  
+                  return (
                   <View style={styles.socialLinksSection}>
                     <Text style={styles.socialLinksLabel}>Social Links</Text>
                     <View style={styles.socialLinksRow}>
-                      {p.social_links.instagram && (
+                      {socialLinks.instagram && (
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
-                            const url = p.social_links?.instagram?.startsWith('http') 
-                              ? p.social_links.instagram 
-                              : `https://instagram.com/${p.social_links?.instagram}`;
+                            const url = socialLinks?.instagram?.startsWith('http') 
+                              ? socialLinks.instagram 
+                              : `https://instagram.com/${socialLinks?.instagram}`;
                             console.log('[Social] Opening Instagram:', url);
                           }}
                         >
                           <Instagram size={16} color="#C13584" />
                           <Text style={styles.socialLinkText} numberOfLines={1}>
-                            {p.social_links.instagram}
+                            {socialLinks.instagram}
                           </Text>
                         </TouchableOpacity>
                       )}
-                      {p.social_links.youtube && (
+                      {socialLinks.youtube && (
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
-                            const url = p.social_links?.youtube?.startsWith('http') 
-                              ? p.social_links.youtube 
-                              : `https://youtube.com/${p.social_links?.youtube}`;
+                            const url = socialLinks?.youtube?.startsWith('http') 
+                              ? socialLinks.youtube 
+                              : `https://youtube.com/${socialLinks?.youtube}`;
                             console.log('[Social] Opening YouTube:', url);
                           }}
                         >
                           <Youtube size={16} color="#FF0000" />
                           <Text style={styles.socialLinkText} numberOfLines={1}>
-                            {p.social_links.youtube}
+                            {socialLinks.youtube}
                           </Text>
                         </TouchableOpacity>
                       )}
-                      {p.social_links.twitter && (
+                      {socialLinks.twitter && (
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
-                            const url = p.social_links?.twitter?.startsWith('http') 
-                              ? p.social_links.twitter 
-                              : `https://twitter.com/${p.social_links?.twitter}`;
+                            const url = socialLinks?.twitter?.startsWith('http') 
+                              ? socialLinks.twitter 
+                              : `https://twitter.com/${socialLinks?.twitter}`;
                             console.log('[Social] Opening Twitter:', url);
                           }}
                         >
                           <Text style={styles.socialIcon}>𝕏</Text>
                           <Text style={styles.socialLinkText} numberOfLines={1}>
-                            {p.social_links.twitter}
+                            {socialLinks.twitter}
                           </Text>
                         </TouchableOpacity>
                       )}
-                      {p.social_links.tiktok && (
+                      {socialLinks.tiktok && (
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
-                            const url = p.social_links?.tiktok?.startsWith('http') 
-                              ? p.social_links.tiktok 
-                              : `https://tiktok.com/@${p.social_links?.tiktok}`;
+                            const url = socialLinks?.tiktok?.startsWith('http') 
+                              ? socialLinks.tiktok 
+                              : `https://tiktok.com/@${socialLinks?.tiktok}`;
                             console.log('[Social] Opening TikTok:', url);
                           }}
                         >
                           <Text style={styles.socialIcon}>♪</Text>
                           <Text style={styles.socialLinkText} numberOfLines={1}>
-                            {p.social_links.tiktok}
+                            {socialLinks.tiktok}
                           </Text>
                         </TouchableOpacity>
                       )}
                     </View>
                   </View>
-                )}
+                  );
+                })()}
 
                 {responses.length > 0 && (
                   <View style={styles.responsesSection}>
