@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
+import { Bell, ChevronDown, MapPin, Search, Send, User, ShieldCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 interface ProfileRow {
   user_id: string;
@@ -36,6 +37,7 @@ export default function NetworkScreen() {
   const [locationMenuOpen, setLocationMenuOpen] = useState<boolean>(false);
 
   const { resolvedProfile, getDisplayForProfile, currentUserId } = useProfile();
+  const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
   const queryClient = useQueryClient();
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
@@ -216,9 +218,32 @@ export default function NetworkScreen() {
           <Pressable onPress={() => console.log("search")} style={styles.iconBtn} testID="top-search">
             <Search color="#E5E7EB" size={20} />
           </Pressable>
-          <Pressable onPress={() => console.log("bell")} style={styles.iconBtn} testID="top-bell">
-            <Bell color="#E5E7EB" size={20} />
-          </Pressable>
+          <View style={styles.iconBadgeWrap}>
+            <Pressable onPress={() => router.push("/notifications")} style={styles.iconBtn} testID="top-bell">
+              <Bell color="#E5E7EB" size={20} />
+            </Pressable>
+            {(notificationCount ?? 0) > 0 && (
+              <View style={styles.notificationBadge} testID="notification-badge">
+                <Text style={styles.notificationBadgeText}>
+                  {(notificationCount ?? 0) > 99 ? "99+" : String(notificationCount ?? 0)}
+                </Text>
+              </View>
+            )}
+          </View>
+          {isAdmin ? (
+            <View style={styles.iconBadgeWrap}>
+              <Pressable onPress={() => router.push("/admin")} style={styles.iconBtn} testID="top-admin">
+                <ShieldCheck color="#34D399" size={20} />
+              </Pressable>
+              {(adminNotificationCount ?? 0) > 0 && (
+                <View style={styles.adminBadge} testID="admin-badge">
+                  <Text style={styles.adminBadgeText}>
+                    {(adminNotificationCount ?? 0) > 99 ? "99+" : String(adminNotificationCount ?? 0)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : null}
           <Pressable onPress={() => console.log("share")} style={styles.iconBtn} testID="top-share">
             <Send color="#E5E7EB" size={20} />
           </Pressable>
@@ -426,6 +451,47 @@ const styles = StyleSheet.create({
   profileText: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" },
   topIcons: { flexDirection: "row", alignItems: "center" },
   iconBtn: { padding: 8, borderRadius: 999 },
+  iconBadgeWrap: { position: "relative" as const },
+  notificationBadge: {
+    position: "absolute" as const,
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#EF4444",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#0B0B0F",
+  },
+  notificationBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800" as const,
+    lineHeight: 12,
+  },
+  adminBadge: {
+    position: "absolute" as const,
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#34D399",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#0B0B0F",
+  },
+  adminBadgeText: {
+    color: "#000000",
+    fontSize: 10,
+    fontWeight: "800" as const,
+    lineHeight: 12,
+  },
 
   scroll: { paddingHorizontal: 12, paddingBottom: 24 },
 
