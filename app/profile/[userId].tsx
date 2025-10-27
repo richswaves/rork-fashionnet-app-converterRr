@@ -643,7 +643,7 @@ export default function UserProfileScreen() {
                     console.log("[DM] Created new conversation:", conversationId);
                   }
 
-                  router.push("/(tabs)/messages");
+                  router.push(`/(tabs)/messages?conversationId=${conversationId}`);
                 } catch (error) {
                   console.error("[DM] Error:", error);
                   Alert.alert("Error", "Something went wrong");

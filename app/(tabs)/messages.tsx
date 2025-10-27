@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Send, Users, Search, MessageCircle } from "lucide-react-native";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useLocalSearchParams } from "expo-router";
 
 interface Message {
   id: string;
@@ -64,6 +65,7 @@ type ConversationItem = Conversation | GroupConversation;
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
+  const { conversationId: routeConversationId } = useLocalSearchParams<{ conversationId?: string }>();
   const { currentUserId, getDisplayForProfile } = useProfile();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -359,6 +361,15 @@ export default function MessagesScreen() {
       loadConversations();
     }
   }, [currentUserId, loadConversations]);
+
+  useEffect(() => {
+    if (routeConversationId && conversations.length > 0) {
+      const convExists = conversations.find((c) => c.id === routeConversationId);
+      if (convExists) {
+        setSelectedConversation(routeConversationId);
+      }
+    }
+  }, [routeConversationId, conversations]);
 
   useEffect(() => {
     if (!supabase || !selectedConversation) return;
