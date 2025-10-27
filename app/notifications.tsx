@@ -220,12 +220,14 @@ export default function NotificationsScreen() {
     queryKey: ["my-applications", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return [];
+      console.log('[MyApplications] Fetching applications for user:', currentUserId);
       const apps = await sbSelect<{ id: string; opportunity_id: string; status?: string; created_at: string }>("applications", {
         select: "*",
         query: { applicant_id: `eq.${currentUserId}` },
         order: { column: "created_at", ascending: false },
         limit: 100,
       });
+      console.log('[MyApplications] Found applications:', apps.length);
 
       if (apps.length === 0) return [];
 
@@ -234,13 +236,16 @@ export default function NotificationsScreen() {
         select: "id,title",
         query: { id: `in.(${oppIds.join(",")})` },
       });
+      console.log('[MyApplications] Found opportunities:', opportunities.length);
 
       const oppMap = new Map(opportunities.map(o => [o.id, o]));
 
-      return apps.map(app => ({
+      const result = apps.map(app => ({
         ...app,
         opportunities: oppMap.get(app.opportunity_id),
       }));
+      console.log('[MyApplications] Final applications with opportunities:', result);
+      return result;
     },
     enabled: !!currentUserId,
     refetchInterval: 30000,
@@ -399,10 +404,11 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
           if (item.type === "myApplication") {
-            const oppTitle = item.data.opportunities?.title ?? "an opportunity";
+            const oppTitle = item.data.opportunities?.title ?? "Untitled Opportunity";
             const status = item.data.status || "pending";
             const isApproved = status === "approved";
             const isRejected = status === "rejected";
+            const isPending = !isApproved && !isRejected;
             
             return (
               <View style={styles.myAppCard} testID={`notif-myapp-${item.data.id}`}>
@@ -420,15 +426,18 @@ export default function NotificationsScreen() {
                 </View>
                 <View style={styles.notifContent}>
                   <Text style={styles.myAppTitle}>
-                    Application to <Text style={styles.notifTextBold}>{oppTitle}</Text>
+                    {oppTitle}
+                  </Text>
+                  <Text style={styles.myAppSubtitle}>
+                    You applied to this opportunity
                   </Text>
                   <Text style={[
                     styles.myAppStatus,
                     isApproved && styles.myAppStatusApproved,
                     isRejected && styles.myAppStatusRejected,
-                    !isApproved && !isRejected && styles.myAppStatusPending,
+                    isPending && styles.myAppStatusPending,
                   ]}>
-                    {isApproved ? "✓ Approved" : isRejected ? "✗ Denied" : "⏳ Pending"}
+                    {isApproved ? "✓ Approved" : isRejected ? "✗ Denied" : "⏳ Pending Review"}
                   </Text>
                   <Text style={styles.notifTime}>{formatRelativeTime(item.data.created_at)}</Text>
                 </View>
@@ -855,10 +864,16 @@ const styles = StyleSheet.create({
   },
   myAppTitle: {
     color: "#E5E7EB",
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 2,
     lineHeight: 20,
+  },
+  myAppSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "500",
+    marginBottom: 6,
   },
   myAppStatus: {
     fontSize: 13,
