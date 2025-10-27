@@ -208,6 +208,16 @@ export default function AdminDashboard() {
           </TouchableOpacity>
         </Section>
 
+        <Section title="Behavior Analytics">
+          <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/activity")}>
+            <View style={styles.linkLeftContent}>
+              <BarChart3 size={18} color="#10B981" />
+              <Text style={styles.linkText}>User behavior & search trends</Text>
+            </View>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+        </Section>
+
         <Section title="Question Analytics">
           <TouchableOpacity style={styles.linkCard} onPress={() => router.push("/admin/question-analytics")}>
             <View style={styles.linkLeftContent}>
