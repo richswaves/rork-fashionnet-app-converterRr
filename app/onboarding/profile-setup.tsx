@@ -255,6 +255,14 @@ export default function ProfileSetup() {
       Alert.alert("Missing info", "Choose your user type and role.");
       return;
     }
+    if (!displayName?.trim()) {
+      Alert.alert("Missing info", "Please enter your display name.");
+      return;
+    }
+    if (!profilePictureUri) {
+      Alert.alert("Missing info", "Please upload a profile picture.");
+      return;
+    }
 
     try {
       console.log("[ProfileSetup] Saving profile with userId:", currentUserId);
