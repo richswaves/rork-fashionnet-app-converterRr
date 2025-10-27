@@ -246,24 +246,6 @@ export default function ProfileSetup() {
   }
 
   const onSave = useCallback(async () => {
-    if (!currentUserId) {
-      console.error("[ProfileSetup] No currentUserId available when trying to save");
-      Alert.alert("Not logged in", "Please log in to continue. Your session may have expired.");
-      return;
-    }
-    if (!userType || !role) {
-      Alert.alert("Missing info", "Choose your user type and role.");
-      return;
-    }
-    if (!displayName?.trim()) {
-      Alert.alert("Missing info", "Please enter your display name.");
-      return;
-    }
-    if (!profilePictureUri) {
-      Alert.alert("Missing info", "Please upload a profile picture.");
-      return;
-    }
-
     try {
       console.log("[ProfileSetup] Saving profile with userId:", currentUserId);
       await recordEvent(3, "profile_details", "complete");
