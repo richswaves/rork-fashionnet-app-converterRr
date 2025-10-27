@@ -623,6 +623,10 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
+        <View style={styles.saveReminder}>
+          <Text style={styles.saveReminderText}>💡 Remember to select Save at the bottom for changes to apply</Text>
+        </View>
+
         <View style={styles.hero}>
           <View style={styles.heroContent}>
 
@@ -1017,6 +1021,7 @@ export default function EditProfileScreen() {
                       setLinkName("");
                       setLinkUrl("");
                       setEditingLinkIndex(-1);
+                      Alert.alert("Remember", "Select Save on profile page for changes to apply");
                     }}
                     style={styles.saveBtn}
                   >
@@ -1509,6 +1514,21 @@ const styles = StyleSheet.create({
     borderColor: "#23232B",
     alignItems: "center",
     justifyContent: "center",
+  },
+  saveReminder: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(59, 130, 246, 0.3)",
+    borderRadius: 12,
+    padding: 12,
+  },
+  saveReminderText: {
+    color: "#93C5FD",
+    fontSize: 13,
+    fontWeight: "600" as const,
+    textAlign: "center" as const,
   },
 
 });
