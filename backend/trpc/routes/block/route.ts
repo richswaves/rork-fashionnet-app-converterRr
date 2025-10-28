@@ -59,7 +59,8 @@ export const blockProcedure = publicProcedure
         console.error("[Block] Error:", res.status, text);
         throw new Error(text || `RPC block_user failed: ${res.status}`);
       }
-      console.log("[Block] Successfully blocked user", input.targetUserId);
+      const text = await res.text();
+      console.log("[Block] Successfully blocked user", input.targetUserId, "Response:", text);
       return { success: true };
     });
 
@@ -77,7 +78,8 @@ export const unblockProcedure = publicProcedure
         console.error("[Unblock] Error:", res.status, text);
         throw new Error(text || `RPC unblock_user failed: ${res.status}`);
       }
-      console.log("[Unblock] Successfully unblocked user", input.targetUserId);
+      const text = await res.text();
+      console.log("[Unblock] Successfully unblocked user", input.targetUserId, "Response:", text);
       return { success: true };
     });
 
