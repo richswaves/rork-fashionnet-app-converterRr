@@ -331,7 +331,7 @@ export default function UserProfileScreen() {
   });
 
 
-  const blockMutation = trpc().block.block.useMutation();
+  const blockMutation = trpc.block.block.useMutation();
 
   const reportMutation = useMutation({
     mutationFn: async ({ reason, blockUser }: { reason: string; blockUser: boolean }) => {
