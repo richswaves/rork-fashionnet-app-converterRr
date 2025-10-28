@@ -51,10 +51,7 @@ export const blockProcedure = publicProcedure
       const url = `${supabaseUrl()}/rest/v1/rpc/block_user`;
       const res = await fetch(url, {
         method: "POST",
-        headers: {
-          ...authHeaders(ctx.req),
-          "Prefer": "return=minimal",
-        },
+        headers: authHeaders(ctx.req),
         body: JSON.stringify({ target_user_id: input.targetUserId }),
       });
       if (!res.ok) {
@@ -72,10 +69,7 @@ export const unblockProcedure = publicProcedure
       const url = `${supabaseUrl()}/rest/v1/rpc/unblock_user`;
       const res = await fetch(url, {
         method: "POST",
-        headers: {
-          ...authHeaders(ctx.req),
-          "Prefer": "return=minimal",
-        },
+        headers: authHeaders(ctx.req),
         body: JSON.stringify({ target_user_id: input.targetUserId }),
       });
       if (!res.ok) {
