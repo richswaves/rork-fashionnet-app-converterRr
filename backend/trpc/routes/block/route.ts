@@ -59,6 +59,15 @@ export default createTRPCRouter({
         const text = await res.text();
         throw new Error(text || `RPC block_user failed: ${res.status}`);
       }
+      const text = await res.text();
+      try {
+        if (text && text.trim()) {
+          const data = JSON.parse(text);
+          return { ok: true, data };
+        }
+      } catch {
+        console.log("[Block] Response is not JSON, treating as success", text);
+      }
       return { ok: true } as const;
     }),
 
@@ -74,6 +83,15 @@ export default createTRPCRouter({
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `RPC unblock_user failed: ${res.status}`);
+      }
+      const text = await res.text();
+      try {
+        if (text && text.trim()) {
+          const data = JSON.parse(text);
+          return { ok: true, data };
+        }
+      } catch {
+        console.log("[Unblock] Response is not JSON, treating as success", text);
       }
       return { ok: true } as const;
     }),
