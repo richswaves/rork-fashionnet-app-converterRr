@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../../create-context";
+import { publicProcedure } from "../../create-context";
 
 function env(key: string): string {
   const v = (typeof process !== "undefined" ? process.env?.[key] : undefined) ?? "";
@@ -28,8 +28,7 @@ function authHeaders(req: Request) {
   return headers;
 }
 
-export default createTRPCRouter({
-  isBlocked: publicProcedure
+export const isBlockedProcedure = publicProcedure
     .input(z.object({ targetUserId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const url = `${supabaseUrl()}/rest/v1/rpc/is_blocked`;
@@ -44,9 +43,9 @@ export default createTRPCRouter({
       }
       const data = (await res.json()) as boolean;
       return data;
-    }),
+    });
 
-  block: publicProcedure
+export const blockProcedure = publicProcedure
     .input(z.object({ targetUserId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const url = `${supabaseUrl()}/rest/v1/rpc/block_user`;
@@ -65,9 +64,9 @@ export default createTRPCRouter({
       }
       console.log("[Block] Successfully blocked user", input.targetUserId);
       return { success: true };
-    }),
+    });
 
-  unblock: publicProcedure
+export const unblockProcedure = publicProcedure
     .input(z.object({ targetUserId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const url = `${supabaseUrl()}/rest/v1/rpc/unblock_user`;
@@ -86,9 +85,9 @@ export default createTRPCRouter({
       }
       console.log("[Unblock] Successfully unblocked user", input.targetUserId);
       return { success: true };
-    }),
+    });
 
-  listBlocked: publicProcedure
+export const listBlockedProcedure = publicProcedure
     .query(async ({ ctx }) => {
       const url = new URL(`${supabaseUrl()}/rest/v1/blocked_users`);
       url.searchParams.set("select", "id,blocked_user_id,created_at");
@@ -102,5 +101,4 @@ export default createTRPCRouter({
       }
       const rows = (await res.json()) as { id: string; blocked_user_id: string; created_at: string }[];
       return rows;
-    }),
-});
+    });

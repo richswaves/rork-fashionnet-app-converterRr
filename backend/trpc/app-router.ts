@@ -1,7 +1,7 @@
 import { createTRPCRouter } from "./create-context";
 import hiRoute from "./routes/example/hi/route";
 import assignAdminRoleProcedure from "./routes/admin/assign-admin-role/route";
-import blockRouter from "./routes/block/route";
+import { isBlockedProcedure, blockProcedure, unblockProcedure, listBlockedProcedure } from "./routes/block/route";
 import { getFunnelDataProcedure } from "./routes/admin/get-funnel-data/route";
 import analyticsRouter from "./routes/admin/analytics/route";
 
@@ -14,7 +14,12 @@ export const appRouter = createTRPCRouter({
     getFunnelData: getFunnelDataProcedure,
     analytics: analyticsRouter,
   }),
-  block: blockRouter,
+  block: createTRPCRouter({
+    isBlocked: isBlockedProcedure,
+    block: blockProcedure,
+    unblock: unblockProcedure,
+    listBlocked: listBlockedProcedure,
+  }),
 });
 
 export type AppRouter = typeof appRouter;
