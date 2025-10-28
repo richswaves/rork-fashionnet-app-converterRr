@@ -165,15 +165,9 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     },
     onSuccess: async (data) => {
       console.log("[ProfileContext] Profile update successful, invalidating queries");
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["profile", currentUserId] }),
-        queryClient.invalidateQueries({ queryKey: ["profile"] }),
-        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
-      ]);
-      queryClient.refetchQueries({ queryKey: ["profile", currentUserId] });
-      queryClient.refetchQueries({ queryKey: ["profile"] });
-      queryClient.refetchQueries({ queryKey: ["opportunities"] });
-      profileQuery.refetch();
+      await queryClient.invalidateQueries({ queryKey: ["profile", currentUserId] });
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
     },
     onError: (error) => {
       console.error("[ProfileContext] Profile update failed:", error);
