@@ -1,13 +1,10 @@
-import { Tabs, useRouter } from "expo-router";
-import { Compass, Users, MessageCircle, Plus } from "lucide-react-native";
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import { Tabs } from "expo-router";
+import { Compass, Users, MessageCircle } from "lucide-react-native";
+import React from "react-native";
 
 import Colors from "@/constants/colors";
 
 export default function TabLayout() {
-  const router = useRouter();
-
   return (
     <Tabs
       screenOptions={{
@@ -31,23 +28,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="create"
-        options={{
-          title: "Create",
-          tabBarIcon: ({ color, size }) => (
-            <View style={styles.createButton}>
-              <Plus color="#000000" size={size ?? 24} />
-            </View>
-          ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-            router.push("/create-opportunity");
-          },
-        }}
-      />
+
       <Tabs.Screen
         name="network"
         options={{
@@ -66,13 +47,4 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  createButton: {
-    backgroundColor: "#FFFFFF",
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
+
