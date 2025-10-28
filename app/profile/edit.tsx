@@ -68,15 +68,21 @@ export default function EditProfileScreen() {
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
 
-  const { data: blockedUsers = [], refetch: refetchBlockedUsers } = useQuery<Array<{ blocked_user_id: string; blocked_user_profile: { full_name?: string; username?: string; profile_picture?: string } }>>({    queryKey: ["blocked-users", currentUserId],
+  const { data: blockedUsers = [], refetch: refetchBlockedUsers } = useQuery<Array<{ blocked_user_id: string; blocked_user_profile: { full_name?: string; username?: string; profile_picture?: string } }>>({
+    queryKey: ["blocked-users", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return [];
-      const rows = await sbSelect<any>("blocked_users", {
-        select: "blocked_user_id,blocked_user_profile:profiles!blocked_users_blocked_user_id_fkey(full_name,username,profile_picture)",
-        query: { blocker_id: `eq.${currentUserId}` },
-        order: { column: "created_at", ascending: false },
-      });
-      return rows ?? [];
+      try {
+        const rows = await sbSelect<any>("blocked_users", {
+          select: "blocked_user_id,blocked_user_profile:profiles!blocked_users_blocked_user_id_fkey(full_name,username,profile_picture)",
+          query: { blocker_id: `eq.${currentUserId}` },
+          order: { column: "created_at", ascending: false },
+        });
+        return rows ?? [];
+      } catch (error) {
+        console.error("[BlockedUsers] Error fetching blocked users:", error);
+        return [];
+      }
     },
     enabled: !!currentUserId,
   });
@@ -699,7 +705,7 @@ export default function EditProfileScreen() {
             <Text style={styles.emptyLinksText}>No custom links added yet</Text>
           ) : (
             <View style={styles.linksList}>
-              {customLinks.map((link, index) => (
+              {Array.isArray(customLinks) && customLinks.map((link, index) => (
                 <View key={index} style={styles.linkCard}>
                   {inlineEditingIndex === index ? (
                     <View style={styles.linkCardEditMode}>
@@ -816,7 +822,7 @@ export default function EditProfileScreen() {
           )}
         </View>
 
-        {blockedUsers.length > 0 && (
+        {Array.isArray(blockedUsers) && blockedUsers.length > 0 && (
           <View style={styles.blockedSection}>
             <Text style={styles.blockedSectionTitle}>Blocked Users</Text>
             {blockedUsers.map((block) => {
