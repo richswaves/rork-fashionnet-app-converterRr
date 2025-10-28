@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { sbSelect } from "@/integrations/supabase/client";
 import { trpc } from "@/lib/trpc";
 import { Shield, ArrowLeft, Calendar } from "lucide-react-native";
+import { useProfile } from "@/contexts/ProfileContext";
 
 function useIsAdmin(userId?: string) {
   return useQuery<boolean>({
@@ -29,8 +30,9 @@ export default function UserActivityScreen() {
   const params = useLocalSearchParams();
   const userId = String(params.userId || "");
   const [days, setDays] = useState<number>(30);
+  const { currentUserId } = useProfile();
 
-  const isAdmin = useIsAdmin(userId);
+  const isAdmin = useIsAdmin(currentUserId);
 
   const summary = trpc.admin.analytics.getUserActivitySummary.useQuery({ userId, daysBack: days }, { enabled: !!userId && isAdmin });
   const recent = trpc.admin.analytics.listRecentUserEvents.useQuery({ userId, limit: 50 }, { enabled: !!userId && isAdmin });
