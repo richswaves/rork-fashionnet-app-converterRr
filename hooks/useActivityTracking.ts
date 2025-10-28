@@ -33,89 +33,89 @@ export function useActivityTracking() {
   const trackActivity = useMutation({
     mutationFn: async (event: ActivityEvent) => {
       if (!currentUserId) {
-        console.log("[ActivityTracking] No user logged in, skipping track");
         return;
       }
-
-      console.log(`[ActivityTracking] Tracking activity: ${event.event_type} on ${event.page}`);
       
-      await sbInsert("user_activity_events", {
-        user_id: currentUserId,
-        event_type: event.event_type,
-        page: event.page,
-        metadata: event.metadata || null,
-      });
+      try {
+        await sbInsert("user_activity_events", {
+          user_id: currentUserId,
+          event_type: event.event_type,
+          page: event.page,
+          metadata: event.metadata || null,
+        });
+      } catch {
+        // Silently fail if tables don't exist yet
+      }
     },
-    onError: (error) => {
-      console.error("[ActivityTracking] Failed to track activity:", error);
+    onError: () => {
+      // Silently fail - activity tracking is optional
     },
   });
 
   const trackSearch = useMutation({
     mutationFn: async (event: SearchEvent) => {
       if (!currentUserId) {
-        console.log("[ActivityTracking] No user logged in, skipping search track");
         return;
       }
-
-      console.log(`[ActivityTracking] Tracking search on ${event.page}:`, {
-        query: event.search_query,
-        filters: event.filters,
-        results: event.results_count,
-      });
-
-      await sbInsert("search_analytics", {
-        user_id: currentUserId,
-        page: event.page,
-        search_query: event.search_query || null,
-        filters: event.filters || null,
-        results_count: event.results_count || null,
-      });
+      
+      try {
+        await sbInsert("search_analytics", {
+          user_id: currentUserId,
+          page: event.page,
+          search_query: event.search_query || null,
+          filters: event.filters || null,
+          results_count: event.results_count || null,
+        });
+      } catch {
+        // Silently fail if tables don't exist yet
+      }
     },
-    onError: (error) => {
-      console.error("[ActivityTracking] Failed to track search:", error);
+    onError: () => {
+      // Silently fail - activity tracking is optional
     },
   });
 
   const trackOpportunityInteraction = useMutation({
     mutationFn: async (interaction: OpportunityInteraction) => {
       if (!currentUserId) {
-        console.log("[ActivityTracking] No user logged in, skipping opportunity track");
         return;
       }
-
-      console.log(`[ActivityTracking] Tracking opportunity ${interaction.interaction_type}:`, interaction.opportunity_id);
-
-      await sbInsert("opportunity_interactions", {
-        user_id: currentUserId,
-        opportunity_id: interaction.opportunity_id,
-        interaction_type: interaction.interaction_type,
-        metadata: interaction.metadata || null,
-      });
+      
+      try {
+        await sbInsert("opportunity_interactions", {
+          user_id: currentUserId,
+          opportunity_id: interaction.opportunity_id,
+          interaction_type: interaction.interaction_type,
+          metadata: interaction.metadata || null,
+        });
+      } catch {
+        // Silently fail if tables don't exist yet
+      }
     },
-    onError: (error) => {
-      console.error("[ActivityTracking] Failed to track opportunity interaction:", error);
+    onError: () => {
+      // Silently fail - activity tracking is optional
     },
   });
 
   const trackNetworkInteraction = useMutation({
     mutationFn: async (interaction: NetworkInteraction) => {
       if (!currentUserId) {
-        console.log("[ActivityTracking] No user logged in, skipping network track");
         return;
       }
-
-      console.log(`[ActivityTracking] Tracking network ${interaction.interaction_type}:`, interaction.target_user_id);
-
-      await sbInsert("network_interactions", {
-        user_id: currentUserId,
-        target_user_id: interaction.target_user_id,
-        interaction_type: interaction.interaction_type,
-        metadata: interaction.metadata || null,
-      });
+      
+      try {
+        await sbInsert("network_interactions", {
+          user_id: currentUserId,
+          target_user_id: interaction.target_user_id,
+          interaction_type: interaction.interaction_type,
+          metadata: interaction.metadata || null,
+        });
+      } catch {
+        // Silently fail if tables don't exist yet
+      }
     },
-    onError: (error) => {
-      console.error("[ActivityTracking] Failed to track network interaction:", error);
+    onError: () => {
+      // Silently fail - activity tracking is optional
     },
   });
 
