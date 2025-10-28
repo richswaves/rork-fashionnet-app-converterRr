@@ -52,23 +52,18 @@ export default createTRPCRouter({
       const url = `${supabaseUrl()}/rest/v1/rpc/block_user`;
       const res = await fetch(url, {
         method: "POST",
-        headers: authHeaders(ctx.req),
+        headers: {
+          ...authHeaders(ctx.req),
+          "Prefer": "return=minimal",
+        },
         body: JSON.stringify({ target_user_id: input.targetUserId }),
       });
       if (!res.ok) {
         const text = await res.text();
+        console.error("[Block] Error:", res.status, text);
         throw new Error(text || `RPC block_user failed: ${res.status}`);
       }
-      const text = await res.text();
-      console.log("[Block] Response text:", text);
-      if (text && text.trim() && text.trim() !== '') {
-        try {
-          const data = JSON.parse(text);
-          return { success: true, data };
-        } catch (e) {
-          console.log("[Block] Response is not JSON, treating as success", text, e);
-        }
-      }
+      console.log("[Block] Successfully blocked user", input.targetUserId);
       return { success: true };
     }),
 
@@ -78,23 +73,18 @@ export default createTRPCRouter({
       const url = `${supabaseUrl()}/rest/v1/rpc/unblock_user`;
       const res = await fetch(url, {
         method: "POST",
-        headers: authHeaders(ctx.req),
+        headers: {
+          ...authHeaders(ctx.req),
+          "Prefer": "return=minimal",
+        },
         body: JSON.stringify({ target_user_id: input.targetUserId }),
       });
       if (!res.ok) {
         const text = await res.text();
+        console.error("[Unblock] Error:", res.status, text);
         throw new Error(text || `RPC unblock_user failed: ${res.status}`);
       }
-      const text = await res.text();
-      console.log("[Unblock] Response text:", text);
-      if (text && text.trim() && text.trim() !== '') {
-        try {
-          const data = JSON.parse(text);
-          return { success: true, data };
-        } catch (e) {
-          console.log("[Unblock] Response is not JSON, treating as success", text, e);
-        }
-      }
+      console.log("[Unblock] Successfully unblocked user", input.targetUserId);
       return { success: true };
     }),
 
