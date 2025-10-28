@@ -25,7 +25,7 @@ interface AdminUser {
   bio?: string;
   account_status?: string;
   created_at?: string;
-  email?: string;
+
   social_links?: SocialLinks | null;
 }
 
@@ -97,7 +97,7 @@ export default function AdminApprovalsScreen() {
   });
 
   const usersQuery = useQuery<{ pending: AdminUser[]; approved: AdminUser[]; rejected: AdminUser[]}>({
-    queryKey: ["admin", "users-by-status"],
+    queryKey: ["admin", "users-by-status", isAdmin],
     queryFn: async () => {
       console.log("[Admin] Fetching users by status...");
       console.log("[Admin] isAdmin value:", isAdmin);
@@ -106,7 +106,7 @@ export default function AdminApprovalsScreen() {
         try {
           console.log(`[Admin] Fetching ${status} users...`);
           const rows = await sbSelect<AdminUser>("profiles", {
-            select: "user_id,full_name,username,profile_picture,profession,location,bio,account_status,created_at,email,social_links",
+            select: "user_id,full_name,username,profile_picture,profession,location,bio,account_status,created_at,social_links",
             query: { account_status: `eq.${status}` },
             order: { column: "created_at", ascending: false },
           });
@@ -124,7 +124,7 @@ export default function AdminApprovalsScreen() {
                 try {
                   parsed = JSON.parse(parsed);
                   console.log(`  - social_links parsed:`, parsed);
-                } catch (e) {
+                } catch {
                   console.log(`  - Failed to parse social_links`);
                 }
               }
@@ -440,8 +440,8 @@ export default function AdminApprovalsScreen() {
                     try {
                       socialLinks = JSON.parse(socialLinks);
                       console.log(`[Admin UI] Parsed social_links from string:`, socialLinks);
-                    } catch (e) {
-                      console.error(`[Admin UI] Failed to parse social_links:`, e);
+                    } catch {
+                      console.error(`[Admin UI] Failed to parse social_links`);
                       socialLinks = null;
                     }
                   }
