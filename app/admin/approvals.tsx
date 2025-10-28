@@ -100,48 +100,61 @@ export default function AdminApprovalsScreen() {
     queryKey: ["admin", "users-by-status"],
     queryFn: async () => {
       console.log("[Admin] Fetching users by status...");
+      console.log("[Admin] isAdmin value:", isAdmin);
       
       const fetchByStatus = async (status: StatusTab) => {
-        const rows = await sbSelect<AdminUser>("profiles", {
-          select: "user_id,full_name,username,profile_picture,profession,location,bio,account_status,created_at,email,social_links",
-          query: { account_status: `eq.${status}` },
-          order: { column: "created_at", ascending: false },
-        });
-        console.log(`[Admin] ${status} users:`, rows.length);
-        rows.forEach((user) => {
-          console.log(`[Admin] User ${user.user_id}:`);
-          console.log(`  - full_name: ${user.full_name}`);
-          console.log(`  - social_links type:`, typeof user.social_links);
-          console.log(`  - social_links raw:`, user.social_links);
-          console.log(`  - social_links stringified:`, JSON.stringify(user.social_links));
-          
-          if (user.social_links) {
-            let parsed = user.social_links;
-            if (typeof parsed === 'string') {
-              try {
-                parsed = JSON.parse(parsed);
-                console.log(`  - social_links parsed:`, parsed);
-              } catch (e) {
-                console.log(`  - Failed to parse social_links`);
+        try {
+          console.log(`[Admin] Fetching ${status} users...`);
+          const rows = await sbSelect<AdminUser>("profiles", {
+            select: "user_id,full_name,username,profile_picture,profession,location,bio,account_status,created_at,email,social_links",
+            query: { account_status: `eq.${status}` },
+            order: { column: "created_at", ascending: false },
+          });
+          console.log(`[Admin] ${status} users count:`, rows.length);
+          rows.forEach((user) => {
+            console.log(`[Admin] User ${user.user_id}:`);
+            console.log(`  - full_name: ${user.full_name}`);
+            console.log(`  - social_links type:`, typeof user.social_links);
+            console.log(`  - social_links raw:`, user.social_links);
+            console.log(`  - social_links stringified:`, JSON.stringify(user.social_links));
+            
+            if (user.social_links) {
+              let parsed = user.social_links;
+              if (typeof parsed === 'string') {
+                try {
+                  parsed = JSON.parse(parsed);
+                  console.log(`  - social_links parsed:`, parsed);
+                } catch (e) {
+                  console.log(`  - Failed to parse social_links`);
+                }
+              }
+              if (typeof parsed === 'object') {
+                console.log(`  - Instagram:`, (parsed as any)?.instagram);
+                console.log(`  - YouTube:`, (parsed as any)?.youtube);
+                console.log(`  - Twitter:`, (parsed as any)?.twitter);
+                console.log(`  - TikTok:`, (parsed as any)?.tiktok);
               }
             }
-            if (typeof parsed === 'object') {
-              console.log(`  - Instagram:`, (parsed as any)?.instagram);
-              console.log(`  - YouTube:`, (parsed as any)?.youtube);
-              console.log(`  - Twitter:`, (parsed as any)?.twitter);
-              console.log(`  - TikTok:`, (parsed as any)?.tiktok);
-            }
-          }
-        });
-        return rows;
+          });
+          return rows;
+        } catch (error) {
+          console.error(`[Admin] Error fetching ${status} users:`, error);
+          throw error;
+        }
       };
 
-      const [pending, approved, rejected] = await Promise.all([
-        fetchByStatus("pending"),
-        fetchByStatus("approved"),
-        fetchByStatus("rejected"),
-      ]);
-      return { pending, approved, rejected };
+      try {
+        const [pending, approved, rejected] = await Promise.all([
+          fetchByStatus("pending"),
+          fetchByStatus("approved"),
+          fetchByStatus("rejected"),
+        ]);
+        console.log("[Admin] Final counts:", { pending: pending.length, approved: approved.length, rejected: rejected.length });
+        return { pending, approved, rejected };
+      } catch (error) {
+        console.error("[Admin] Error in usersQuery:", error);
+        throw error;
+      }
     },
     enabled: !!isAdmin,
   });
@@ -365,6 +378,14 @@ export default function AdminApprovalsScreen() {
         {usersQuery.isLoading ? (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading applications...</Text>
+          </View>
+        ) : usersQuery.error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Error loading applications</Text>
+            <Text style={styles.errorDetail}>{String(usersQuery.error)}</Text>
+            <TouchableOpacity onPress={() => usersQuery.refetch()} style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         ) : list.length > 0 ? (
           list.map((p) => {
@@ -607,6 +628,10 @@ const styles = StyleSheet.create({
   backButtonText: { color: "#000000", fontSize: 16, fontWeight: "600" as const },
   loadingContainer: { padding: 40, alignItems: "center" },
   loadingText: { color: "#9CA3AF", fontSize: 16 },
+  errorContainer: { padding: 40, alignItems: "center", gap: 12 },
+  errorDetail: { color: "#EF4444", fontSize: 13, textAlign: "center" as const },
+  retryButton: { backgroundColor: "#FFFFFF", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10, marginTop: 8 },
+  retryButtonText: { color: "#000000", fontSize: 14, fontWeight: "600" as const },
   emptyContainer: { padding: 40, alignItems: "center" },
   emptyText: { color: "#9CA3AF", fontSize: 16 },
   applicationCard: { backgroundColor: "rgba(15, 15, 15, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 16, padding: 16, gap: 16 },
