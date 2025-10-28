@@ -65,6 +65,7 @@ export default function EditProfileScreen() {
   const [linkName, setLinkName] = useState<string>("");
   const [linkUrl, setLinkUrl] = useState<string>("");
   const [inlineEditingIndex, setInlineEditingIndex] = useState<number>(-1);
+  const [showBlockedUsers, setShowBlockedUsers] = useState<boolean>(false);
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -816,36 +817,47 @@ export default function EditProfileScreen() {
 
         {Array.isArray(blockedUsers) && blockedUsers.length > 0 && (
           <View style={styles.blockedSection}>
-            <Text style={styles.blockedSectionTitle}>Blocked Users</Text>
-            {blockedUsers.map((block) => {
-              const user = (block as any).blocked_user_profile;
-              const displayName = user?.full_name || user?.username || "Unknown User";
-              const avatarUrl = user?.profile_picture || "";
-              
-              return (
-                <View key={block.blocked_user_id} style={styles.blockedUserCard}>
-                  <View style={styles.blockedUserLeft}>
-                    <Image 
-                      source={{ uri: avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" }}
-                      style={styles.blockedUserAvatar}
-                    />
-                    <Text style={styles.blockedUserName}>{displayName}</Text>
-                  </View>
-                  <Pressable
-                    onPress={() => handleUnblock(block.blocked_user_id, displayName)}
-                    disabled={unblockMutation.isPending}
-                    style={styles.unblockBtn}
-                    testID={`unblock-${block.blocked_user_id}`}
-                  >
-                    {unblockMutation.isPending ? (
-                      <Loader2 color="#E5E7EB" size={16} />
-                    ) : (
-                      <Text style={styles.unblockText}>Unblock</Text>
-                    )}
-                  </Pressable>
-                </View>
-              );
-            })}
+            <Pressable 
+              onPress={() => setShowBlockedUsers(!showBlockedUsers)}
+              style={styles.blockedSectionHeader}
+              testID="toggle-blocked-users"
+            >
+              <Text style={styles.blockedSectionTitle}>Blocked ({blockedUsers.length})</Text>
+              <Text style={styles.blockedToggleIcon}>{showBlockedUsers ? '−' : '+'}</Text>
+            </Pressable>
+            {showBlockedUsers && (
+              <View style={styles.blockedUsersList}>
+                {blockedUsers.map((block) => {
+                  const user = (block as any).blocked_user_profile;
+                  const displayName = user?.full_name || user?.username || "Unknown User";
+                  const avatarUrl = user?.profile_picture || "";
+                  
+                  return (
+                    <View key={block.blocked_user_id} style={styles.blockedUserCard}>
+                      <View style={styles.blockedUserLeft}>
+                        <Image 
+                          source={{ uri: avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" }}
+                          style={styles.blockedUserAvatar}
+                        />
+                        <Text style={styles.blockedUserName}>{displayName}</Text>
+                      </View>
+                      <Pressable
+                        onPress={() => handleUnblock(block.blocked_user_id, displayName)}
+                        disabled={unblockMutation.isPending}
+                        style={styles.unblockBtn}
+                        testID={`unblock-${block.blocked_user_id}`}
+                      >
+                        {unblockMutation.isPending ? (
+                          <Loader2 color="#E5E7EB" size={16} />
+                        ) : (
+                          <Text style={styles.unblockText}>Unblock</Text>
+                        )}
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
           </View>
         )}
 
@@ -1442,11 +1454,30 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginHorizontal: 16,
   },
+  blockedSectionHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
   blockedSectionTitle: {
     color: "#E5E7EB",
-    fontSize: 18,
-    fontWeight: "900" as const,
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: "800" as const,
+  },
+  blockedToggleIcon: {
+    color: "#E5E7EB",
+    fontSize: 24,
+    fontWeight: "300" as const,
+  },
+  blockedUsersList: {
+    gap: 8,
   },
   blockedUserCard: {
     backgroundColor: "#111318",
