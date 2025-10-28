@@ -663,21 +663,6 @@ export default function EditProfileScreen() {
               </View>
             </View>
 
-            <View style={styles.socialRow}>
-              <Pressable testID="social-instagram" style={[styles.socialBtn, { backgroundColor: "#C13584" }]} onPress={() => openEditor("instagram")}>
-                <Instagram color="#fff" size={20} />
-              </Pressable>
-              <Pressable testID="social-youtube" style={[styles.socialBtn, { backgroundColor: "#FF0000" }]} onPress={() => openEditor("youtube")}>
-                <Youtube color="#fff" size={20} />
-              </Pressable>
-              <View style={[styles.socialBtn, { backgroundColor: "#2C2C33" }]}> 
-                <CircleX color="#9CA3AF" size={20} />
-              </View>
-              <View style={[styles.socialBtn, { backgroundColor: "#2C2C33" }]}>
-                <Text style={{ color: "#9CA3AF", fontWeight: "800" }}>t</Text>
-              </View>
-            </View>
-
             <View style={styles.bioWrap}>
               <Text style={styles.bioText}>{bio || "Tell people about yourself..."}</Text>
               <Pressable testID="edit-bio" onPress={() => openEditor("bio")} style={styles.inlineEditBtn}>
