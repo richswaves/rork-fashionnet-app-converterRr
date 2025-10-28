@@ -1,10 +1,17 @@
 const palette = {
-  bg: "#000000",
-  surface: "#0A0A0A",
-  border: "#1A1A1A",
-  text: "#FFFFFF",
-  muted: "#808080",
-  accent: "#FFFFFF",
+  bg: "#FFFFFF",
+  bgSecondary: "#FAFAFA",
+  surface: "#FFFFFF",
+  border: "#EFEFEF",
+  borderLight: "#F5F5F5",
+  text: "#000000",
+  textSecondary: "#737373",
+  textTertiary: "#A3A3A3",
+  accent: "#000000",
+  accentSoft: "#0095F6",
+  success: "#10B981",
+  error: "#EF4444",
+  warning: "#F59E0B",
 };
 
 export default {
@@ -12,7 +19,7 @@ export default {
     text: palette.text,
     background: palette.bg,
     tint: palette.accent,
-    tabIconDefault: palette.muted,
+    tabIconDefault: palette.textTertiary,
     tabIconSelected: palette.accent,
     border: palette.border,
   },

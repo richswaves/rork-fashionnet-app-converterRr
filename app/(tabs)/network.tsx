@@ -489,7 +489,7 @@ export default function NetworkScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0B0B0F" },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   topBar: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -499,9 +499,9 @@ const styles = StyleSheet.create({
   },
   profile: { flexDirection: "row", alignItems: "center", gap: 10 },
   avatar: { width: 28, height: 28, borderRadius: 14 },
-  profileText: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" },
+  profileText: { color: "#000000", fontSize: 16, fontWeight: "700" },
   topIcons: { flexDirection: "row", alignItems: "center" },
-  iconBtn: { padding: 8, borderRadius: 999 },
+  iconBtn: { padding: 8, borderRadius: 999, backgroundColor: "transparent" },
   iconBadgeWrap: { position: "relative" as const },
   notificationBadge: {
     position: "absolute" as const,

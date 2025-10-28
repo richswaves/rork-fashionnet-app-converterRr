@@ -1,4 +1,3 @@
-// template
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -14,14 +13,12 @@ const envAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 if (envUrl && envAnon) {
   setRuntimeSupabaseEnv(envUrl, envAnon);
 } else {
-  // Fallback for Expo Go/mobile where process.env is not populated
   setRuntimeSupabaseEnv(
     "https://mnqgmpvkdmgmyoqhgswc.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ucWdtcHZrZG1nbXlvcWhnc3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMTM0NTksImV4cCI6MjA2Njg4OTQ1OX0.JeTVfB0c5MDmgSElxpkI9eVW6Ca7QLTNj3p-Vgq2VdE"
   );
 }
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
@@ -31,9 +28,10 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerBackTitle: "Back",
-        contentStyle: { backgroundColor: "#0B0B0F" },
-        headerStyle: { backgroundColor: "#0B0B0F" },
-        headerTintColor: "#E5E7EB",
+        contentStyle: { backgroundColor: "#FFFFFF" },
+        headerStyle: { backgroundColor: "#FFFFFF" },
+        headerTintColor: "#000000",
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -74,7 +72,7 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <ProfileProvider>
           <NotificationProvider>
-            <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
+            <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
               <RootLayoutNav />
             </GestureHandlerRootView>
           </NotificationProvider>

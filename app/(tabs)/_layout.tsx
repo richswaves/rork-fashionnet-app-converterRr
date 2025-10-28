@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from "expo-router";
-import { Compass, Users, MessageCircle, Plus } from "lucide-react-native";
+import { Home, Users, MessageCircle, Plus } from "lucide-react-native";
 import React from "react";
 import { View, StyleSheet } from "react-native";
 
@@ -18,7 +18,9 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: Colors.light.background,
           borderTopColor: Colors.light.border,
-          borderTopWidth: 1,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
@@ -26,8 +28,13 @@ export default function TabLayout() {
         name="opportunities"
         options={{
           title: "Opportunities",
-          tabBarIcon: ({ color, size }) => (
-            <Compass color={color} size={size ?? 20} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Home 
+              color={color} 
+              size={size ?? 24} 
+              strokeWidth={focused ? 2.5 : 2}
+              fill={focused ? color : "none"}
+            />
           ),
         }}
       />
@@ -37,7 +44,7 @@ export default function TabLayout() {
           title: "Create",
           tabBarIcon: ({ color, size }) => (
             <View style={styles.createButton}>
-              <Plus color="#000000" size={size ?? 24} />
+              <Plus color="#FFFFFF" size={size ?? 22} strokeWidth={2.5} />
             </View>
           ),
         }}
@@ -52,14 +59,26 @@ export default function TabLayout() {
         name="network"
         options={{
           title: "Network",
-          tabBarIcon: ({ color, size }) => <Users color={color} size={size ?? 20} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Users 
+              color={color} 
+              size={size ?? 24} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size ?? 20} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <MessageCircle 
+              color={color} 
+              size={size ?? 24} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
         }}
       />
     </Tabs>
@@ -68,10 +87,10 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   createButton: {
-    backgroundColor: "#FFFFFF",
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    backgroundColor: "#000000",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
   },
