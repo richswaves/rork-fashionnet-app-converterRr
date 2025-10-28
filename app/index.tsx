@@ -7,6 +7,8 @@ export default function Index() {
   const { session, isLoading, profile } = useProfile();
   const router = useRouter();
   const didNavigate = useRef<boolean>(false);
+  
+  console.log('[Index] App starting...');
 
   useEffect(() => {
     if (isLoading || didNavigate.current) return;
