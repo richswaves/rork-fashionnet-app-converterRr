@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { Bell, ChevronDown, MapPin, Search, Send, User, ShieldCheck } from "lucide-react-native";
+import { Bell, ChevronDown, MapPin, Search, User, ShieldCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -257,9 +257,6 @@ export default function NetworkScreen() {
               )}
             </View>
           ) : null}
-          <Pressable onPress={() => console.log("share")} style={styles.iconBtn} testID="top-share">
-            <Send color="#E5E7EB" size={20} />
-          </Pressable>
         </View>
       </View>
 
