@@ -944,7 +944,7 @@ export default function UserProfileScreen() {
           >
             <Pressable style={styles.reportModalContent} onPress={(e) => e.stopPropagation()}>
               <Text style={styles.reportModalTitle}>Report User</Text>
-              <Text style={styles.reportModalSubtitle}>Please tell us why you&apos;re reporting this account</Text>
+              <Text style={styles.reportModalSubtitle}>Please tell us why you're reporting this account</Text>
               <TextInput
                 style={styles.reportInput}
                 placeholder="Reason for reporting..."
