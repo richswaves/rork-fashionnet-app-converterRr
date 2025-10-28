@@ -11,6 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
+import { trpc } from "@/lib/trpc";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -68,36 +69,42 @@ export default function EditProfileScreen() {
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
 
-  const { data: blockedUsers = [], refetch: refetchBlockedUsers } = useQuery<Array<{ blocked_user_id: string; blocked_user_profile: { full_name?: string; username?: string; profile_picture?: string } }>>({
-    queryKey: ["blocked-users", currentUserId],
+  const { data: blockedList = [] } = trpc.block.listBlocked.useQuery(undefined, {
+    enabled: !!currentUserId,
+  });
+
+  const { data: blockedUsers = [] } = useQuery<Array<{ blocked_user_id: string; blocked_user_profile: { full_name?: string; username?: string; profile_picture?: string } }>>({
+    queryKey: ["blocked-users-profiles", currentUserId, blockedList],
     queryFn: async () => {
-      if (!currentUserId) return [];
+      if (!currentUserId || !blockedList || blockedList.length === 0) return [];
       try {
-        const rows = await sbSelect<any>("blocked_users", {
-          select: "blocked_user_id,blocked_user_profile:profiles!blocked_users_blocked_user_id_fkey(full_name,username,profile_picture)",
-          query: { blocker_id: `eq.${currentUserId}` },
-          order: { column: "created_at", ascending: false },
+        const blockedIds = blockedList.map((b) => b.blocked_user_id);
+        const profiles = await sbSelect<{ user_id: string; full_name?: string; username?: string; profile_picture?: string }>("profiles", {
+          select: "user_id,full_name,username,profile_picture",
+          query: {},
+          limit: 1000,
         });
-        return rows ?? [];
+        
+        const blockedProfiles = profiles.filter((p) => blockedIds.includes(p.user_id));
+        return blockedProfiles.map((p) => ({
+          blocked_user_id: p.user_id,
+          blocked_user_profile: {
+            full_name: p.full_name,
+            username: p.username,
+            profile_picture: p.profile_picture,
+          },
+        }));
       } catch (error) {
         console.error("[BlockedUsers] Error fetching blocked users:", error);
         return [];
       }
     },
-    enabled: !!currentUserId,
+    enabled: !!currentUserId && blockedList.length > 0,
   });
 
-  const unblockMutation = useMutation({
-    mutationFn: async (blockedUserId: string) => {
-      if (!currentUserId) throw new Error("Must be logged in");
-      await sbDelete("blocked_users", {
-        blocker_id: currentUserId,
-        blocked_user_id: blockedUserId,
-      });
-    },
+  const unblockMutation = trpc.block.unblock.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blocked-users", currentUserId] });
-      refetchBlockedUsers();
+      queryClient.invalidateQueries({ queryKey: ["blocked-users-profiles", currentUserId] });
     },
     onError: (error: any) => {
       console.error("[Unblock] Error:", error);
@@ -108,7 +115,7 @@ export default function EditProfileScreen() {
   function handleUnblock(blockedUserId: string, userName: string) {
     if (Platform.OS === "web") {
       if (confirm(`Are you sure you want to unblock ${userName}?`)) {
-        unblockMutation.mutate(blockedUserId);
+        unblockMutation.mutate({ targetUserId: blockedUserId });
       }
     } else {
       Alert.alert(
@@ -118,7 +125,7 @@ export default function EditProfileScreen() {
           { text: "Cancel", style: "cancel" },
           {
             text: "Unblock",
-            onPress: () => unblockMutation.mutate(blockedUserId),
+            onPress: () => unblockMutation.mutate({ targetUserId: blockedUserId }),
           },
         ]
       );
