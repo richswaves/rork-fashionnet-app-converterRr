@@ -11,6 +11,7 @@ import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supaba
 
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 import { useProfile } from "@/contexts/ProfileContext";
+import { trpc } from "@/lib/trpc";
 
 interface ProfileRow {
   user_id: string;
@@ -74,6 +75,7 @@ export default function UserProfileScreen() {
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState<string>("");
+  const [shouldBlockUser, setShouldBlockUser] = useState<boolean>(false);
   const [creatingConversation, setCreatingConversation] = useState<boolean>(false);
 
 
@@ -329,14 +331,17 @@ export default function UserProfileScreen() {
   });
 
 
+  const blockMutation = trpc.block.block.useMutation();
+
   const reportMutation = useMutation({
-    mutationFn: async (reason: string) => {
+    mutationFn: async ({ reason, blockUser }: { reason: string; blockUser: boolean }) => {
       if (!currentUserId) throw new Error("Must be logged in");
       if (!userId) throw new Error("No user to report");
       if (!reason || reason.trim().length === 0) throw new Error("Reason is required");
       
       console.log(`[Report] User ${currentUserId} reporting user ${userId}`);
       console.log(`[Report] Reason: ${reason.trim()}`);
+      console.log(`[Report] Block user: ${blockUser}`);
       
       try {
         const result = await sbInsert("reports", {
@@ -346,18 +351,38 @@ export default function UserProfileScreen() {
           status: "pending",
         });
         console.log("[Report] Insert result:", result);
-        return result;
+        return { result, blockUser };
       } catch (err) {
         console.error("[Report] Insert failed:", err);
         console.error("[Report] Error details:", JSON.stringify(err, null, 2));
         throw err;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       console.log("[Report] Successfully reported user");
+      
+      if (data.blockUser && userId) {
+        try {
+          console.log(`[Report] Blocking user ${userId}`);
+          await blockMutation.mutateAsync({ targetUserId: userId });
+          console.log("[Report] Successfully blocked user");
+        } catch (err) {
+          console.error("[Report] Failed to block user:", err);
+        }
+      }
+      
       setReportModalVisible(false);
       setReportReason("");
-      Alert.alert("Success", "Report submitted. Our team will review it.");
+      setShouldBlockUser(false);
+      
+      const message = data.blockUser 
+        ? "Report submitted and user blocked. Our team will review it."
+        : "Report submitted. Our team will review it.";
+      Alert.alert("Success", message);
+      
+      if (data.blockUser) {
+        router.back();
+      }
     },
     onError: (error: any) => {
       console.error("[Report] Error reporting user:", error);
@@ -929,6 +954,7 @@ export default function UserProfileScreen() {
         onRequestClose={() => {
           setReportModalVisible(false);
           setReportReason("");
+          setShouldBlockUser(false);
         }}
       >
         <KeyboardAvoidingView
@@ -940,6 +966,7 @@ export default function UserProfileScreen() {
             onPress={() => {
               setReportModalVisible(false);
               setReportReason("");
+              setShouldBlockUser(false);
             }}
           >
             <Pressable style={styles.reportModalContent} onPress={(e) => e.stopPropagation()}>
@@ -955,12 +982,23 @@ export default function UserProfileScreen() {
                 numberOfLines={4}
                 textAlignVertical="top"
               />
+              <Pressable
+                style={styles.blockCheckboxRow}
+                onPress={() => setShouldBlockUser(!shouldBlockUser)}
+                testID="block-checkbox"
+              >
+                <View style={[styles.checkbox, shouldBlockUser && styles.checkboxChecked]}>
+                  {shouldBlockUser && <Text style={styles.checkboxCheck}>✓</Text>}
+                </View>
+                <Text style={styles.blockCheckboxText}>Block this user</Text>
+              </Pressable>
               <View style={styles.reportModalActions}>
                 <TouchableOpacity
                   style={[styles.reportModalButton, styles.reportModalButtonCancel]}
                   onPress={() => {
                     setReportModalVisible(false);
                     setReportReason("");
+                    setShouldBlockUser(false);
                   }}
                 >
                   <Text style={styles.reportModalButtonTextCancel}>Cancel</Text>
@@ -972,7 +1010,7 @@ export default function UserProfileScreen() {
                       Alert.alert("Error", "Please provide a reason for reporting");
                       return;
                     }
-                    reportMutation.mutate(reportReason);
+                    reportMutation.mutate({ reason: reportReason, blockUser: shouldBlockUser });
                   }}
                   disabled={reportMutation.isPending}
                 >
@@ -1290,6 +1328,36 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontSize: 13,
     fontWeight: "500" as const,
+  },
+  blockCheckboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 4,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#2A2A38",
+    backgroundColor: "#0F0F15",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#EF4444",
+    borderColor: "#EF4444",
+  },
+  checkboxCheck: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700" as const,
+  },
+  blockCheckboxText: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "600" as const,
   },
 });
 
