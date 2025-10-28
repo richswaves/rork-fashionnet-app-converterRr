@@ -60,15 +60,16 @@ export default createTRPCRouter({
         throw new Error(text || `RPC block_user failed: ${res.status}`);
       }
       const text = await res.text();
-      try {
-        if (text && text.trim()) {
+      console.log("[Block] Response text:", text);
+      if (text && text.trim() && text.trim() !== '') {
+        try {
           const data = JSON.parse(text);
-          return { ok: true, data };
+          return { success: true, data };
+        } catch (e) {
+          console.log("[Block] Response is not JSON, treating as success", text, e);
         }
-      } catch {
-        console.log("[Block] Response is not JSON, treating as success", text);
       }
-      return { ok: true } as const;
+      return { success: true };
     }),
 
   unblock: publicProcedure
@@ -85,15 +86,16 @@ export default createTRPCRouter({
         throw new Error(text || `RPC unblock_user failed: ${res.status}`);
       }
       const text = await res.text();
-      try {
-        if (text && text.trim()) {
+      console.log("[Unblock] Response text:", text);
+      if (text && text.trim() && text.trim() !== '') {
+        try {
           const data = JSON.parse(text);
-          return { ok: true, data };
+          return { success: true, data };
+        } catch (e) {
+          console.log("[Unblock] Response is not JSON, treating as success", text, e);
         }
-      } catch {
-        console.log("[Unblock] Response is not JSON, treating as success", text);
       }
-      return { ok: true } as const;
+      return { success: true };
     }),
 
   listBlocked: publicProcedure
