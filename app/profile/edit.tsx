@@ -4,7 +4,7 @@ import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, Phone, Ban } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -68,11 +68,11 @@ export default function EditProfileScreen() {
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
 
-  const { data: blockedUsers = [], refetch: refetchBlockedUsers } = useQuery<Array<{ blocked_user_id: string; user: { full_name?: string; username?: string; profile_picture?: string } }>>({    queryKey: ["blocked-users", currentUserId],
+  const { data: blockedUsers = [], refetch: refetchBlockedUsers } = useQuery<Array<{ blocked_user_id: string; blocked_user_profile: { full_name?: string; username?: string; profile_picture?: string } }>>({    queryKey: ["blocked-users", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return [];
       const rows = await sbSelect<any>("blocked_users", {
-        select: "blocked_user_id,user:profiles!blocked_user_id(full_name,username,profile_picture)",
+        select: "blocked_user_id,blocked_user_profile:profiles!blocked_users_blocked_user_id_fkey(full_name,username,profile_picture)",
         query: { blocker_id: `eq.${currentUserId}` },
         order: { column: "created_at", ascending: false },
       });
@@ -820,7 +820,7 @@ export default function EditProfileScreen() {
           <View style={styles.blockedSection}>
             <Text style={styles.blockedSectionTitle}>Blocked Users</Text>
             {blockedUsers.map((block) => {
-              const user = (block as any).user;
+              const user = (block as any).blocked_user_profile;
               const displayName = user?.full_name || user?.username || "Unknown User";
               const avatarUrl = user?.profile_picture || "";
               
