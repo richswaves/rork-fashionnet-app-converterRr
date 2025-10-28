@@ -9,6 +9,7 @@ import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
+import { trpc } from "@/lib/trpc";
 
 interface ProfileRow {
   user_id: string;
@@ -113,6 +114,14 @@ export default function OpportunitiesScreen() {
   const router = useRouter();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
   const { trackSearch, trackOpportunityInteraction } = useActivityTracking();
+
+  const { data: blockedList } = trpc.block.listBlocked.useQuery(undefined, {
+    enabled: !!currentUserId,
+  });
+
+  const blockedUserIds = useMemo(() => {
+    return new Set((blockedList ?? []).map((b) => b.blocked_user_id));
+  }, [blockedList]);
 
   const { data: applications } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],
@@ -473,6 +482,10 @@ export default function OpportunitiesScreen() {
       <FlatList
         data={useMemo(() => {
           let filteredData = [...(data ?? [])];
+          filteredData = filteredData.filter((opp) => {
+            const userId = opp.profiles?.user_id ?? opp.user_id;
+            return userId && !blockedUserIds.has(userId);
+          });
           const q = searchQuery.trim().toLowerCase();
           if (q) {
             filteredData = filteredData.filter((app) =>
@@ -518,7 +531,7 @@ export default function OpportunitiesScreen() {
             });
           }
           return filteredData;
-        }, [data, searchQuery, city, seekingRole, paymentStatus, postedByRole])}
+        }, [data, searchQuery, city, seekingRole, paymentStatus, postedByRole, blockedUserIds])}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {

@@ -8,6 +8,7 @@ import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
+import { trpc } from "@/lib/trpc";
 
 interface ProfileRow {
   user_id: string;
@@ -43,6 +44,14 @@ export default function NetworkScreen() {
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
   const { trackSearch, trackNetworkInteraction } = useActivityTracking();
+
+  const { data: blockedList } = trpc.block.listBlocked.useQuery(undefined, {
+    enabled: !!currentUserId,
+  });
+
+  const blockedUserIds = useMemo(() => {
+    return new Set((blockedList ?? []).map((b) => b.blocked_user_id));
+  }, [blockedList]);
 
   const { width: windowWidth } = useWindowDimensions();
 
@@ -104,6 +113,7 @@ export default function NetworkScreen() {
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
       }
+      filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
       return filtered.slice(0, 8).map((r) => {
         const d = getDisplayForProfile(r);
         return {
@@ -134,6 +144,7 @@ export default function NetworkScreen() {
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
       }
+      filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
       return filtered.slice(0, 12).map((r) => {
         const d = getDisplayForProfile(r);
         return {
