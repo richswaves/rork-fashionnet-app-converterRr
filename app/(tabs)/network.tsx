@@ -279,7 +279,7 @@ export default function NetworkScreen() {
 
         {roleMenuOpen && (
           <View style={styles.filterMenuContainer}>
-            <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="role-chips">
+            <View style={styles.roleChips} testID="role-chips">
               {availableRoles.map((r) => (
                 <Pressable
                   key={r}
@@ -300,7 +300,7 @@ export default function NetworkScreen() {
                   <Text style={[styles.chipText, selectedRoles.has(r) && styles.chipTextActive]}>{r.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
                 </Pressable>
               ))}
-            </ScrollView>
+            </View>
             <View style={styles.filterActions}>
               <Pressable
                 onPress={() => setSelectedRoles(new Set())}
@@ -332,7 +332,7 @@ export default function NetworkScreen() {
 
         {locationMenuOpen && (
           <View style={styles.filterMenuContainer}>
-            <ScrollView style={styles.roleChipsScroll} contentContainerStyle={styles.roleChips} testID="location-chips">
+            <View style={styles.roleChips} testID="location-chips">
               {availableLocations.map((loc) => (
                 <Pressable
                   key={loc}
@@ -353,7 +353,7 @@ export default function NetworkScreen() {
                   <Text style={[styles.chipText, selectedLocations.has(loc) && styles.chipTextActive]}>{loc}</Text>
                 </Pressable>
               ))}
-            </ScrollView>
+            </View>
             <View style={styles.filterActions}>
               <Pressable
                 onPress={() => setSelectedLocations(new Set())}
@@ -561,8 +561,7 @@ const styles = StyleSheet.create({
   },
   selectorText: { color: "#E5E7EB", fontSize: 15, fontWeight: "600", flex: 1 },
   filterMenuContainer: { marginTop: 10, marginBottom: 8 },
-  roleChipsScroll: { maxHeight: 200 },
-  roleChips: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingBottom: 10 },
+  roleChips: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingBottom: 10, maxHeight: 200 },
   chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderColor: "#2C2C33", borderWidth: 1, backgroundColor: "#0F0F14" },
   chipActive: { backgroundColor: "#3B82F6", borderColor: "#3B82F6" },
   chipText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
