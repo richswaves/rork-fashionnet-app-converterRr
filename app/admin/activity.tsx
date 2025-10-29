@@ -68,11 +68,11 @@ export default function AdminActivityOverview() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {
-          searchPatterns.refetch();
-          filterStatsOpps.refetch();
-          filterStatsNetwork.refetch();
-          locationOpps.refetch();
-          oppStats.refetch();
+          if (searchPatterns?.refetch) searchPatterns.refetch();
+          if (filterStatsOpps?.refetch) filterStatsOpps.refetch();
+          if (filterStatsNetwork?.refetch) filterStatsNetwork.refetch();
+          if (locationOpps?.refetch) locationOpps.refetch();
+          if (oppStats?.refetch) oppStats.refetch();
         }} tintColor="#fff" />}
         testID="admin-activity-scroll"
       >

@@ -64,7 +64,10 @@ export default function UserActivityScreen() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={summary.isRefetching || recent.isRefetching} onRefresh={() => { summary.refetch(); recent.refetch(); }} tintColor="#fff" />}
+        refreshControl={<RefreshControl refreshing={summary.isRefetching || recent.isRefetching} onRefresh={() => { 
+          if (summary?.refetch) summary.refetch(); 
+          if (recent?.refetch) recent.refetch(); 
+        }} tintColor="#fff" />}
       >
         <View style={styles.controlsRow}>
           <View style={styles.daysPill}>
