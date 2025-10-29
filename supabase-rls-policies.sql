@@ -707,8 +707,8 @@ FOR INSERT WITH CHECK (
   -- Admins can create notifications for profile approvals/rejections
   EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = auth.uid()
-    AND role = 'admin'
+    WHERE user_roles.user_id = auth.uid()
+    AND user_roles.role = 'admin'
   )
   OR
   -- Opportunity owners can create notifications when approving/rejecting applications
@@ -717,7 +717,7 @@ FOR INSERT WITH CHECK (
     AND EXISTS (
       SELECT 1 FROM applications a
       JOIN opportunities o ON o.id = a.opportunity_id
-      WHERE a.id::text = related_id::text
+      WHERE a.id = related_id
       AND o.user_id = auth.uid()
       AND a.applicant_id = applicant_id
     )
