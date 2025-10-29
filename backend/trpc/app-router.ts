@@ -3,7 +3,14 @@ import hiRoute from "./routes/example/hi/route";
 import assignAdminRoleProcedure from "./routes/admin/assign-admin-role/route";
 import { isBlockedProcedure, blockProcedure, unblockProcedure, listBlockedProcedure } from "./routes/block/route";
 import { getFunnelDataProcedure } from "./routes/admin/get-funnel-data/route";
-import analyticsRouter from "./routes/admin/analytics/route";
+import {
+  getUserActivitySummaryProcedure,
+  getSearchPatternsProcedure,
+  getFilterUsageStatsProcedure,
+  getOpportunityStatsProcedure,
+  getLocationStatsProcedure,
+  listRecentUserEventsProcedure,
+} from "./routes/admin/analytics/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -12,7 +19,14 @@ export const appRouter = createTRPCRouter({
   admin: createTRPCRouter({
     assignAdminRole: assignAdminRoleProcedure,
     getFunnelData: getFunnelDataProcedure,
-    analytics: analyticsRouter,
+    analytics: createTRPCRouter({
+      getUserActivitySummary: getUserActivitySummaryProcedure,
+      getSearchPatterns: getSearchPatternsProcedure,
+      getFilterUsageStats: getFilterUsageStatsProcedure,
+      getOpportunityStats: getOpportunityStatsProcedure,
+      getLocationStats: getLocationStatsProcedure,
+      listRecentUserEvents: listRecentUserEventsProcedure,
+    }),
   }),
   block: createTRPCRouter({
     isBlocked: isBlockedProcedure,
