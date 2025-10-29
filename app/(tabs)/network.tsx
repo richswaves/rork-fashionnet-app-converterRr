@@ -43,7 +43,7 @@ export default function NetworkScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
-  const { trackSearch, trackNetworkInteraction } = useActivityTracking();
+  const { trackNetworkInteraction } = useActivityTracking();
 
   const { data: blockedList } = trpc.block.listBlocked.useQuery(undefined, {
     enabled: !!currentUserId,
@@ -92,13 +92,6 @@ export default function NetworkScreen() {
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
     queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations)],
     queryFn: async () => {
-      const hasFilters = selectedRoles.size > 0 || selectedLocations.size > 0;
-      if (hasFilters) {
-        const filters: Record<string, any> = {};
-        if (selectedRoles.size > 0) filters.roles = Array.from(selectedRoles);
-        if (selectedLocations.size > 0) filters.locations = Array.from(selectedLocations);
-        trackSearch({ page: "network", filters, results_count: 0 });
-      }
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
         select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
