@@ -70,8 +70,8 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
         <ProfileProvider>
           <NotificationProvider>
             <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
@@ -79,7 +79,7 @@ export default function RootLayout() {
             </GestureHandlerRootView>
           </NotificationProvider>
         </ProfileProvider>
-      </trpc.Provider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
