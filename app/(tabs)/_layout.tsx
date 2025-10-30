@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from "expo-router";
-import { Compass, Users, MessageCircle, Plus } from "lucide-react-native";
+import { Compass, Plus } from "lucide-react-native";
 import React from "react";
 import { View, StyleSheet } from "react-native";
 
@@ -48,20 +48,7 @@ export default function TabLayout() {
           },
         }}
       />
-      <Tabs.Screen
-        name="network"
-        options={{
-          title: "Network",
-          tabBarIcon: ({ color, size }) => <Users color={color} size={size ?? 20} />,
-        }}
-      />
-      <Tabs.Screen
-        name="messages"
-        options={{
-          title: "Messages",
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size ?? 20} />,
-        }}
-      />
+
     </Tabs>
   );
 }
