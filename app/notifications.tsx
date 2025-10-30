@@ -454,8 +454,8 @@ export default function NotificationsScreen() {
                   }
                 }}
               >
-                <View style={[styles.iconCircle, item.data.type === "application_approved" ? styles.iconCircleApproved : styles.iconCircleRejected]}>
-                  {item.data.type === "application_approved" ? (
+                <View style={[styles.iconCircle, (item.data.type === "application_approved" || item.data.type === "profile_approved") ? styles.iconCircleApproved : styles.iconCircleRejected]}>
+                  {(item.data.type === "application_approved" || item.data.type === "profile_approved") ? (
                     <Check color="#10B981" size={20} />
                   ) : (
                     <XCircle color="#EF4444" size={20} />
