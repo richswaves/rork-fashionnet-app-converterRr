@@ -704,7 +704,7 @@ export default function SignupScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
-      {isCurrentQuestionAnswered && (
+      {isCurrentQuestionAnswered && !showingProfileInfo && (
   <TouchableOpacity
     testID="signup-continue"
     // This style array fixes the button placement
