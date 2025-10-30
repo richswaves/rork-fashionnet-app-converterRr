@@ -573,7 +573,7 @@ export default function ProfileSetup() {
 
         {!!role && showModelDetails && (
           <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
-            <Text style={styles.primaryBtnText}>Continue</Text>
+            <Text style={styles.primaryBtnText}>Create account</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
