@@ -579,26 +579,6 @@ export default function SignupScreen() {
                   })}
                 </View>
               </View>
-              {isCurrentQuestionAnswered && (
-                <TouchableOpacity
-                  testID="signup-continue"
-                  style={styles.secondaryBtn}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    if (currentQuestionIndex < availableQuestions.length - 1) {
-                      handleContinueQuestion();
-                    } else {
-                      if (role === "model") {
-                        handleContinueQuestion();
-                      } else {
-                        setShowingProfileInfo(true);
-                      }
-                    }
-                  }}
-                >
-                  <Text style={styles.secondaryBtnText}>Continue</Text>
-                </TouchableOpacity>
-              )}
             </View>
           );
         })()}
@@ -724,6 +704,34 @@ export default function SignupScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+      {isCurrentQuestionAnswered && (
+  <TouchableOpacity
+    testID="signup-continue"
+    // This style array fixes the button placement
+    style={[
+      styles.secondaryBtn, 
+      { 
+        position: 'absolute', 
+        bottom: 20, 
+        left: 20, 
+        right: 20, 
+        zIndex: 10,
+        flex: undefined 
+      }
+    ]}
+    onPress={() => {
+      Keyboard.dismiss();
+      if (currentQuestionIndex < availableQuestions.length - 1) {
+        handleContinueQuestion();
+      } else {
+        // This is the FIX for Bug #1 (the 'model' bug)
+        setShowingProfileInfo(true);
+      }
+    }}
+  >
+    <Text style={styles.secondaryBtnText}>Continue</Text>
+  </TouchableOpacity>
+)}
     </SafeAreaView>
   );
 }
