@@ -62,6 +62,18 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size ?? 20} />,
         }}
       />
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="portfolio"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
