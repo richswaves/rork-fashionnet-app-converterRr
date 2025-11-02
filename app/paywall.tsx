@@ -1,16 +1,19 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { View, Text, StyleSheet, Pressable, Platform, Linking, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform, ScrollView } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CheckCircle2, Shield, Crown, ChevronRight, Info } from "lucide-react-native";
+import { CheckCircle2, Shield, Crown, ChevronRight, Info, ExternalLink } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import * as WebBrowser from "expo-web-browser";
 
 const FEATURES: { id: string; title: string; subtitle: string }[] = [
   { id: "f1", title: "Unlimited Networking", subtitle: "Message and connect without limits" },
   { id: "f2", title: "Priority Exposure", subtitle: "Show up first in searches and feeds" },
   { id: "f3", title: "Pro Portfolio", subtitle: "Premium layout with HD media" },
 ];
+
+const CHECKOUT_URL: string = "https://your-site.com/checkout";
 
 export default function PaywallScreen() {
   const router = useRouter();
@@ -27,6 +30,20 @@ export default function PaywallScreen() {
       console.log("Nav error", e);
     }
   }, [router]);
+
+  const openCheckout = useCallback(async () => {
+    if (Platform.OS === "ios") {
+      alert("Subscriptions that unlock in-app features must use Apple In‑App Purchase. You can subscribe on the web and then sign in here.");
+      return;
+    }
+    try {
+      console.log("[Paywall] Opening external checkout", CHECKOUT_URL);
+      await WebBrowser.openBrowserAsync(CHECKOUT_URL);
+    } catch (e) {
+      console.log("[Paywall] WebBrowser error", e);
+      alert("Could not open checkout. Please try again in your browser.");
+    }
+  }, []);
 
   const handleSubscribe = useCallback(async () => {
     if (!agree || isProcessing) return;
@@ -91,6 +108,18 @@ export default function PaywallScreen() {
             <Text style={styles.price}>{price}</Text>
             <Text style={styles.trial}>{trial}</Text>
           </View>
+
+          {Platform.OS !== "ios" && (
+            <Pressable
+              testID="checkout-web"
+              onPress={openCheckout}
+              style={({ pressed }) => [styles.linkOut, pressed && { opacity: 0.8 }]}
+            >
+              <ExternalLink color="#93C5FD" size={16} />
+              <Text style={styles.linkOutText}>Pay on our secure website</Text>
+              <ChevronRight color="#60A5FA" size={16} />
+            </Pressable>
+          )}
         </View>
 
         <Pressable
@@ -132,11 +161,11 @@ export default function PaywallScreen() {
             pressed && agree && !isProcessing && { opacity: 0.85 },
           ]}
         >
-          <Text style={styles.ctaText}>{isProcessing ? "Processing…" : "Start Free Trial"}</Text>
+          <Text style={styles.ctaText}>{isProcessing ? "Processing…" : Platform.OS === "ios" ? "Continue" : "Start Free Trial"}</Text>
         </Pressable>
 
         <Text style={styles.storeNote}>
-          Purchases are processed by Apple/Google. Manage in your device account settings. We never store your card.
+          Purchases on iOS use Apple In‑App Purchase. Web/Android can use our website checkout. We never store your card.
         </Text>
       </ScrollView>
 
@@ -181,4 +210,6 @@ const styles = StyleSheet.create({
   storeNote: { color: "#6B7280", fontSize: 12, fontWeight: "600", textAlign: "center", marginTop: 10 },
   restore: { paddingVertical: 14, alignItems: "center" },
   restoreText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700", textDecorationLine: "underline" as const },
+  linkOut: { marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0F172A", borderColor: "#1E293B", borderWidth: StyleSheet.hairlineWidth, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12 },
+  linkOutText: { color: "#BFDBFE", fontSize: 14, fontWeight: "700", flex: 1 },
 });
