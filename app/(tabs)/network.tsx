@@ -72,6 +72,7 @@ export default function NetworkScreen() {
       });
       return Array.from(uniqueRoles).sort();
     },
+    staleTime: 120000,
   });
 
   const { data: availableLocations = [] } = useQuery<string[]>({
@@ -89,10 +90,12 @@ export default function NetworkScreen() {
       });
       return Array.from(uniqueLocations).sort();
     },
+    staleTime: 120000,
   });
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
     queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery],
+    staleTime: 30000,
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -131,6 +134,7 @@ export default function NetworkScreen() {
 
   const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
     queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery],
+    staleTime: 30000,
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -179,6 +183,7 @@ export default function NetworkScreen() {
       return new Set(follows.map((f) => f.following_id));
     },
     enabled: !!currentUserId,
+    staleTime: 15000,
   });
 
   const followMutation = useMutation({

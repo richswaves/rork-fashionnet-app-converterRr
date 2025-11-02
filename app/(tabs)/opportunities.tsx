@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -138,6 +138,7 @@ export default function OpportunitiesScreen() {
       }, {} as Record<string, { applied: boolean; status?: string }>);
     },
     enabled: !!currentUserId,
+    staleTime: 10000,
   });
 
   const { data: savedIds } = useQuery<Set<string>>({
@@ -152,6 +153,7 @@ export default function OpportunitiesScreen() {
       return new Set(saves.map((s) => s.opportunity_id));
     },
     enabled: !!currentUserId,
+    staleTime: 10000,
   });
 
   const applyMutation = useMutation({
@@ -279,10 +281,12 @@ export default function OpportunitiesScreen() {
       });
       return Array.from(locationSet).sort();
     },
+    staleTime: 60000,
   });
 
   const { data, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
+    staleTime: 15000,
     queryFn: async () => {
       switch (view) {
         case "all": {

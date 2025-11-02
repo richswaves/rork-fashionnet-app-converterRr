@@ -116,6 +116,8 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
       return rows[0] ?? null;
     },
     enabled: !!currentUserId && !!getSupabase(),
+    staleTime: 30000,
+    gcTime: 300000,
   });
 
   const resolved = useMemo<ResolvedProfile>(() => resolveFromSession(profileQuery.data ?? null, session), [profileQuery.data, session]);

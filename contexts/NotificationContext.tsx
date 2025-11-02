@@ -36,6 +36,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       return (rows?.length ?? 0) > 0;
     },
     enabled: !!currentUserId,
+    staleTime: 60000,
+    gcTime: 300000,
   });
 
   const { data: notificationCount = 0, refetch: refetchUser } = useQuery<number>({
@@ -45,19 +47,25 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       
       const cutoffDate = lastViewedAt || new Date(0).toISOString();
       
-      const follows = await sbSelect<{ id: string; created_at: string }>("follows", {
-        select: "id,created_at",
-        query: { following_id: `eq.${currentUserId}` },
-        limit: 100,
-      });
+      const [follows, myOpps, applicantNotifications] = await Promise.all([
+        sbSelect<{ id: string; created_at: string }>("follows", {
+          select: "id,created_at",
+          query: { following_id: `eq.${currentUserId}` },
+          limit: 100,
+        }),
+        sbSelect<{ id: string }>("opportunities", {
+          select: "id",
+          query: { user_id: `eq.${currentUserId}` },
+          limit: 200,
+        }),
+        sbSelect<{ id: string; read: boolean }>("applicant_notifications", {
+          select: "id,read",
+          query: { applicant_id: `eq.${currentUserId}`, read: "eq.false" },
+          limit: 100,
+        }),
+      ]);
       
       const recentFollows = follows.filter(f => (f.created_at || "") > cutoffDate);
-      
-      const myOpps = await sbSelect<{ id: string }>("opportunities", {
-        select: "id",
-        query: { user_id: `eq.${currentUserId}` },
-        limit: 200,
-      });
       
       const oppIds = myOpps.map((o) => o.id);
       let appsCount = 0;
@@ -73,17 +81,12 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
         appsCount = recentApps.length;
       }
       
-      const applicantNotifications = await sbSelect<{ id: string; read: boolean }>("applicant_notifications", {
-        select: "id,read",
-        query: { applicant_id: `eq.${currentUserId}`, read: "eq.false" },
-        limit: 100,
-      });
-      
       const unreadApplicantNotifs = applicantNotifications.length;
       
       return recentFollows.length + appsCount + unreadApplicantNotifs;
     },
     enabled: !!currentUserId,
+    staleTime: 10000,
     refetchInterval: 30000,
   });
 
@@ -102,6 +105,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       return recentPending.length;
     },
     enabled: !!isAdmin,
+    staleTime: 10000,
     refetchInterval: 30000,
   });
 

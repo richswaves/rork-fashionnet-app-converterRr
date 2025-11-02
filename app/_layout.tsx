@@ -24,7 +24,17 @@ if (envUrl && envAnon) {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5000,
+      gcTime: 300000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+    },
+  },
+});
 
 function RootLayoutNav() {
   return (
