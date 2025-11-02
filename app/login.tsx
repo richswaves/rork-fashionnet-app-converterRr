@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   },
   forgotButtonText: {
     color: "#9CA3AF",
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: "600" as const,
     textDecorationLine: "underline" as const,
   },
