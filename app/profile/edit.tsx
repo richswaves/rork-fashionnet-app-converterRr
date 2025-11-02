@@ -185,13 +185,38 @@ export default function EditProfileScreen() {
       console.log("[Portfolio] Item inserted", inserted);
       return inserted;
     },
-    onSuccess: async () => {
-      console.log("[Portfolio] Invalidating queries");
-      await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
-      queryClient.refetchQueries({ queryKey: ["portfolio", currentUserId] });
+    onMutate: async (asset: ImagePicker.ImagePickerAsset) => {
+      console.log("[Portfolio] Starting optimistic update");
+      await queryClient.cancelQueries({ queryKey: ["portfolio", currentUserId] });
+      
+      const previousItems = queryClient.getQueryData<PortfolioItem[]>(["portfolio", currentUserId]);
+      
+      const isVideo = asset.type === "video" || (asset as any).mimeType?.startsWith("video/");
+      const optimisticItem: PortfolioItem = {
+        id: `temp-${Date.now()}`,
+        user_id: currentUserId!,
+        media_url: asset.uri,
+        media_type: isVideo ? "video" : "image",
+        created_at: new Date().toISOString(),
+        duration: isVideo && asset.duration ? Math.floor(asset.duration / 1000) : undefined,
+      } as PortfolioItem;
+      
+      queryClient.setQueryData<PortfolioItem[]>(["portfolio", currentUserId], (old = []) => [
+        optimisticItem,
+        ...old,
+      ]);
+      
+      return { previousItems };
     },
-    onError: (error: any) => {
+    onSuccess: async (data) => {
+      console.log("[Portfolio] Upload successful, refetching data");
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+    },
+    onError: (error: any, _variables, context) => {
       console.error("[Portfolio] Upload error", error);
+      if (context?.previousItems) {
+        queryClient.setQueryData(["portfolio", currentUserId], context.previousItems);
+      }
       Alert.alert("Error", "Failed to upload portfolio item");
     },
   });
