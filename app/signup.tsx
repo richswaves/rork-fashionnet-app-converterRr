@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform, Image, Keyboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, Link } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import GrainTexture from "@/components/GrainTexture";
@@ -160,6 +160,7 @@ export default function SignupScreen() {
   const [eyeColor, setEyeColor] = useState<string>("");
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1);
+  const [agreed, setAgreed] = useState<boolean>(false);
   const [showingProfileInfo, setShowingProfileInfo] = useState<boolean>(false);
 
   const [displayName, setDisplayName] = useState<string>("");
@@ -238,8 +239,8 @@ export default function SignupScreen() {
   const canSubmit = useMemo(() => {
     const baseValid = email.trim().length > 3 && password.trim().length >= 6 && password === confirmPassword && phoneNumber.trim().length >= 10;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
-    return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete;
-  }, [email, password, confirmPassword, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete]);
+    return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete && agreed;
+  }, [email, password, confirmPassword, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete, agreed]);
 
   async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
     const supabase = getSupabase();
@@ -696,12 +697,42 @@ export default function SignupScreen() {
         {showingProfileInfo && canSubmit && (
           <TouchableOpacity
             testID="signup-submit"
-            style={[styles.primaryBtn, { opacity: loading ? 0.6 : 1 }]}
+            style={[styles.primaryBtn, { opacity: loading || !agreed ? 0.6 : 1 }]}
             onPress={onSubmit}
             disabled={loading}
           >
             <Text style={styles.primaryBtnText}>{loading ? "Creating..." : "Create account"}</Text>
           </TouchableOpacity>
+        )}
+        {showingProfileInfo && (
+          <View style={styles.agreeRow}>
+            <TouchableOpacity
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: agreed }}
+              onPress={() => setAgreed((v) => !v)}
+              style={[styles.checkbox, agreed && styles.checkboxChecked]}
+              testID="signup-agree"
+            >
+              <Text style={styles.checkboxTick}>{agreed ? "✓" : ""}</Text>
+            </TouchableOpacity>
+            <View style={styles.legalNote} testID="signup-legal-note">
+              <Text style={styles.legalText}>I agree to the </Text>
+              <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+              <Text style={styles.legalText}> and </Text>
+              <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+              <Text style={styles.legalText}>.</Text>
+            </View>
+          </View>
         )}
       </ScrollView>
       {isCurrentQuestionAnswered && !showingProfileInfo && (
@@ -774,6 +805,13 @@ const styles = StyleSheet.create({
   socialLinkPlaceholder: { color: "#9CA3AF" },
   pasteBtn: { backgroundColor: "#FFFFFF", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   pasteBtnText: { color: "#111827", fontSize: 14, fontWeight: "700" as const },
+  legalNote: { marginTop: 10, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center", flex: 1 },
+  agreeRow: { marginTop: 10, flexDirection: "row", alignItems: "flex-start", gap: 10, paddingHorizontal: 20 },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: "#404040", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,20,20,0.85)" },
+  checkboxChecked: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
+  checkboxTick: { color: "#111827", fontSize: 14, fontWeight: "800" as const },
+  legalText: { color: "#9CA3AF", fontSize: 12 },
+  legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
   inputError: { borderColor: "#EF4444", borderWidth: 2 },
   errorText: { color: "#EF4444", fontSize: 12, marginTop: -8, marginLeft: 4 },
 });

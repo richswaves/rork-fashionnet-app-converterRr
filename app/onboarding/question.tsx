@@ -20,6 +20,7 @@ export default function OnboardingQuestion() {
   const q = questions[index];
 
   const [selected, setSelected] = useState<string[]>([]);
+  const [agreed, setAgreed] = useState<boolean>(false);
   const multiple = q?.multiple ?? false;
 
   const toggle = useCallback((opt: string) => {
@@ -40,6 +41,10 @@ export default function OnboardingQuestion() {
     }
     if (selected.length === 0) {
       Alert.alert("Select an option", "Choose at least one option to continue.");
+      return;
+    }
+    if (!agreed) {
+      Alert.alert("Agreement required", "Please confirm you agree to the Terms and policies to continue.");
       return;
     }
 
@@ -90,7 +95,7 @@ export default function OnboardingQuestion() {
     } else {
       router.replace("/(tabs)/opportunities" as any);
     }
-  }, [currentUserId, index, profile?.account_status, q, questions.length, role, router, selected, sessionId, updateProfileAsync, userType]);
+  }, [currentUserId, index, profile?.account_status, q, questions.length, role, router, selected, sessionId, updateProfileAsync, userType, agreed]);
 
   const onSkip = useCallback(() => {
     if (!q) return;
@@ -139,26 +144,37 @@ export default function OnboardingQuestion() {
           <TouchableOpacity testID="ob-skip" style={[styles.secondaryBtn]} onPress={onSkip}>
             <Text style={styles.secondaryBtnText}>Skip</Text>
           </TouchableOpacity>
-          <TouchableOpacity testID="ob-next" style={[styles.primaryBtn, { opacity: selected.length === 0 ? 0.6 : 1 }]} onPress={onNext}>
+          <TouchableOpacity testID="ob-next" style={[styles.primaryBtn, { opacity: selected.length === 0 || !agreed ? 0.6 : 1 }]} onPress={onNext}>
             <Text style={styles.primaryBtnText}>Next</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.legalNote} testID="onboarding-legal-note">
-          <Text style={styles.legalText}>By continuing, you agree to our </Text>
-          <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
-          <Text style={styles.legalText}>, </Text>
-          <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
-          <Text style={styles.legalText}>, </Text>
-          <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
-          <Text style={styles.legalText}>, </Text>
-          <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
-          <Text style={styles.legalText}>, </Text>
-          <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
-          <Text style={styles.legalText}>, </Text>
-          <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
-          <Text style={styles.legalText}> and </Text>
-          <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
-          <Text style={styles.legalText}>.</Text>
+        <View style={styles.agreeRow}>
+          <TouchableOpacity
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreed }}
+            onPress={() => setAgreed((v) => !v)}
+            style={[styles.checkbox, agreed && styles.checkboxChecked]}
+            testID="onboarding-agree"
+          >
+            <Text style={styles.checkboxTick}>{agreed ? "✓" : ""}</Text>
+          </TouchableOpacity>
+          <View style={styles.legalNote} testID="onboarding-legal-note">
+            <Text style={styles.legalText}>I agree to the </Text>
+            <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+            <Text style={styles.legalText}>, </Text>
+            <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+            <Text style={styles.legalText}>, </Text>
+            <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+            <Text style={styles.legalText}>, </Text>
+            <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+            <Text style={styles.legalText}>, </Text>
+            <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+            <Text style={styles.legalText}>, </Text>
+            <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+            <Text style={styles.legalText}> and </Text>
+            <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+            <Text style={styles.legalText}>.</Text>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -184,7 +200,11 @@ const styles = StyleSheet.create({
   secondaryBtn: { flex: 1, backgroundColor: "#0F172A", borderWidth: 1, borderColor: "#1F2937", paddingVertical: 16, alignItems: "center", borderRadius: 14 },
   secondaryBtnText: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" as const },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 20 },
-  legalNote: { marginTop: 10, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center" },
+  legalNote: { marginTop: 10, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center", flex: 1 },
+  agreeRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 10 },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: "#374151", alignItems: "center", justifyContent: "center", backgroundColor: "#0B1220" },
+  checkboxChecked: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
+  checkboxTick: { color: "#111827", fontSize: 14, fontWeight: "800" as const },
   legalText: { color: "#9CA3AF", fontSize: 12 },
   legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
 });

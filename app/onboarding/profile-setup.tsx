@@ -176,6 +176,7 @@ export default function ProfileSetup() {
   const [displayName, setDisplayName] = useState<string>(profile?.full_name ?? "");
 
   const [showModelDetails, setShowModelDetails] = useState<boolean>(false);
+  const [agreed, setAgreed] = useState<boolean>(false);
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
@@ -479,25 +480,36 @@ export default function ProfileSetup() {
 
         {!!role && !showModelDetails && (
           <>
-            <TouchableOpacity testID="ps-continue-profile" style={styles.primaryBtn} onPress={role === "model" ? onContinueFromProfile : onSave}>
+            <TouchableOpacity testID="ps-continue-profile" style={[styles.primaryBtn, { opacity: !agreed ? 0.6 : 1 }]} onPress={() => { if (!agreed) { Alert.alert("Agreement required", "Please confirm you agree to the Terms and policies to continue."); return; } if (role === "model") { onContinueFromProfile(); } else { onSave(); } }}>
               <Text style={styles.primaryBtnText}>Continue</Text>
             </TouchableOpacity>
-            <View style={styles.legalNote} testID="ps-legal-note-1">
-              <Text style={styles.legalText}>By continuing, you agree to our </Text>
-              <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
-              <Text style={styles.legalText}> and </Text>
-              <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
-              <Text style={styles.legalText}>.</Text>
+            <View style={styles.agreeRow}>
+              <TouchableOpacity
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: agreed }}
+                onPress={() => setAgreed((v) => !v)}
+                style={[styles.checkbox, agreed && styles.checkboxChecked]}
+                testID="ps-agree-1"
+              >
+                <Text style={styles.checkboxTick}>{agreed ? "✓" : ""}</Text>
+              </TouchableOpacity>
+              <View style={styles.legalNote} testID="ps-legal-note-1">
+                <Text style={styles.legalText}>I agree to the </Text>
+                <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+                <Text style={styles.legalText}> and </Text>
+                <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+                <Text style={styles.legalText}>.</Text>
+              </View>
             </View>
           </>
         )}
@@ -593,25 +605,36 @@ export default function ProfileSetup() {
 
         {!!role && showModelDetails && (
           <>
-            <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
+            <TouchableOpacity testID="ps-save" style={[styles.primaryBtn, { opacity: !agreed ? 0.6 : 1 }]} onPress={() => { if (!agreed) { Alert.alert("Agreement required", "Please confirm you agree to the Terms and policies to continue."); return; } onSave(); }}>
               <Text style={styles.primaryBtnText}>Create account</Text>
             </TouchableOpacity>
-            <View style={styles.legalNote} testID="ps-legal-note-2">
-              <Text style={styles.legalText}>By continuing, you agree to our </Text>
-              <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
-              <Text style={styles.legalText}>, </Text>
-              <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
-              <Text style={styles.legalText}> and </Text>
-              <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
-              <Text style={styles.legalText}>.</Text>
+            <View style={styles.agreeRow}>
+              <TouchableOpacity
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: agreed }}
+                onPress={() => setAgreed((v) => !v)}
+                style={[styles.checkbox, agreed && styles.checkboxChecked]}
+                testID="ps-agree-2"
+              >
+                <Text style={styles.checkboxTick}>{agreed ? "✓" : ""}</Text>
+              </TouchableOpacity>
+              <View style={styles.legalNote} testID="ps-legal-note-2">
+                <Text style={styles.legalText}>I agree to the </Text>
+                <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+                <Text style={styles.legalText}>, </Text>
+                <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+                <Text style={styles.legalText}> and </Text>
+                <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+                <Text style={styles.legalText}>.</Text>
+              </View>
             </View>
           </>
         )}
@@ -644,7 +667,11 @@ const styles = StyleSheet.create({
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
   profilePreviewSmall: { width: 80, height: 80, borderRadius: 12, marginBottom: 6 },
-  legalNote: { marginTop: 8, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center" },
+  legalNote: { marginTop: 8, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center", flex: 1 },
+  agreeRow: { marginTop: 8, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: "#404040", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,20,20,0.85)" },
+  checkboxChecked: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
+  checkboxTick: { color: "#111827", fontSize: 14, fontWeight: "800" as const },
   legalText: { color: "#9CA3AF", fontSize: 12 },
   legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
 });
