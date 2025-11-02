@@ -120,9 +120,17 @@ export function useActivityTracking() {
   });
 
   return {
-    trackActivity: (event: ActivityEvent) => trackActivity.mutate(event),
-    trackSearch: (event: SearchEvent) => trackSearch.mutate(event),
-    trackOpportunityInteraction: (interaction: OpportunityInteraction) => trackOpportunityInteraction.mutate(interaction),
-    trackNetworkInteraction: (interaction: NetworkInteraction) => trackNetworkInteraction.mutate(interaction),
+    trackActivity: (event: ActivityEvent) => {
+      trackActivity.mutate(event);
+    },
+    trackSearch: (event: SearchEvent) => {
+      trackSearch.mutate(event);
+    },
+    trackOpportunityInteraction: (interaction: OpportunityInteraction) => {
+      trackOpportunityInteraction.mutate(interaction);
+    },
+    trackNetworkInteraction: (interaction: NetworkInteraction) => {
+      trackNetworkInteraction.mutate(interaction);
+    },
   };
 }
