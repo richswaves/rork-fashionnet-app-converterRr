@@ -10,6 +10,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   ScrollView,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -123,6 +124,21 @@ export default function LoginScreen() {
     setPassword("");
   };
 
+  const handleInstagramPress = async () => {
+    const instagramUrl = "https://www.instagram.com/_thebrxnd_?igsh=YXhubWFqNGp0ZWJk&utm_source=qr";
+    try {
+      const canOpen = await Linking.canOpenURL(instagramUrl);
+      if (canOpen) {
+        await Linking.openURL(instagramUrl);
+      } else {
+        Alert.alert("Error", "Unable to open Instagram link");
+      }
+    } catch (error) {
+      console.error("Error opening Instagram:", error);
+      Alert.alert("Error", "Unable to open Instagram link");
+    }
+  };
+
   if (showLoginForm) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -181,11 +197,15 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.forgotButton}>
+            <TouchableOpacity
+              style={styles.forgotButton}
+              onPress={handleInstagramPress}
+              activeOpacity={0.7}
+            >
               <Text style={styles.forgotButtonText}>
                 Forgot password? Reach out on Instagram for help
               </Text>
-            </View>
+            </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
