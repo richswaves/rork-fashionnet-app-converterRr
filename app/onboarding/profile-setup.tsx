@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Image, Platform } from "react-native";
+import { Link } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -477,9 +478,28 @@ export default function ProfileSetup() {
         )}
 
         {!!role && !showModelDetails && (
-          <TouchableOpacity testID="ps-continue-profile" style={styles.primaryBtn} onPress={role === "model" ? onContinueFromProfile : onSave}>
-            <Text style={styles.primaryBtnText}>Continue</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity testID="ps-continue-profile" style={styles.primaryBtn} onPress={role === "model" ? onContinueFromProfile : onSave}>
+              <Text style={styles.primaryBtnText}>Continue</Text>
+            </TouchableOpacity>
+            <View style={styles.legalNote} testID="ps-legal-note-1">
+              <Text style={styles.legalText}>By continuing, you agree to our </Text>
+              <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+              <Text style={styles.legalText}> and </Text>
+              <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+              <Text style={styles.legalText}>.</Text>
+            </View>
+          </>
         )}
 
         {!!role && showModelDetails && (
@@ -572,9 +592,28 @@ export default function ProfileSetup() {
         )}
 
         {!!role && showModelDetails && (
-          <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
-            <Text style={styles.primaryBtnText}>Create account</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity testID="ps-save" style={styles.primaryBtn} onPress={onSave}>
+              <Text style={styles.primaryBtnText}>Create account</Text>
+            </TouchableOpacity>
+            <View style={styles.legalNote} testID="ps-legal-note-2">
+              <Text style={styles.legalText}>By continuing, you agree to our </Text>
+              <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+              <Text style={styles.legalText}>, </Text>
+              <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+              <Text style={styles.legalText}> and </Text>
+              <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+              <Text style={styles.legalText}>.</Text>
+            </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -605,4 +644,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: { width: "100%", height: "100%", backgroundColor: "rgba(20, 20, 20, 0.85)", borderWidth: 1, borderColor: "#404040", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   imagePlaceholderText: { color: "#9CA3AF", fontSize: 14 },
   profilePreviewSmall: { width: 80, height: 80, borderRadius: 12, marginBottom: 6 },
+  legalNote: { marginTop: 8, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center" },
+  legalText: { color: "#9CA3AF", fontSize: 12 },
+  legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
 });
