@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bell, ChevronDown, MapPin, Search, Send, User } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 
 interface MemberCard {
   id: string;
@@ -31,6 +32,9 @@ export default function NetworkScreen() {
   const containerStyle = useMemo(() => [styles.container], []);
 
   function toggleFollow(id: string) {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setFollowing((cur) => ({ ...cur, [id]: !cur[id] }));
   }
 
@@ -38,19 +42,47 @@ export default function NetworkScreen() {
     <View style={containerStyle} testID="network-screen">
       <SafeAreaView edges={["top"]}>
         <View style={styles.topBar}>
-          <Pressable style={styles.profile} testID="top-profile" onPress={() => console.log("profile") }>
+          <Pressable 
+            style={styles.profile} 
+            testID="top-profile" 
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              console.log("profile");
+            }}
+          >
             <Image source={{ uri: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=128&auto=format&fit=crop&q=60" }} style={styles.avatar} />
             <Text style={styles.profileText}>test</Text>
           </Pressable>
 
           <View style={styles.topIcons}>
-            <Pressable onPress={() => console.log("search") } style={styles.iconBtn} testID="top-search">
+            <Pressable 
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                console.log("search");
+              }} 
+              style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.5 }]} 
+              testID="top-search"
+            >
               <Search color="#E5E7EB" size={20} />
             </Pressable>
-            <Pressable onPress={() => console.log("bell") } style={styles.iconBtn} testID="top-bell">
+            <Pressable 
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                console.log("bell");
+              }} 
+              style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.5 }]} 
+              testID="top-bell"
+            >
               <Bell color="#E5E7EB" size={20} />
             </Pressable>
-            <Pressable onPress={() => console.log("share") } style={styles.iconBtn} testID="top-share">
+            <Pressable 
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                console.log("share");
+              }} 
+              style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.5 }]} 
+              testID="top-share"
+            >
               <Send color="#E5E7EB" size={20} />
             </Pressable>
           </View>
@@ -60,7 +92,14 @@ export default function NetworkScreen() {
       <ScrollView contentContainerStyle={styles.scroll} testID="network-scroll">
         <Text style={styles.sectionHeader}>FILTER NETWORK</Text>
 
-        <Pressable style={styles.selector} onPress={() => setRoleMenuOpen((s) => !s)} testID="role-selector">
+        <Pressable 
+          style={({ pressed }) => [styles.selector, pressed && { opacity: 0.7 }]} 
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setRoleMenuOpen((s) => !s);
+          }} 
+          testID="role-selector"
+        >
           <User color="#E5E7EB" size={18} />
           <Text style={styles.selectorText}>{selectedRole}</Text>
           <ChevronDown color="#E5E7EB" size={18} />
@@ -71,8 +110,12 @@ export default function NetworkScreen() {
             {ROLES.slice(1).map((r) => (
               <Pressable
                 key={r}
-                onPress={() => { setSelectedRole(r); setRoleMenuOpen(false); }}
-                style={[styles.chip, selectedRole === r && styles.chipActive]}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedRole(r);
+                  setRoleMenuOpen(false);
+                }}
+                style={({ pressed }) => [styles.chip, selectedRole === r && styles.chipActive, pressed && { opacity: 0.7 }]}
                 testID={`chip-${r}`}
               >
                 <Text style={[styles.chipText, selectedRole === r && styles.chipTextActive]}>{r}</Text>
@@ -96,7 +139,7 @@ export default function NetworkScreen() {
                 )}
                 <Pressable
                   onPress={() => toggleFollow(m.id)}
-                  style={[styles.followBtn, following[m.id] && styles.followBtnActive]}
+                  style={({ pressed }) => [styles.followBtn, following[m.id] && styles.followBtnActive, pressed && { opacity: 0.7 }]}
                   testID={`follow-${m.id}`}
                 >
                   <Text style={[styles.followLabel, following[m.id] && styles.followLabelActive]}>
@@ -123,7 +166,7 @@ export default function NetworkScreen() {
                 )}
                 <Pressable
                   onPress={() => toggleFollow(m.id)}
-                  style={[styles.followBtn, following[m.id] && styles.followBtnActive]}
+                  style={({ pressed }) => [styles.followBtn, following[m.id] && styles.followBtnActive, pressed && { opacity: 0.7 }]}
                   testID={`follow-${m.id}`}
                 >
                   <Text style={[styles.followLabel, following[m.id] && styles.followLabelActive]}>

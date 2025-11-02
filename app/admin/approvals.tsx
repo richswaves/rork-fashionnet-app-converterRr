@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Image } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Pressable, Image, Platform } from "react-native";
 import { Shield, Instagram, Youtube } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -7,6 +7,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { sbSelect, sbUpdate, sbInsert, getPublicUrl } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import GrainTexture from "@/components/GrainTexture";
+import * as Haptics from "expo-haptics";
 
 interface SocialLinks {
   instagram?: string;
@@ -173,10 +174,16 @@ export default function AdminApprovalsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Success", "User application approved");
     },
     onError: (error) => {
       console.error("[Admin] Approval error:", error);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       Alert.alert("Error", "Failed to approve application");
     },
   });
@@ -195,10 +202,16 @@ export default function AdminApprovalsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Success", "User application rejected");
     },
     onError: (error) => {
       console.error("[Admin] Rejection error:", error);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       Alert.alert("Error", "Failed to reject application");
     },
   });
@@ -211,10 +224,16 @@ export default function AdminApprovalsScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "suspended-users"] });
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Success", "Account suspended");
     },
     onError: (error) => {
       console.error("[Admin] Suspend error:", error);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       Alert.alert("Error", "Failed to suspend account");
     },
   });
@@ -225,15 +244,24 @@ export default function AdminApprovalsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users-by-status"] });
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Success", "Account deleted");
     },
     onError: (error) => {
       console.error("[Admin] Delete error:", error);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       Alert.alert("Error", "Failed to delete account");
     },
   });
 
   const handleApprove = (userId: string, userName?: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     Alert.alert(
       "Approve Application",
       `Approve ${userName || "this user"}?`,
@@ -245,6 +273,9 @@ export default function AdminApprovalsScreen() {
   };
 
   const handleReject = (userId: string, userName?: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     Alert.alert(
       "Reject Application",
       `Reject ${userName || "this user"}?`,
@@ -256,6 +287,9 @@ export default function AdminApprovalsScreen() {
   };
 
   const handleSuspendAccount = (userId: string, userName?: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     Alert.alert(
       "Suspend Account",
       `Suspend ${userName || "this user"}'s account? They will not be able to access the app.`,
@@ -267,6 +301,9 @@ export default function AdminApprovalsScreen() {
   };
 
   const handleDeleteAccount = (userId: string, userName?: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     Alert.alert(
       "Delete Account",
       `Permanently delete ${userName || "this user"}'s account? This action cannot be undone.`,
@@ -325,7 +362,7 @@ export default function AdminApprovalsScreen() {
         <GrainTexture />
         <View style={styles.content}>
           <Text style={styles.errorText}>Access denied. Admin only.</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -343,7 +380,11 @@ export default function AdminApprovalsScreen() {
           <Text style={styles.headerTitle}>Application Approvals</Text>
           <TouchableOpacity 
             style={styles.adminAccessBtn}
-            onPress={() => router.push("/admin/access")}
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/admin/access");
+            }}
+            activeOpacity={0.7}
           >
             <Shield size={16} color="#8B5CF6" />
             <Text style={styles.adminAccessText}>Admin Access</Text>
@@ -351,7 +392,14 @@ export default function AdminApprovalsScreen() {
         </View>
         <View style={styles.tabsRow}>
           {(["pending", "approved", "rejected"] as StatusTab[]).map((t) => (
-            <Pressable key={t} onPress={() => setActiveTab(t)} style={[styles.tabBtn, activeTab === t && styles.tabBtnActive]}>
+            <Pressable 
+              key={t} 
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveTab(t);
+              }} 
+              style={({ pressed }) => [styles.tabBtn, activeTab === t && styles.tabBtnActive, pressed && { opacity: 0.7 }]}
+            >
               <Text style={[styles.tabText, activeTab === t && styles.tabTextActive]}>
                 {t.toUpperCase()} ({usersQuery.data?.[t]?.length ?? 0})
               </Text>
@@ -383,7 +431,7 @@ export default function AdminApprovalsScreen() {
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Error loading applications</Text>
             <Text style={styles.errorDetail}>{String(usersQuery.error)}</Text>
-            <TouchableOpacity onPress={() => usersQuery.refetch()} style={styles.retryButton}>
+            <TouchableOpacity onPress={() => usersQuery.refetch()} style={styles.retryButton} activeOpacity={0.7}>
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
@@ -461,11 +509,13 @@ export default function AdminApprovalsScreen() {
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             const url = socialLinks?.instagram?.startsWith('http') 
                               ? socialLinks.instagram 
                               : `https://instagram.com/${socialLinks?.instagram}`;
                             console.log('[Social] Opening Instagram:', url);
                           }}
+                          activeOpacity={0.7}
                         >
                           <Instagram size={16} color="#C13584" />
                           <Text style={styles.socialLinkText} numberOfLines={1}>
@@ -477,11 +527,13 @@ export default function AdminApprovalsScreen() {
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             const url = socialLinks?.youtube?.startsWith('http') 
                               ? socialLinks.youtube 
                               : `https://youtube.com/${socialLinks?.youtube}`;
                             console.log('[Social] Opening YouTube:', url);
                           }}
+                          activeOpacity={0.7}
                         >
                           <Youtube size={16} color="#FF0000" />
                           <Text style={styles.socialLinkText} numberOfLines={1}>
@@ -493,11 +545,13 @@ export default function AdminApprovalsScreen() {
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             const url = socialLinks?.twitter?.startsWith('http') 
                               ? socialLinks.twitter 
                               : `https://twitter.com/${socialLinks?.twitter}`;
                             console.log('[Social] Opening Twitter:', url);
                           }}
+                          activeOpacity={0.7}
                         >
                           <Text style={styles.socialIcon}>𝕏</Text>
                           <Text style={styles.socialLinkText} numberOfLines={1}>
@@ -509,11 +563,13 @@ export default function AdminApprovalsScreen() {
                         <TouchableOpacity 
                           style={styles.socialLinkBtn}
                           onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             const url = socialLinks?.tiktok?.startsWith('http') 
                               ? socialLinks.tiktok 
                               : `https://tiktok.com/@${socialLinks?.tiktok}`;
                             console.log('[Social] Opening TikTok:', url);
                           }}
+                          activeOpacity={0.7}
                         >
                           <Text style={styles.socialIcon}>♪</Text>
                           <Text style={styles.socialLinkText} numberOfLines={1}>
@@ -547,36 +603,40 @@ export default function AdminApprovalsScreen() {
                   {activeTab === "pending" && (
                     <>
                       <TouchableOpacity
-                        style={[styles.actionButton, styles.approveButton]}
+                        style={[styles.actionButton, styles.approveButton, (approveMutation.isPending || rejectMutation.isPending) && { opacity: 0.5 }]}
                         onPress={() => handleApprove(p.user_id, p.full_name || p.username)}
                         disabled={approveMutation.isPending || rejectMutation.isPending}
+                        activeOpacity={0.7}
                       >
-                        <Text style={styles.approveButtonText}>Approve</Text>
+                        <Text style={styles.approveButtonText}>{approveMutation.isPending ? 'Approving...' : 'Approve'}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.actionButton, styles.rejectButton]}
+                        style={[styles.actionButton, styles.rejectButton, (approveMutation.isPending || rejectMutation.isPending) && { opacity: 0.5 }]}
                         onPress={() => handleReject(p.user_id, p.full_name || p.username)}
                         disabled={approveMutation.isPending || rejectMutation.isPending}
+                        activeOpacity={0.7}
                       >
-                        <Text style={styles.rejectButtonText}>Reject</Text>
+                        <Text style={styles.rejectButtonText}>{rejectMutation.isPending ? 'Rejecting...' : 'Reject'}</Text>
                       </TouchableOpacity>
                     </>
                   )}
                   {activeTab === "approved" && (
                     <>
                       <TouchableOpacity
-                        style={[styles.actionButton, styles.suspendButton]}
+                        style={[styles.actionButton, styles.suspendButton, (suspendAccountMutation.isPending || deleteAccountMutation.isPending) && { opacity: 0.5 }]}
                         onPress={() => handleSuspendAccount(p.user_id, p.full_name || p.username)}
                         disabled={suspendAccountMutation.isPending || deleteAccountMutation.isPending}
+                        activeOpacity={0.7}
                       >
-                        <Text style={styles.suspendButtonText}>Suspend</Text>
+                        <Text style={styles.suspendButtonText}>{suspendAccountMutation.isPending ? 'Suspending...' : 'Suspend'}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.actionButton, styles.deleteButton]}
+                        style={[styles.actionButton, styles.deleteButton, (suspendAccountMutation.isPending || deleteAccountMutation.isPending) && { opacity: 0.5 }]}
                         onPress={() => handleDeleteAccount(p.user_id, p.full_name || p.username)}
                         disabled={suspendAccountMutation.isPending || deleteAccountMutation.isPending}
+                        activeOpacity={0.7}
                       >
-                        <Text style={styles.deleteButtonText}>Delete</Text>
+                        <Text style={styles.deleteButtonText}>{deleteAccountMutation.isPending ? 'Deleting...' : 'Delete'}</Text>
                       </TouchableOpacity>
                     </>
                   )}
