@@ -941,13 +941,6 @@ export default function EditProfileScreen() {
           >
             <Text style={styles.logoutText}>Log Out</Text>
           </Pressable>
-          <Pressable 
-            onPress={() => setEditing("delete_confirm")}
-            style={styles.deleteBtn}
-            testID="btn-delete-account"
-          >
-            <Text style={styles.deleteText}>Delete Account</Text>
-          </Pressable>
         </View>
       </ScrollView>
 
