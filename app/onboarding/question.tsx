@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Link } from "expo-router";
 import { roleQuestions } from "@/constants/onboarding";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sbInsert } from "@/integrations/supabase/client";
@@ -143,6 +143,23 @@ export default function OnboardingQuestion() {
             <Text style={styles.primaryBtnText}>Next</Text>
           </TouchableOpacity>
         </View>
+        <View style={styles.legalNote} testID="onboarding-legal-note">
+          <Text style={styles.legalText}>By continuing, you agree to our </Text>
+          <Link href="/legal/terms"><Text style={styles.legalLink}>Terms</Text></Link>
+          <Text style={styles.legalText}>, </Text>
+          <Link href="/legal/privacy"><Text style={styles.legalLink}>Privacy Policy</Text></Link>
+          <Text style={styles.legalText}>, </Text>
+          <Link href="/legal/subscription"><Text style={styles.legalLink}>Subscription Addendum</Text></Link>
+          <Text style={styles.legalText}>, </Text>
+          <Link href="/legal/community-guidelines"><Text style={styles.legalLink}>Community Guidelines</Text></Link>
+          <Text style={styles.legalText}>, </Text>
+          <Link href="/legal/dmca"><Text style={styles.legalLink}>DMCA</Text></Link>
+          <Text style={styles.legalText}>, </Text>
+          <Link href="/legal/dpa"><Text style={styles.legalLink}>DPA</Text></Link>
+          <Text style={styles.legalText}> and </Text>
+          <Link href="/legal/cookie-policy"><Text style={styles.legalLink}>Cookie Policy</Text></Link>
+          <Text style={styles.legalText}>.</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -167,4 +184,7 @@ const styles = StyleSheet.create({
   secondaryBtn: { flex: 1, backgroundColor: "#0F172A", borderWidth: 1, borderColor: "#1F2937", paddingVertical: 16, alignItems: "center", borderRadius: 14 },
   secondaryBtnText: { color: "#E5E7EB", fontSize: 16, fontWeight: "700" as const },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 20 },
+  legalNote: { marginTop: 10, flexDirection: "row", flexWrap: "wrap" as const, alignItems: "center" },
+  legalText: { color: "#9CA3AF", fontSize: 12 },
+  legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
 });
