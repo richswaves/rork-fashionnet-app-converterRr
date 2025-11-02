@@ -522,11 +522,10 @@ export default function OpportunitiesScreen() {
           if (postedByRole.length > 0) {
             filteredData = filteredData.filter((opp) => {
               const profile = opp.profiles as any;
-              const profession: string = (profile?.profession ?? "").toLowerCase();
-              const professions: string[] = Array.isArray(profile?.professions) ? (profile.professions as string[]).map((p) => p.toLowerCase()) : [];
+              const userProfession = profile?.profession ?? "";
+              console.log("[Filter] Checking profession:", userProfession, "against:", postedByRole);
               return postedByRole.some(role => {
-                const target = role.toLowerCase();
-                return profession === target || professions.includes(target);
+                return userProfession === role;
               });
             });
           }
