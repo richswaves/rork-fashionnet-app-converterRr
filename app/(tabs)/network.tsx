@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { Bell, ChevronDown, MapPin, Search, User, ShieldCheck } from "lucide-react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Bell, ChevronDown, MapPin, Search, User, ShieldCheck, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,8 @@ export default function NetworkScreen() {
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
   const [locationMenuOpen, setLocationMenuOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 
   const { resolvedProfile, getDisplayForProfile, currentUserId } = useProfile();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
@@ -90,7 +92,7 @@ export default function NetworkScreen() {
   });
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations)],
+    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery],
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -105,6 +107,13 @@ export default function NetworkScreen() {
       }
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+      }
+      if (searchQuery.trim()) {
+        const lowerQuery = searchQuery.toLowerCase();
+        filtered = filtered.filter((r) => {
+          const d = getDisplayForProfile(r);
+          return d.displayName.toLowerCase().includes(lowerQuery);
+        });
       }
       filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
       return filtered.slice(0, 8).map((r) => {
@@ -121,7 +130,7 @@ export default function NetworkScreen() {
   });
 
   const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations)],
+    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery],
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -136,6 +145,13 @@ export default function NetworkScreen() {
       }
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+      }
+      if (searchQuery.trim()) {
+        const lowerQuery = searchQuery.toLowerCase();
+        filtered = filtered.filter((r) => {
+          const d = getDisplayForProfile(r);
+          return d.displayName.toLowerCase().includes(lowerQuery);
+        });
       }
       filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
       return filtered.slice(0, 12).map((r) => {
@@ -232,7 +248,7 @@ export default function NetworkScreen() {
         </Pressable>
 
         <View style={styles.topIcons}>
-          <Pressable onPress={() => console.log("search")} style={styles.iconBtn} testID="top-search">
+          <Pressable onPress={() => setIsSearchOpen((s) => !s)} style={styles.iconBtn} testID="top-search">
             <Search color="#E5E7EB" size={20} />
           </Pressable>
           <View style={styles.iconBadgeWrap}>
@@ -263,6 +279,28 @@ export default function NetworkScreen() {
           ) : null}
         </View>
       </View>
+
+      {isSearchOpen && (
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Search color="#9CA3AF" size={18} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by display name"
+              placeholderTextColor="#6B7280"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+              testID="search-input"
+            />
+            {searchQuery.length > 0 && (
+              <Pressable onPress={() => setSearchQuery("")} testID="clear-search">
+                <X color="#9CA3AF" size={18} />
+              </Pressable>
+            )}
+          </View>
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} testID="network-scroll">
         <Text style={styles.sectionHeader}>FILTER NETWORK</Text>
@@ -543,6 +581,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800" as const,
     lineHeight: 12,
+  },
+
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#23232B",
+  },
+  searchInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#121218",
+    borderColor: "#23232B",
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  searchInput: {
+    flex: 1,
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "600" as const,
+    paddingVertical: 4,
   },
 
   scroll: { paddingHorizontal: 12, paddingBottom: 24 },
