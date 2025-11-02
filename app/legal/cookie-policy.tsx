@@ -4,6 +4,8 @@ const BODY = `Cookie / Tracking Policy
 
 thebrxnd is a mobile app and does not use web browser cookies. We do not currently use advertising or analytics tracking that identifies you. Here is how we handle tracking:
 
+Pricing Notice: thebrxnd is currently free to use. If we introduce paid features later, this policy will be updated to reflect any SDKs or tracking strictly necessary for payments, with clear in‑app disclosure and controls.
+
 • No Tracking Cookies: We do not place cookies on your device or browser. The mobile app uses local storage for essential functions only.
 • Essential Analytics: We may use basic analytics (for example, crash reporting or usage statistics) to improve the app. These analytics are anonymous and not linked to you personally. Currently, we do not use any third-party analytics or advertising networks.
 • Future Tracking: We may introduce analytics or metrics to better understand app usage and improve features. If that happens, we will update this policy and give you an option to opt in or out where possible.

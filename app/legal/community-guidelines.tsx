@@ -3,6 +3,8 @@ import LegalDoc from "@/components/LegalDoc";
 const BODY = `Community Guidelines
 We want thebrxnd to be a creative, positive space for fashion and culture. Please follow these guidelines to keep the community safe and respectful:
 
+Important Pricing Notice: thebrxnd is currently free to use. We may introduce paid features or subscriptions in the future. If that happens, we will provide clear in‑app disclosure and you will not be charged unless you choose to opt in.
+
 • Be Respectful: Treat others kindly. Bullying, harassment, or personal attacks are not allowed.
 • No Hate Speech: Do not post content that attacks or discriminates against others based on race, ethnicity, religion, gender, sexual orientation, disability, or any protected status. Hate symbols, slurs, and extremist content are banned.
 • No Graphic or Adult Content: Do not share excessive violence, gore, or sexual content. If you post fashion content that is edgy, make sure it’s still appropriate for a broad audience. Content intended for adults (nudity, explicit scenes) is not allowed.

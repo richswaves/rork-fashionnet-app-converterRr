@@ -2,7 +2,9 @@ import LegalDoc from "@/components/LegalDoc";
 
 const BODY = `DMCA Takedown Policy
 
-thebrxnd LLC respects copyright and intellectual property rights. If you believe that content on thebrxnd infringes your copyright, please submit a Copyright Infringement Notice in writing to our Designated Copyright Agent.
+Important Pricing Notice: thebrxnd is currently free to use. We may introduce paid features or subscriptions in the future. If that happens, we will provide clear in‑app disclosure and you will not be charged unless you choose to opt in.
+
+Thebrxnd LLC respects copyright and intellectual property rights. If you believe that content on thebrxnd infringes your copyright, please submit a Copyright Infringement Notice in writing to our Designated Copyright Agent.
 
 How to Submit a Notice: Send an email with all of the following information (as required by U.S. law, 17 U.S.C. §512):
 - A physical or electronic signature of the copyright owner or authorized agent.
