@@ -203,9 +203,15 @@ export function getSupabase(): SupabaseClient | null {
     return null;
   }
   if (!client || cachedUrl !== url || cachedKey !== anonKey) {
+
+    // Define the storage adapter based on the platform
+    const storageAdapter = Platform.OS === 'web' 
+      ? undefined // On web, let supabase-js default to localStorage
+      : AsyncStorage; // On mobile, use AsyncStorage
+
     client = createClient(url, anonKey, {
       auth: {
-        storage: AsyncStorage,
+        storage: storageAdapter, // Use the correct storage for the platform
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,

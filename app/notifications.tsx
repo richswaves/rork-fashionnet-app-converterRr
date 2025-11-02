@@ -8,6 +8,7 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Platform,
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -261,7 +262,7 @@ export default function NotificationsScreen() {
         title: "Application Approved",
         message: `Your application to "${opportunityTitle}" has been approved!`,
         related_id: applicationId,
-      });
+      }, "return=minimal");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
@@ -270,8 +271,8 @@ export default function NotificationsScreen() {
       Alert.alert("Success", "Application approved");
     },
     onError: (error) => {
-      console.error("[Notifications] Approval error:", error);
-      Alert.alert("Error", "Failed to approve application");
+      console.error("[Notifications] Full approval error:", JSON.stringify(error, null, 2));
+      Alert.alert("Error", `Failed to approve: ${error.message}`);
     },
   });
 
@@ -285,7 +286,7 @@ export default function NotificationsScreen() {
         title: "Application Denied",
         message: `Your application to "${opportunityTitle}" has been denied.`,
         related_id: applicationId,
-      });
+      }, "return=minimal");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications-applications", currentUserId] });
@@ -294,8 +295,8 @@ export default function NotificationsScreen() {
       Alert.alert("Success", "Application rejected");
     },
     onError: (error) => {
-      console.error("[Notifications] Rejection error:", error);
-      Alert.alert("Error", "Failed to reject application");
+      console.error("[Notifications] Full rejection error:", JSON.stringify(error, null, 2));
+      Alert.alert("Error", `Failed to reject: ${error.message}`);
     },
   });
 
@@ -534,62 +535,68 @@ export default function NotificationsScreen() {
                 )}
                 
                 {isPending && (
-                  <View style={styles.appActionButtons}>
-                    <TouchableOpacity
-                      style={[styles.appActionBtn, styles.appApproveBtn]}
-                      onPress={() => {
-                        Alert.alert(
-                          "Approve Application",
-                          `Approve ${display.displayName}'s application to ${oppTitle}?`,
-                          [
-                            { text: "Cancel", style: "cancel" },
-                            {
-                              text: "Approve",
-                              onPress: () => approveApplicationMutation.mutate({ 
-                                applicationId: item.data.id,
-                                applicantId: item.data.applicant_id,
-                                opportunityTitle: oppTitle,
-                              }),
-                            },
-                          ]
-                        );
-                      }}
-                      disabled={approveApplicationMutation.isPending || rejectApplicationMutation.isPending}
-                      testID={`approve-app-${item.data.id}`}
-                    >
-                      <Check color="#FFFFFF" size={16} />
-                      <Text style={styles.appActionBtnText}>Approve</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[styles.appActionBtn, styles.appRejectBtn]}
-                      onPress={() => {
-                        Alert.alert(
-                          "Reject Application",
-                          `Reject ${display.displayName}'s application to ${oppTitle}?`,
-                          [
-                            { text: "Cancel", style: "cancel" },
-                            {
-                              text: "Reject",
-                              onPress: () => rejectApplicationMutation.mutate({ 
-                                applicationId: item.data.id,
-                                applicantId: item.data.applicant_id,
-                                opportunityTitle: oppTitle,
-                              }),
-                              style: "destructive",
-                            },
-                          ]
-                        );
-                      }}
-                      disabled={approveApplicationMutation.isPending || rejectApplicationMutation.isPending}
-                      testID={`reject-app-${item.data.id}`}
-                    >
-                      <XCircle color="#FFFFFF" size={16} />
-                      <Text style={styles.appActionBtnText}>Deny</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                
+  <View style={styles.appActionButtons}>
+    <Pressable
+      style={[styles.appActionBtn, styles.appApproveBtn]}
+      onPress={() => {
+        const approveFn = () => approveApplicationMutation.mutate({ 
+          applicationId: item.data.id,
+          applicantId: item.data.applicant_id,
+          opportunityTitle: oppTitle,
+        });
+
+        if (Platform.OS === 'web') {
+          if (window.confirm(`Approve ${display.displayName}'s application to ${oppTitle}?`)) {
+            approveFn();
+          }
+        } else {
+          Alert.alert(
+            "Approve Application",
+            `Approve ${display.displayName}'s application to ${oppTitle}?`,
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Approve", onPress: approveFn },
+            ]
+          );
+        }
+      }}
+      testID={`approve-app-${item.data.id}`}
+    >
+      <Check color="#FFFFFF" size={16} />
+      <Text style={styles.appActionBtnText}>Approve</Text>
+    </Pressable>
+    
+    <Pressable
+      style={[styles.appActionBtn, styles.appRejectBtn]}
+      onPress={() => {
+        const rejectFn = () => rejectApplicationMutation.mutate({ 
+          applicationId: item.data.id,
+          applicantId: item.data.applicant_id,
+          opportunityTitle: oppTitle,
+        });
+
+        if (Platform.OS === 'web') {
+          if (window.confirm(`Reject ${display.displayName}'s application to ${oppTitle}?`)) {
+            rejectFn();
+          }
+        } else {
+          Alert.alert(
+            "Reject Application",
+            `Reject ${display.displayName}'s application to ${oppTitle}?`,
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Reject", onPress: rejectFn, style: "destructive" },
+            ]
+          );
+        }
+      }}
+      testID={`reject-app-${item.data.id}`}
+    >
+      <XCircle color="#FFFFFF" size={16} />
+      <Text style={styles.appActionBtnText}>Deny</Text>
+    </Pressable>
+  </View>
+)}
                 {!isPending && (
                   <View style={styles.appStatusBadge}>
                     <Text style={[

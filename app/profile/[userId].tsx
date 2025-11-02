@@ -829,7 +829,7 @@ export default function UserProfileScreen() {
                                 Alert.alert("Login Required", "You must be logged in to apply");
                                 return;
                               }
-                              if (appliedIds?.has(opp.id)) {
+                              if (appliedIds?.includes(opp.id)) {
                                 unapplyMutation.mutate(opp.id);
                               } else {
                                 applyMutation.mutate(opp.id);
