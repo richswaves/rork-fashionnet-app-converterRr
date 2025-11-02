@@ -579,8 +579,8 @@ export default function OpportunitiesScreen() {
                             const url = profile?.social_links?.instagram ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://instagram.com/${url.replace(/^@/, "")}`;
                             console.log(`[OpportunityCard] Opening Instagram:`, fullUrl);
-                            if (Platform.OS === "web") {
-                              window.open(fullUrl, "_blank");
+                            if (Platform.OS === "web" && typeof window !== "undefined") {
+                              (window as any).open(fullUrl, "_blank");
                             } else {
                               Linking.openURL(fullUrl).catch(() => {});
                             }
@@ -596,8 +596,8 @@ export default function OpportunitiesScreen() {
                           onPress={() => {
                             const url = profile?.social_links?.youtube ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://youtube.com/@${url.replace(/^@/, "")}`;
-                            if (Platform.OS === "web") {
-                              window.open(fullUrl, "_blank");
+                            if (Platform.OS === "web" && typeof window !== "undefined") {
+                              (window as any).open(fullUrl, "_blank");
                             } else {
                               Linking.openURL(fullUrl).catch(() => {});
                             }
@@ -613,8 +613,8 @@ export default function OpportunitiesScreen() {
                           onPress={() => {
                             const url = profile?.social_links?.twitter ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://twitter.com/${url.replace(/^@/, "")}`;
-                            if (Platform.OS === "web") {
-                              window.open(fullUrl, "_blank");
+                            if (Platform.OS === "web" && typeof window !== "undefined") {
+                              (window as any).open(fullUrl, "_blank");
                             } else {
                               Linking.openURL(fullUrl).catch(() => {});
                             }
@@ -630,8 +630,8 @@ export default function OpportunitiesScreen() {
                           onPress={() => {
                             const url = profile?.social_links?.tiktok ?? "";
                             const fullUrl = url.startsWith("http") ? url : `https://tiktok.com/@${url.replace(/^@/, "")}`;
-                            if (Platform.OS === "web") {
-                              window.open(fullUrl, "_blank");
+                            if (Platform.OS === "web" && typeof window !== "undefined") {
+                              (window as any).open(fullUrl, "_blank");
                             } else {
                               Linking.openURL(fullUrl).catch(() => {});
                             }

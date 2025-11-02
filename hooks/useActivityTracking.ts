@@ -64,9 +64,9 @@ export function useActivityTracking() {
           page: event.page,
           search_query: event.search_query || null,
           filters: event.filters || null,
-          results_count: event.results_count || null,
         });
-      } catch {
+      } catch (error) {
+        console.log("[ActivityTracking] Search analytics insert failed:", error);
         // Silently fail if tables don't exist yet
       }
     },

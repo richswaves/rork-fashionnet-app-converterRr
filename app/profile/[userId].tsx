@@ -587,8 +587,8 @@ export default function UserProfileScreen() {
             if (!hasAny) return null;
             function open(url: string) {
               const full = url.startsWith("http") ? url : url.includes(".") ? `https://${url}` : url;
-              if (Platform.OS === "web") {
-                window.open(full, "_blank");
+              if (Platform.OS === "web" && typeof window !== "undefined") {
+                (window as any).open(full, "_blank");
               } else {
                 Linking.openURL(full).catch(() => {});
               }
@@ -708,8 +708,8 @@ export default function UserProfileScreen() {
                 key={index}
                 onPress={() => {
                   const url = link.url.startsWith("http") ? link.url : `https://${link.url}`;
-                  if (Platform.OS === "web") {
-                    window.open(url, "_blank");
+                  if (Platform.OS === "web" && typeof window !== "undefined") {
+                    (window as any).open(url, "_blank");
                   } else {
                     Linking.openURL(url).catch(() => {
                       Alert.alert("Error", "Could not open link");
@@ -829,7 +829,7 @@ export default function UserProfileScreen() {
                                 Alert.alert("Login Required", "You must be logged in to apply");
                                 return;
                               }
-                              if (appliedIds?.includes(opp.id)) {
+                              if (appliedIds?.has(opp.id)) {
                                 unapplyMutation.mutate(opp.id);
                               } else {
                                 applyMutation.mutate(opp.id);
