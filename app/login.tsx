@@ -183,7 +183,7 @@ export default function LoginScreen() {
 
             <View style={styles.forgotButton}>
               <Text style={styles.forgotButtonText}>
-                If you forgot your password dm us on instagram
+                Forgot password? Reach out on Instagram for help
               </Text>
             </View>
           </ScrollView>
