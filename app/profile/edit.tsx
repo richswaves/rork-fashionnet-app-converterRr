@@ -602,12 +602,14 @@ export default function EditProfileScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
         <View style={styles.coverWrap}>
-          <Image 
-            key={bannerUrl}
-            source={{ uri: bannerUrl || "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" }} 
-            style={styles.cover} 
-            resizeMode="cover" 
-          />
+          {(bannerUrl && bannerUrl.trim().length > 0) || "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" ? (
+            <Image 
+              key={bannerUrl}
+              source={{ uri: bannerUrl && bannerUrl.trim().length > 0 ? bannerUrl : "https://images.unsplash.com/photo-1517816428104-797678c7cf0d?w=1600&auto=format&fit=crop&q=60" }} 
+              style={styles.cover} 
+              resizeMode="cover" 
+            />
+          ) : null}
           <View style={styles.coverOverlay} />
           <LinearGradient
             colors={["rgba(11,11,15,0)", "rgba(11,11,15,0.35)", "rgba(11,11,15,0.85)", "#0B0B0F"]}
@@ -626,11 +628,17 @@ export default function EditProfileScreen() {
           </Pressable>
           <View style={styles.avatarFloating}>
             <Pressable accessibilityRole="button" accessibilityLabel="Change profile picture" onPress={onPickAvatar} style={styles.avatarWrap} testID="avatar-press">
-              <Image 
-                key={avatarUrl}
-                source={{ uri: avatarUrl || resolvedProfile.avatarUrl }} 
-                style={styles.avatar} 
-              />
+              {(avatarUrl && avatarUrl.trim().length > 0) || resolvedProfile.avatarUrl ? (
+                <Image 
+                  key={avatarUrl}
+                  source={{ uri: (avatarUrl && avatarUrl.trim().length > 0) ? avatarUrl : resolvedProfile.avatarUrl }} 
+                  style={styles.avatar} 
+                />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: "#14141C", alignItems: "center", justifyContent: "center" }]}>
+                  <Text style={{ color: "#9CA3AF", fontSize: 14 }}>No Avatar</Text>
+                </View>
+              )}
               <Pressable testID="edit-avatar" onPress={onPickAvatar} style={styles.editFab}>
                 <Pencil color="#0B0B0F" size={16} />
               </Pressable>
@@ -835,10 +843,14 @@ export default function EditProfileScreen() {
                   return (
                     <View key={block.blocked_user_id} style={styles.blockedUserCard}>
                       <View style={styles.blockedUserLeft}>
-                        <Image 
-                          source={{ uri: avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" }}
-                          style={styles.blockedUserAvatar}
-                        />
+                        {(avatarUrl && avatarUrl.trim().length > 0) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" ? (
+                          <Image 
+                            source={{ uri: (avatarUrl && avatarUrl.trim().length > 0) ? avatarUrl : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" }}
+                            style={styles.blockedUserAvatar}
+                          />
+                        ) : (
+                          <View style={[styles.blockedUserAvatar, { backgroundColor: "#14141C" }]} />
+                        )}
                         <Text style={styles.blockedUserName}>{displayName}</Text>
                       </View>
                       <Pressable
@@ -1713,7 +1725,13 @@ function MasonryPortfolio({ items, onDelete }: { items: PortfolioItem[]; onDelet
                     )}
                   </>
                 ) : (
-                  <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                  item.media_url && item.media_url.trim().length > 0 ? (
+                    <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                  ) : (
+                    <View style={[styles.portfolioImage, { backgroundColor: "#14141C", alignItems: "center", justifyContent: "center" }]}>
+                      <Text style={{ color: "#9CA3AF", fontSize: 12 }}>No Image</Text>
+                    </View>
+                  )
                 )}
                 <Pressable
                   onPress={() => onDelete(item.id)}
