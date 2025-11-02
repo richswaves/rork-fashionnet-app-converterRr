@@ -408,9 +408,7 @@ export default function NetworkScreen() {
                         testID={`top-${m.id}`}
                         onPress={() => {
                           trackNetworkInteraction({ target_user_id: m.id, interaction_type: "view_profile" });
-                          const userIds = (topProfiles ?? []).map(p => p.id).join(',');
-                          const currentIndex = (topProfiles ?? []).findIndex(p => p.id === m.id);
-                          router.push({ pathname: "/profile/[userId]", params: { userId: m.id, userIds, currentIndex: String(currentIndex) } });
+                          router.push({ pathname: "/profile/[userId]", params: { userId: m.id } });
                         }}
                       >
                         <Image source={{ uri: m.image }} style={styles.cardImage} resizeMode="cover" />
@@ -458,9 +456,7 @@ export default function NetworkScreen() {
           {(newProfiles ?? []).map((m) => (
             <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => {
               trackNetworkInteraction({ target_user_id: m.id, interaction_type: "view_profile" });
-              const userIds = (newProfiles ?? []).map(p => p.id).join(',');
-              const currentIndex = (newProfiles ?? []).findIndex(p => p.id === m.id);
-              router.push({ pathname: "/profile/[userId]", params: { userId: m.id, userIds, currentIndex: String(currentIndex) } });
+              router.push({ pathname: "/profile/[userId]", params: { userId: m.id } });
             }}>
               <Image source={{ uri: m.image }} style={styles.hImage} resizeMode="cover" />
               <View style={styles.cardBody}>
