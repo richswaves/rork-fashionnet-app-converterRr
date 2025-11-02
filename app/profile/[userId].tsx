@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, PanResponder } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send, ExternalLink } from "lucide-react-native";
@@ -37,7 +37,7 @@ interface ProfileRow {
     twitter?: string;
     tiktok?: string;
   } | null;
-  custom_links?: Array<{ name: string; url: string }> | null;
+  custom_links?: { name: string; url: string }[] | null;
 }
 
 interface OpportunityRow {
@@ -58,7 +58,7 @@ interface OpportunityRow {
 }
 
 export default function UserProfileScreen() {
-  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const { userId, userIds, currentIndex } = useLocalSearchParams<{ userId: string; userIds?: string; currentIndex?: string }>();
 
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -77,6 +77,66 @@ export default function UserProfileScreen() {
   const [reportReason, setReportReason] = useState<string>("");
   const [shouldBlockUser, setShouldBlockUser] = useState<boolean>(false);
   const [creatingConversation, setCreatingConversation] = useState<boolean>(false);
+
+  const userIdList = useMemo(() => {
+    if (!userIds) return [];
+    return userIds.split(',').filter(Boolean);
+  }, [userIds]);
+
+  const currentIdx = useMemo(() => {
+    return currentIndex ? parseInt(currentIndex, 10) : -1;
+  }, [currentIndex]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (userIdList.length === 0 || currentIdx === -1) return;
+
+        const SWIPE_THRESHOLD = 50;
+        const SWIPE_VELOCITY_THRESHOLD = 0.3;
+
+        if (
+          gestureState.dx < -SWIPE_THRESHOLD ||
+          gestureState.vx < -SWIPE_VELOCITY_THRESHOLD
+        ) {
+          const nextIdx = currentIdx + 1;
+          if (nextIdx < userIdList.length) {
+            const nextUserId = userIdList[nextIdx];
+            console.log('[Swipe] Navigating to next profile:', nextUserId);
+            router.replace({ 
+              pathname: "/profile/[userId]", 
+              params: { 
+                userId: nextUserId, 
+                userIds, 
+                currentIndex: String(nextIdx) 
+              } 
+            });
+          }
+        } else if (
+          gestureState.dx > SWIPE_THRESHOLD ||
+          gestureState.vx > SWIPE_VELOCITY_THRESHOLD
+        ) {
+          const prevIdx = currentIdx - 1;
+          if (prevIdx >= 0) {
+            const prevUserId = userIdList[prevIdx];
+            console.log('[Swipe] Navigating to previous profile:', prevUserId);
+            router.replace({ 
+              pathname: "/profile/[userId]", 
+              params: { 
+                userId: prevUserId, 
+                userIds, 
+                currentIndex: String(prevIdx) 
+              } 
+            });
+          }
+        }
+      },
+    })
+  ).current;
 
 
   useEffect(() => {
@@ -506,7 +566,7 @@ export default function UserProfileScreen() {
   const isOwn = !!data?.user_id && currentUserId === data.user_id;
 
   return (
-    <View style={styles.container} testID="profile-screen">
+    <View style={styles.container} testID="profile-screen" {...panResponder.panHandlers}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 32 + insets.bottom }]} testID="profile-scroll">
@@ -829,7 +889,7 @@ export default function UserProfileScreen() {
                                 Alert.alert("Login Required", "You must be logged in to apply");
                                 return;
                               }
-                              if (appliedIds?.includes(opp.id)) {
+                              if (appliedIds?.has(opp.id)) {
                                 unapplyMutation.mutate(opp.id);
                               } else {
                                 applyMutation.mutate(opp.id);
@@ -971,7 +1031,7 @@ export default function UserProfileScreen() {
           >
             <Pressable style={styles.reportModalContent} onPress={(e) => e.stopPropagation()}>
               <Text style={styles.reportModalTitle}>Report User</Text>
-              <Text style={styles.reportModalSubtitle}>Please tell us why you're reporting this account</Text>
+              <Text style={styles.reportModalSubtitle}>Please tell us why you&apos;re reporting this account</Text>
               <TextInput
                 style={styles.reportInput}
                 placeholder="Reason for reporting..."
