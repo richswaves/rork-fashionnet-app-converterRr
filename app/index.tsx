@@ -11,7 +11,13 @@ export default function Index() {
   console.log('[Index] App starting...');
 
   useEffect(() => {
-    if (isLoading || didNavigate.current) return;
+    if (isLoading || didNavigate.current) {
+      console.log('[Index] Waiting... isLoading:', isLoading, 'didNavigate:', didNavigate.current);
+      return;
+    }
+    
+    console.log('[Index] Determining route...', { session: !!session, profile: profile });
+    
     const target = (() => {
       if (!session) return "/login";
       if (profile && profile.account_status === "suspended") {
@@ -28,14 +34,19 @@ export default function Index() {
       }
       return "/(tabs)/network";
     })();
+    
+    console.log('[Index] Navigating to:', target);
+    
     const id = setTimeout(() => {
+      if (didNavigate.current) return;
       try {
-        router.replace(target as any);
         didNavigate.current = true;
+        router.replace(target as any);
       } catch (e) {
-        console.log("Deferred navigation error", e);
+        console.error('[Index] Navigation error:', e);
+        didNavigate.current = false;
       }
-    }, 0);
+    }, 100);
     return () => clearTimeout(id);
   }, [isLoading, session, profile, router]);
 

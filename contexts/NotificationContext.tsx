@@ -49,70 +49,82 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       
       const cutoffDate = lastViewedAt || new Date(0).toISOString();
       
-      const [follows, myOpps, applicantNotifications] = await Promise.all([
-        sbSelect<{ id: string; created_at: string }>("follows", {
-          select: "id,created_at",
-          query: { following_id: `eq.${currentUserId}` },
-          limit: 100,
-        }),
-        sbSelect<{ id: string }>("opportunities", {
-          select: "id",
-          query: { user_id: `eq.${currentUserId}` },
-          limit: 200,
-        }),
-        sbSelect<{ id: string; read: boolean }>("applicant_notifications", {
-          select: "id,read",
-          query: { applicant_id: `eq.${currentUserId}`, read: "eq.false" },
-          limit: 100,
-        }),
-      ]);
-      
-      const recentFollows = follows.filter(f => (f.created_at || "") > cutoffDate);
-      
-      const oppIds = myOpps.map((o) => o.id);
-      let appsCount = 0;
-      
-      if (oppIds.length > 0) {
-        const idList = `in.(${oppIds.join(",")})`;
-        const apps = await sbSelect<{ id: string; created_at: string }>("applications", {
-          select: "id,created_at",
-          query: { opportunity_id: idList },
-          limit: 100,
-        });
-        const recentApps = apps.filter(a => (a.created_at || "") > cutoffDate);
-        appsCount = recentApps.length;
+      try {
+        const [follows, myOpps, applicantNotifications] = await Promise.all([
+          sbSelect<{ id: string; created_at: string }>("follows", {
+            select: "id,created_at",
+            query: { following_id: `eq.${currentUserId}` },
+            limit: 100,
+          }),
+          sbSelect<{ id: string }>("opportunities", {
+            select: "id",
+            query: { user_id: `eq.${currentUserId}` },
+            limit: 200,
+          }),
+          sbSelect<{ id: string; read: boolean }>("applicant_notifications", {
+            select: "id,read",
+            query: { applicant_id: `eq.${currentUserId}`, read: "eq.false" },
+            limit: 100,
+          }),
+        ]);
+        
+        const recentFollows = follows.filter(f => (f.created_at || "") > cutoffDate);
+        
+        const oppIds = myOpps.map((o) => o.id);
+        let appsCount = 0;
+        
+        if (oppIds.length > 0) {
+          const idList = `in.(${oppIds.join(",")})`;
+          const apps = await sbSelect<{ id: string; created_at: string }>("applications", {
+            select: "id,created_at",
+            query: { opportunity_id: idList },
+            limit: 100,
+          });
+          const recentApps = apps.filter(a => (a.created_at || "") > cutoffDate);
+          appsCount = recentApps.length;
+        }
+        
+        const unreadApplicantNotifs = applicantNotifications.length;
+        
+        return recentFollows.length + appsCount + unreadApplicantNotifs;
+      } catch (error) {
+        console.error('[NotificationContext] Error fetching user notifications:', error);
+        return 0;
       }
-      
-      const unreadApplicantNotifs = applicantNotifications.length;
-      
-      return recentFollows.length + appsCount + unreadApplicantNotifs;
     },
     enabled: !!currentUserId,
-    staleTime: 10000,
-    refetchInterval: 30000,
+    staleTime: 30000,
+    refetchInterval: 60000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const { data: adminNotificationCount = 0, refetch: refetchAdmin } = useQuery<number>({
     queryKey: ["admin-notification-count", lastViewedAt],
     queryFn: async () => {
-      const cutoffDate = lastViewedAt || new Date(0).toISOString();
-      
-      const pendingProfiles = await sbSelect<{ user_id: string; created_at: string }>("profiles", {
-        select: "user_id,created_at",
-        query: { account_status: "eq.pending" },
-        limit: 100,
-      });
-      
-      const recentPending = pendingProfiles.filter(p => (p.created_at || "") > cutoffDate);
-      return recentPending.length;
+      try {
+        const cutoffDate = lastViewedAt || new Date(0).toISOString();
+        
+        const pendingProfiles = await sbSelect<{ user_id: string; created_at: string }>("profiles", {
+          select: "user_id,created_at",
+          query: { account_status: "eq.pending" },
+          limit: 100,
+        });
+        
+        const recentPending = pendingProfiles.filter(p => (p.created_at || "") > cutoffDate);
+        return recentPending.length;
+      } catch (error) {
+        console.error('[NotificationContext] Error fetching admin notifications:', error);
+        return 0;
+      }
     },
     enabled: !!isAdmin,
-    staleTime: 10000,
-    refetchInterval: 30000,
+    staleTime: 30000,
+    refetchInterval: 60000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const markAsViewed = useCallback(async (type: "user" | "admin") => {
