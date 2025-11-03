@@ -108,28 +108,16 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     queryKey: ["profile", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return null;
-      try {
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
-        );
-        const fetchPromise = sbSelect<Profile>("profiles", {
-          select: "*",
-          query: { user_id: `eq.${currentUserId}` },
-          limit: 1,
-        });
-        const rows = await Promise.race([fetchPromise, timeoutPromise]);
-        return rows[0] ?? null;
-      } catch (error) {
-        console.error('[ProfileContext] Profile fetch error:', error);
-        return null;
-      }
+      const rows = await sbSelect<Profile>("profiles", {
+        select: "*",
+        query: { user_id: `eq.${currentUserId}` },
+        limit: 1,
+      });
+      return rows[0] ?? null;
     },
     enabled: !!currentUserId && !!getSupabase(),
     staleTime: 30000,
     gcTime: 300000,
-    retry: 2,
-    retryDelay: 1000,
-    networkMode: 'offlineFirst',
   });
 
   const resolved = useMemo<ResolvedProfile>(() => resolveFromSession(profileQuery.data ?? null, session), [profileQuery.data, session]);
