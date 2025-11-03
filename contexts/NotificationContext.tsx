@@ -38,6 +38,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     enabled: !!currentUserId,
     staleTime: 60000,
     gcTime: 300000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: notificationCount = 0, refetch: refetchUser } = useQuery<number>({
@@ -88,6 +90,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     enabled: !!currentUserId,
     staleTime: 10000,
     refetchInterval: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: adminNotificationCount = 0, refetch: refetchAdmin } = useQuery<number>({
@@ -107,6 +111,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     enabled: !!isAdmin,
     staleTime: 10000,
     refetchInterval: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const markAsViewed = useCallback(async (type: "user" | "admin") => {

@@ -31,7 +31,8 @@ const queryClient = new QueryClient({
       gcTime: 300000,
       retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount: true,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
     },
   },
 });
