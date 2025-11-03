@@ -79,8 +79,10 @@ export default function RootLayout() {
     };
   }, []);
 
+  const TRPCProvider = trpc.Provider;
+
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+    <TRPCProvider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <ProfileProvider>
           <NotificationProvider>
@@ -90,6 +92,6 @@ export default function RootLayout() {
           </NotificationProvider>
         </ProfileProvider>
       </QueryClientProvider>
-    </trpc.Provider>
+    </TRPCProvider>
   );
 }
