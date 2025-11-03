@@ -81,9 +81,11 @@ export default function RootLayout() {
 
   const TRPCProvider = trpc.Provider;
 
+  // RENDER THE CORRECTED STRUCTURE:
   return (
-    <TRPCProvider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
+    // 1. ADD THIS PROVIDER AROUND EVERYTHING
+    <QueryClientProvider client={queryClient}>
+      <TRPCProvider client={trpcClient} queryClient={queryClient}>
         <ProfileProvider>
           <NotificationProvider>
             <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0B0B0F" }}>
@@ -91,7 +93,7 @@ export default function RootLayout() {
             </GestureHandlerRootView>
           </NotificationProvider>
         </ProfileProvider>
-      </QueryClientProvider>
-    </TRPCProvider>
+      </TRPCProvider>
+    </QueryClientProvider> // 2. AND ADD THE CLOSING TAG
   );
 }
