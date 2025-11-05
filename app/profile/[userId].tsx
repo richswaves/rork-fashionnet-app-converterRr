@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
 
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
@@ -452,7 +453,6 @@ export default function UserProfileScreen() {
         base64Data = asset.base64;
       } else {
         console.log("[upload] Reading file using FileSystem");
-        const FileSystem = await import("expo-file-system");
         base64Data = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
       }
     } catch (err) {
