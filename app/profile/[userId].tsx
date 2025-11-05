@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
 
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
@@ -142,7 +143,7 @@ export default function UserProfileScreen() {
     enabled: !!userId,
   });
 
-  const { data: appliedIds } = useQuery<Set<string>>({
+  const { data: appliedIds } = useQuery<Set<string> | string[]>({
     queryKey: ["applied-ids", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return new Set<string>();
@@ -156,7 +157,7 @@ export default function UserProfileScreen() {
     enabled: !!currentUserId,
   });
 
-  const { data: savedIds } = useQuery<Set<string>>({
+  const { data: savedIds } = useQuery<Set<string> | string[]>({
     queryKey: ["saved-ids", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return new Set<string>();
@@ -452,7 +453,6 @@ export default function UserProfileScreen() {
         base64Data = asset.base64;
       } else {
         console.log("[upload] Reading file using FileSystem");
-        const FileSystem = await import("expo-file-system");
         base64Data = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
       }
     } catch (err) {
@@ -504,6 +504,22 @@ export default function UserProfileScreen() {
   }
 
   const isOwn = !!data?.user_id && currentUserId === data.user_id;
+
+  const appliedHas = React.useCallback((id: string): boolean => {
+    const anyIds: unknown = appliedIds;
+    if (!anyIds) return false;
+    if (anyIds instanceof Set) return (anyIds as Set<string>).has(id);
+    if (Array.isArray(anyIds)) return (anyIds as string[]).includes(id);
+    return false;
+  }, [appliedIds]);
+
+  const savedHas = React.useCallback((id: string): boolean => {
+    const anyIds: unknown = savedIds;
+    if (!anyIds) return false;
+    if (anyIds instanceof Set) return (anyIds as Set<string>).has(id);
+    if (Array.isArray(anyIds)) return (anyIds as string[]).includes(id);
+    return false;
+  }, [savedIds]);
 
   return (
     <View style={styles.container} testID="profile-screen">
@@ -823,13 +839,13 @@ export default function UserProfileScreen() {
                       {!isOwnPost && (
                         <View style={styles.oppActions}>
                           <Pressable
-                            style={[styles.oppActionBtn, appliedIds?.has(opp.id) && styles.oppActionBtnApplied]}
+                            style={[styles.oppActionBtn, appliedHas(opp.id) && styles.oppActionBtnApplied]}
                             onPress={() => {
                               if (!currentUserId) {
                                 Alert.alert("Login Required", "You must be logged in to apply");
                                 return;
                               }
-                              if (appliedIds?.has(opp.id)) {
+                              if (appliedHas(opp.id)) {
                                 unapplyMutation.mutate(opp.id);
                               } else {
                                 applyMutation.mutate(opp.id);
@@ -838,19 +854,19 @@ export default function UserProfileScreen() {
                             disabled={applyMutation.isPending || unapplyMutation.isPending}
                             testID={`apply-${opp.id}`}
                           >
-                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
-                            <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {appliedIds?.has(opp.id) ? "Applied" : "Apply"}
+                            <CheckCircle2 color={appliedHas(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
+                            <Text style={[styles.oppActionText, appliedHas(opp.id) && styles.oppActionTextActive]}>
+                              {appliedHas(opp.id) ? "Applied" : "Apply"}
                             </Text>
                           </Pressable>
                           <Pressable
-                            style={[styles.oppActionBtn, savedIds?.has(opp.id) && styles.oppActionBtnSaved]}
+                            style={[styles.oppActionBtn, savedHas(opp.id) && styles.oppActionBtnSaved]}
                             onPress={() => {
                               if (!currentUserId) {
                                 Alert.alert("Login Required", "You must be logged in to save");
                                 return;
                               }
-                              if (savedIds?.has(opp.id)) {
+                              if (savedHas(opp.id)) {
                                 unsaveMutation.mutate(opp.id);
                               } else {
                                 saveMutation.mutate(opp.id);
@@ -859,9 +875,9 @@ export default function UserProfileScreen() {
                             disabled={saveMutation.isPending || unsaveMutation.isPending}
                             testID={`save-${opp.id}`}
                           >
-                            <Bookmark color={savedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedIds?.has(opp.id) ? "#FFFFFF" : "transparent"} />
-                            <Text style={[styles.oppActionText, savedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {savedIds?.has(opp.id) ? "Saved" : "Save"}
+                            <Bookmark color={savedHas(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedHas(opp.id) ? "#FFFFFF" : "transparent"} />
+                            <Text style={[styles.oppActionText, savedHas(opp.id) && styles.oppActionTextActive]}>
+                              {savedHas(opp.id) ? "Saved" : "Save"}
                             </Text>
                           </Pressable>
                         </View>
