@@ -142,34 +142,34 @@ export default function UserProfileScreen() {
     enabled: !!userId,
   });
 
-  const { data: appliedIds } = useQuery<Set<string>>({
+  const { data: appliedIds } = useQuery<string[]>({
     queryKey: ["applied-ids", currentUserId],
     queryFn: async () => {
-      if (!currentUserId) return new Set<string>();
+      if (!currentUserId) return [];
       const apps = await sbSelect<{ opportunity_id: string }>("applications", {
         select: "opportunity_id",
         query: { applicant_id: `eq.${currentUserId}` },
         limit: 1000,
       });
-      return new Set(apps.map((a) => a.opportunity_id));
+      return apps.map((a) => a.opportunity_id);
     },
     enabled: !!currentUserId,
   });
 
-  const { data: savedIds } = useQuery<Set<string>>({
+  const { data: savedIds } = useQuery<string[]>({
     queryKey: ["saved-ids", currentUserId],
     queryFn: async () => {
-      if (!currentUserId) return new Set<string>();
+      if (!currentUserId) return [];
       const saves = await sbSelect<{ opportunity_id: string }>("saved_opportunities", {
         select: "opportunity_id",
         query: { user_id: `eq.${currentUserId}` },
         limit: 1000,
       });
-      return new Set(saves.map((s) => s.opportunity_id));
+      return saves.map((s) => s.opportunity_id);
     },
     enabled: !!currentUserId,
   });
-
+  
   const { data: isFollowing } = useQuery<boolean>({
     queryKey: ["is-following", currentUserId, userId],
     queryFn: async () => {
@@ -823,13 +823,13 @@ export default function UserProfileScreen() {
                       {!isOwnPost && (
                         <View style={styles.oppActions}>
                           <Pressable
-                            style={[styles.oppActionBtn, appliedIds?.has(opp.id) && styles.oppActionBtnApplied]}
+                            style={[styles.oppActionBtn, appliedIds?.includes(opp.id) && styles.oppActionBtnApplied]}
                             onPress={() => {
                               if (!currentUserId) {
                                 Alert.alert("Login Required", "You must be logged in to apply");
                                 return;
                               }
-                              if (appliedIds?.has(opp.id)) {
+                              if (appliedIds?.includes(opp.id)) {
                                 unapplyMutation.mutate(opp.id);
                               } else {
                                 applyMutation.mutate(opp.id);
@@ -838,19 +838,19 @@ export default function UserProfileScreen() {
                             disabled={applyMutation.isPending || unapplyMutation.isPending}
                             testID={`apply-${opp.id}`}
                           >
-                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
-                            <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {appliedIds?.has(opp.id) ? "Applied" : "Apply"}
+                            <CheckCircle2 color={appliedIds?.includes(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
+                            <Text style={[styles.oppActionText, appliedIds?.includes(opp.id) && styles.oppActionTextActive]}>
+                              {appliedIds?.includes(opp.id) ? "Applied" : "Apply"}
                             </Text>
                           </Pressable>
                           <Pressable
-                            style={[styles.oppActionBtn, savedIds?.has(opp.id) && styles.oppActionBtnSaved]}
+                            style={[styles.oppActionBtn, savedIds?.includes(opp.id) && styles.oppActionBtnSaved]}
                             onPress={() => {
                               if (!currentUserId) {
                                 Alert.alert("Login Required", "You must be logged in to save");
                                 return;
                               }
-                              if (savedIds?.has(opp.id)) {
+                              if (savedIds?.includes(opp.id)) {
                                 unsaveMutation.mutate(opp.id);
                               } else {
                                 saveMutation.mutate(opp.id);
@@ -859,9 +859,9 @@ export default function UserProfileScreen() {
                             disabled={saveMutation.isPending || unsaveMutation.isPending}
                             testID={`save-${opp.id}`}
                           >
-                            <Bookmark color={savedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedIds?.has(opp.id) ? "#FFFFFF" : "transparent"} />
-                            <Text style={[styles.oppActionText, savedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {savedIds?.has(opp.id) ? "Saved" : "Save"}
+                            <Bookmark color={savedIds?.includes(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedIds?.includes(opp.id) ? "#FFFFFF" : "transparent"} />
+                            <Text style={[styles.oppActionText, savedIds?.includes(opp.id) && styles.oppActionTextActive]}>
+                              {savedIds?.includes(opp.id) ? "Saved" : "Save"}
                             </Text>
                           </Pressable>
                         </View>
