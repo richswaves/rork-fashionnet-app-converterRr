@@ -138,7 +138,8 @@ export default function OpportunitiesScreen() {
       }, {} as Record<string, { applied: boolean; status?: string }>);
     },
     enabled: !!currentUserId,
-    staleTime: 10000,
+    staleTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   const { data: savedIds } = useQuery<Set<string>>({
@@ -153,7 +154,9 @@ export default function OpportunitiesScreen() {
       return new Set(saves.map((s) => s.opportunity_id));
     },
     enabled: !!currentUserId,
-    staleTime: 10000,
+    placeholderData: new Set<string>(),
+    staleTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   const applyMutation = useMutation({
@@ -170,14 +173,11 @@ export default function OpportunitiesScreen() {
     onSuccess: async (opportunityId) => {
       console.log("[Apply] Success, updating cache for opportunity:", opportunityId);
       
-      queryClient.setQueryData<Record<string, { applied: boolean; status?: string }>>([
+      queryClient.setQueryData<Set<string>>([
         "applied-ids",
         currentUserId,
       ], (old) => {
-        return {
-          ...(old ?? {}),
-          [opportunityId]: { applied: true, status: "pending" },
-        };
+        return new Set([...(old ?? []), opportunityId]);
       });
       
       await queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] });
@@ -284,9 +284,10 @@ export default function OpportunitiesScreen() {
     staleTime: 60000,
   });
 
-  const { data, isLoading, error } = useQuery<OpportunityRow[]>({
+  const { data: opportunities, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
-    staleTime: 15000,
+    staleTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       switch (view) {
         case "all": {
@@ -485,7 +486,7 @@ export default function OpportunitiesScreen() {
 
       <FlatList
         data={useMemo(() => {
-          let filteredData = [...(data ?? [])];
+          let filteredData = [...(opportunities ?? [])];
           filteredData = filteredData.filter((opp) => {
             const userId = opp.profiles?.user_id ?? opp.user_id;
             return userId && !blockedUserIds.has(userId);
@@ -534,7 +535,7 @@ export default function OpportunitiesScreen() {
             });
           }
           return filteredData;
-        }, [data, searchQuery, city, seekingRole, paymentStatus, postedByRole, blockedUserIds])}
+        }, [opportunities, searchQuery, blockedUserIds])}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {

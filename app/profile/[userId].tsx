@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, ActivityIndicator } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send, ExternalLink } from "lucide-react-native";
@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { sbSelect, getSupabase, sbInsert, sbDelete } from "@/integrations/supabase/client";
 
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
@@ -142,21 +143,28 @@ export default function UserProfileScreen() {
     enabled: !!userId,
   });
 
-  const { data: appliedIds } = useQuery<Set<string>>({
+  // ## FIX 1: Make `applications` query match `opportunities.tsx` (return Record)
+  const { data: applications, isLoading: isLoadingApplied } = useQuery<Record<string, { applied: boolean; status?: string }>>({
     queryKey: ["applied-ids", currentUserId],
     queryFn: async () => {
-      if (!currentUserId) return new Set<string>();
-      const apps = await sbSelect<{ opportunity_id: string }>("applications", {
-        select: "opportunity_id",
+      if (!currentUserId) return {};
+      const apps = await sbSelect<{ opportunity_id: string; status?: string }>("applications", {
+        select: "opportunity_id,status",
         query: { applicant_id: `eq.${currentUserId}` },
         limit: 1000,
       });
-      return new Set(apps.map((a) => a.opportunity_id));
+      return apps.reduce((acc, app) => {
+        acc[app.opportunity_id] = { applied: true, status: app.status };
+        return acc;
+      }, {} as Record<string, { applied: boolean; status?: string }>);
     },
     enabled: !!currentUserId,
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
-  const { data: savedIds } = useQuery<Set<string>>({
+  // ## FIX 2: Make `savedIds` query match `opportunities.tsx` (return Set)
+  const { data: savedIds, isLoading: isLoadingSaved } = useQuery<Set<string>>({
     queryKey: ["saved-ids", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return new Set<string>();
@@ -168,8 +176,11 @@ export default function UserProfileScreen() {
       return new Set(saves.map((s) => s.opportunity_id));
     },
     enabled: !!currentUserId,
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
+    placeholderData: new Set<string>(), // Fixes race condition
   });
-
+  
   const { data: isFollowing } = useQuery<boolean>({
     queryKey: ["is-following", currentUserId, userId],
     queryFn: async () => {
@@ -452,7 +463,6 @@ export default function UserProfileScreen() {
         base64Data = asset.base64;
       } else {
         console.log("[upload] Reading file using FileSystem");
-        const FileSystem = await import("expo-file-system");
         base64Data = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
       }
     } catch (err) {
@@ -820,52 +830,63 @@ export default function UserProfileScreen() {
                           ))}
                         </View>
                       )}
+                      
+                      {/* ## FIX 3: Replace this entire block */}
                       {!isOwnPost && (
                         <View style={styles.oppActions}>
-                          <Pressable
-                            style={[styles.oppActionBtn, appliedIds?.has(opp.id) && styles.oppActionBtnApplied]}
-                            onPress={() => {
-                              if (!currentUserId) {
-                                Alert.alert("Login Required", "You must be logged in to apply");
-                                return;
-                              }
-                              if (appliedIds?.has(opp.id)) {
-                                unapplyMutation.mutate(opp.id);
-                              } else {
-                                applyMutation.mutate(opp.id);
-                              }
-                            }}
-                            disabled={applyMutation.isPending || unapplyMutation.isPending}
-                            testID={`apply-${opp.id}`}
-                          >
-                            <CheckCircle2 color={appliedIds?.has(opp.id) ? "#4CB963" : "#E5E7EB"} size={14} />
-                            <Text style={[styles.oppActionText, appliedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {appliedIds?.has(opp.id) ? "Applied" : "Apply"}
-                            </Text>
-                          </Pressable>
-                          <Pressable
-                            style={[styles.oppActionBtn, savedIds?.has(opp.id) && styles.oppActionBtnSaved]}
-                            onPress={() => {
-                              if (!currentUserId) {
-                                Alert.alert("Login Required", "You must be logged in to save");
-                                return;
-                              }
-                              if (savedIds?.has(opp.id)) {
-                                unsaveMutation.mutate(opp.id);
-                              } else {
-                                saveMutation.mutate(opp.id);
-                              }
-                            }}
-                            disabled={saveMutation.isPending || unsaveMutation.isPending}
-                            testID={`save-${opp.id}`}
-                          >
-                            <Bookmark color={savedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedIds?.has(opp.id) ? "#FFFFFF" : "transparent"} />
-                            <Text style={[styles.oppActionText, savedIds?.has(opp.id) && styles.oppActionTextActive]}>
-                              {savedIds?.has(opp.id) ? "Saved" : "Save"}
-                            </Text>
-                          </Pressable>
+                          {(isLoadingApplied || isLoadingSaved) ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                          ) : (
+                            <>
+                              <Pressable
+                                style={[styles.oppActionBtn, applications?.[opp.id]?.applied && styles.oppActionBtnApplied]}
+                                onPress={() => {
+                                  if (!currentUserId) {
+                                    Alert.alert("Login Required", "You must be logged in to apply");
+                                    return;
+                                  }
+                                  if (applications?.[opp.id]?.applied) {
+                                    unapplyMutation.mutate(opp.id);
+                                  } else {
+                                    applyMutation.mutate(opp.id);
+                                  }
+                                }}
+                                disabled={applyMutation.isPending || unapplyMutation.isPending}
+                                testID={`apply-${opp.id}`}
+                              >
+                                <CheckCircle2 color={applications?.[opp.id]?.applied ? "#4CB963" : "#E5E7EB"} size={14} />
+                                <Text style={[styles.oppActionText, applications?.[opp.id]?.applied && styles.oppActionTextActive]}>
+                                  {applications?.[opp.id]?.applied ? "Applied" : "Apply"}
+                                </Text>
+                              </Pressable>
+
+                              <Pressable
+                                style={[styles.oppActionBtn, savedIds?.has(opp.id) && styles.oppActionBtnSaved]}
+                                onPress={() => {
+                                  if (!currentUserId) {
+                                    Alert.alert("Login Required", "You must be logged in to save");
+                                    return;
+                                  }
+                                  if (savedIds?.has(opp.id)) {
+                                    unsaveMutation.mutate(opp.id);
+                                  } else {
+                                    saveMutation.mutate(opp.id);
+                                  }
+                                }}
+                                disabled={saveMutation.isPending || unsaveMutation.isPending}
+                                testID={`save-${opp.id}`}
+                              >
+                                <Bookmark color={savedIds?.has(opp.id) ? "#FFFFFF" : "#E5E7EB"} size={14} fill={savedIds?.has(opp.id) ? "#FFFFFF" : "transparent"} />
+                                <Text style={[styles.oppActionText, savedIds?.has(opp.id) && styles.oppActionTextActive]}>
+                                  {savedIds?.has(opp.id) ? "Saved" : "Save"}
+                                </Text>
+                              </Pressable>
+                            </>
+                          )}
                         </View>
                       )}
+                      {/* ## END OF FIX 3 */}
+                      
                     </View>
                   </View>
                 );
