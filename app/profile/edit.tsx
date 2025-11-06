@@ -12,6 +12,7 @@ import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supaba
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
 import { trpc } from "@/lib/trpc";
+import * as FileSystem from "expo-file-system";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -348,7 +349,6 @@ export default function EditProfileScreen() {
         base64Data = asset.base64;
       } else {
         console.log("[upload] Reading file using FileSystem");
-        const FileSystem = await import("expo-file-system");
         base64Data = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
       }
     } catch (err) {
