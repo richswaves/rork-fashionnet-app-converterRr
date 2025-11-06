@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Alert, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, Dimensions, Animated, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, ActivityIndicator } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send, ExternalLink } from "lucide-react-native";
+import { MapPin, Instagram, Youtube, Twitter, Music2, ChevronDown, ChevronUp, CheckCircle2, Bookmark, Play, Flag, Send, ExternalLink, Trash2 } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -515,6 +515,21 @@ export default function UserProfileScreen() {
 
   const isOwn = !!data?.user_id && currentUserId === data.user_id;
 
+  const deletePortfolioMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!currentUserId) throw new Error("Must be logged in");
+      await sbDelete("portfolio_items", { id: itemId });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", userId] });
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
+    },
+    onError: (error: any) => {
+      console.error("[Portfolio] Delete error", error);
+      Alert.alert("Error", "Failed to delete portfolio item");
+    },
+  });
+
   return (
     <View style={styles.container} testID="profile-screen">
       <Stack.Screen options={{ headerShown: false }} />
@@ -924,7 +939,17 @@ export default function UserProfileScreen() {
                 }
               ]}
             >
-              <MasonryPortfolio items={portfolioItems} onItemPress={setSelectedItem} />
+              <MasonryPortfolio items={portfolioItems} onItemPress={setSelectedItem} canDelete={isOwn} onDelete={(id) => {
+                  if (!isOwn) return;
+                  if (Platform.OS === "web") {
+                    if (confirm("Delete this portfolio item?")) deletePortfolioMutation.mutate(id);
+                  } else {
+                    Alert.alert("Delete Portfolio Item", "Are you sure you want to delete this item?", [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Delete", style: "destructive", onPress: () => deletePortfolioMutation.mutate(id) },
+                    ]);
+                  }
+                }} />
             </Animated.View>
           </View>
         )}
@@ -1196,6 +1221,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+  deletePortfolioBtn: { position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", zIndex: 10 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.95)",
@@ -1382,7 +1408,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function MasonryPortfolio({ items, onItemPress }: { items: PortfolioItem[]; onItemPress: (item: PortfolioItem) => void }) {
+function MasonryPortfolio({ items, onItemPress, canDelete = false, onDelete }: { items: PortfolioItem[]; onItemPress: (item: PortfolioItem) => void; canDelete?: boolean; onDelete?: (id: string) => void }) {
   const screenWidth = Dimensions.get("window").width;
   const padding = 16;
   const gap = 6;
@@ -1455,6 +1481,19 @@ function MasonryPortfolio({ items, onItemPress }: { items: PortfolioItem[]; onIt
                   </>
                 ) : (
                   <Image source={{ uri: item.media_url }} style={styles.portfolioImage} resizeMode="cover" />
+                )}
+                {canDelete && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onDelete && onDelete(item.id);
+                    }}
+                    style={styles.deletePortfolioBtn}
+                    testID={`delete-portfolio-${item.id}`}
+                    accessibilityLabel="Delete portfolio item"
+                  >
+                    <Trash2 color="#FFF" size={14} />
+                  </Pressable>
                 )}
               </Pressable>
             );
