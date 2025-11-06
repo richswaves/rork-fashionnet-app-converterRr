@@ -607,6 +607,11 @@ export default function EditProfileScreen() {
   }
 
   async function onDeletePortfolio(itemId: string) {
+    if (Platform.OS === "web") {
+      const ok = confirm("Delete this portfolio item?");
+      if (ok) deletePortfolioMutation.mutate(itemId);
+      return;
+    }
     Alert.alert(
       "Delete Portfolio Item",
       "Are you sure you want to delete this item?",
