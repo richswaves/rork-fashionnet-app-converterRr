@@ -518,15 +518,19 @@ export default function UserProfileScreen() {
   const deletePortfolioMutation = useMutation({
     mutationFn: async (itemId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
-      await sbDelete("portfolio_items", { id: itemId });
+      console.log("[Portfolio] Deleting item", { itemId, currentUserId });
+      await sbDelete("portfolio_items", { id: itemId, user_id: currentUserId });
+      return itemId;
     },
-    onSuccess: async () => {
+    onSuccess: async (deletedId: string) => {
+      console.log("[Portfolio] Deleted item", deletedId);
       await queryClient.invalidateQueries({ queryKey: ["portfolio", userId] });
       await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
     },
     onError: (error: any) => {
       console.error("[Portfolio] Delete error", error);
-      Alert.alert("Error", "Failed to delete portfolio item");
+      const msg = typeof error?.message === "string" ? error.message : "Failed to delete portfolio item";
+      Alert.alert("Error", msg.includes("permission") ? "You don't have permission to delete this item. Make sure you're logged in as the owner." : msg);
     },
   });
 
@@ -942,7 +946,8 @@ export default function UserProfileScreen() {
               <MasonryPortfolio items={portfolioItems} onItemPress={setSelectedItem} canDelete={isOwn} onDelete={(id) => {
                   if (!isOwn) return;
                   if (Platform.OS === "web") {
-                    if (confirm("Delete this portfolio item?")) deletePortfolioMutation.mutate(id);
+                    const ok = typeof window !== "undefined" && typeof (window as any).confirm === "function" ? (window as any).confirm("Delete this portfolio item?") : true;
+                    if (ok) deletePortfolioMutation.mutate(id);
                   } else {
                     Alert.alert("Delete Portfolio Item", "Are you sure you want to delete this item?", [
                       { text: "Cancel", style: "cancel" },
@@ -1486,11 +1491,12 @@ function MasonryPortfolio({ items, onItemPress, canDelete = false, onDelete }: {
                   <Pressable
                     onPress={(e) => {
                       e.stopPropagation();
-                      onDelete && onDelete(item.id);
+                      if (onDelete) onDelete(item.id);
                     }}
                     style={styles.deletePortfolioBtn}
                     testID={`delete-portfolio-${item.id}`}
                     accessibilityLabel="Delete portfolio item"
+                    disabled={false}
                   >
                     <Trash2 color="#FFF" size={14} />
                   </Pressable>
