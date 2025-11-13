@@ -1,12 +1,9 @@
 import LegalDoc from "@/components/LegalDoc";
 
 const BODY = `DMCA Takedown Policy
-
-Important Pricing Notice: thebrxnd is currently free to use. We may introduce paid features or subscriptions in the future. If that happens, we will provide clear in‑app disclosure and you will not be charged unless you choose to opt in.
-
 Thebrxnd LLC respects copyright and intellectual property rights. If you believe that content on thebrxnd infringes your copyright, please submit a Copyright Infringement Notice in writing to our Designated Copyright Agent.
 
-How to Submit a Notice: Send an email with all of the following information (as required by U.S. law, 17 U.S.C. §512):
+How to Submit a Notice: Send an email to richreporter70@gmail.com with all of the following information (as required by U.S. law, 17 U.S.C. §512):
 - A physical or electronic signature of the copyright owner or authorized agent.
 - Identification of the copyrighted work you claim has been infringed (e.g. title, description).
 - Identification of the material you claim is infringing (with exact location in the app, e.g. link or screenshots).
@@ -21,7 +18,7 @@ Designated Copyright Agent
  204 Lincoln St, New Britain, CT, USA
  Email: richreporter70@gmail.com
 
-What Happens Next: Upon receipt of a proper notice, thebrxnd will act expeditiously. We may remove or disable access to the allegedly infringing material. We will also notify the user who posted the content about the removal and provide your contact information to them so they can respond. Repeat copyright infringers will have their accounts terminated.
+What Happens Next: Upon receipt of a proper notice, thebrxnd will act expeditiously. We may remove or disable access to the allegedly infringing material[11]. We will also notify the user who posted the content about the removal and provide your contact information to them so they can respond. Repeat copyright infringers will have their accounts terminated.
 
 Counter-Notification: If you believe your content was removed in error, you may file a DMCA counter-notice. Email richreporter70@gmail.com with:
 - A statement under penalty of perjury that you have a good-faith belief the material was removed by mistake.

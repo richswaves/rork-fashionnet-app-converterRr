@@ -1,9 +1,7 @@
 import LegalDoc from "@/components/LegalDoc";
 
 const BODY = `Content Licensing Agreement
-Important Pricing Notice: thebrxnd is currently free to use. We may introduce paid features or subscriptions in the future. If that happens, we will provide clear in‑app disclosure and you will not be charged unless you choose to opt in.
-
-All content you create or post on thebrxnd (photos, designs, text, etc.) is owned by you. By submitting content to thebrxnd service, you grant thebrxnd LLC a worldwide, royalty-free, perpetual, non-exclusive license to use, reproduce, modify, and display your content in connection with the operation of the app. This means we can show your posts, share them in our app, and use them for marketing (like featured posts), but you still own the copyright.
+All content you create or post on thebrxnd (photos, designs, text, etc.) is owned by you. By submitting content to thebrxnd service, you grant thebrxnd LLC a worldwide, royalty-free, perpetual, non-exclusive license to use, reproduce, modify, and display your content in connection with the operation of the app[5]. This means we can show your posts, share them in our app, and use them for marketing (like featured posts), but you still own the copyright.
 
 This license is only so long as your content is published in the app. If you delete the content or your account is closed, the license ends (except to the extent we already used the content). We will not sell your content to third parties.
 

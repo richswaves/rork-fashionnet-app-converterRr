@@ -1,23 +1,21 @@
 import LegalDoc from "@/components/LegalDoc";
 
 const BODY = `Subscription Addendum
-Current Status: thebrxnd is currently free to use. No paid subscriptions or in‑app purchases are available at this time. This page explains how subscriptions will work if introduced in the future; nothing here creates a present obligation to pay.
+This Subscription Addendum provides details on pricing, renewal, cancellation, and refunds for the thebrxnd app, in compliance with App Store (Apple) and Google Play requirements.
 
-Future Subscription Overview: If we add subscriptions, pricing and features will be disclosed in‑app before purchase. You must explicitly confirm via the Apple App Store or Google Play. We will notify you of material changes.
+Subscription Pricing: thebrxnd offers a subscription at $9.99 per month (USD) with a 7-day free trial for new subscribers. The price shown includes applicable taxes. All billing is handled by the App Store or Google Play; we never see your credit card or payment info.
 
-Pricing and Trials: If offered in the future, exact price and any free trial length will be shown in‑app at purchase time.
+Free Trial: A 7-day free trial starts when you subscribe. You won’t be charged until the trial ends. To avoid being charged, cancel your subscription at least 24 hours before the trial expires[3]. If you do not cancel, your subscription will automatically begin and your payment method will be charged.
 
-Free Trial: If any free trial is offered in the future, details will be disclosed before purchase, including how to cancel before charges begin.
+Auto-Renewal: Subscriptions automatically renew each month after the initial period[1][2]. You will be charged 24 hours before the start of each new month. To prevent renewal, cancel at least 24 hours before your next billing date[1]. We will notify you via your device’s App Store or Google Play when your subscription is about to renew, as required by law.
 
-Auto‑Renewal: If enabled in the future, subscriptions would auto‑renew unless canceled at least 24 hours before renewal. You would manage or cancel via your Apple/Google subscription settings.
+Cancellation: You can cancel your subscription at any time. To cancel, go to your Apple/Google account’s “Manage Subscriptions” page. (For Apple, open Settings → [your name] → Subscriptions. For Google, open Google Play Store → Menu → Subscriptions.) Follow the on-screen steps. Cancelling stops future payments but does not retroactively refund your last payment or prorate the current month[4]. Your subscription remains active until the end of the paid period. If you cancel during a free trial, you will not be charged, but you will also lose access to subscription content once the trial ends. We have no access to subscription settings; please use only the official app store interfaces.
 
-Cancellation: You could cancel any future subscription at any time through your store settings. Access would continue until the end of the paid period.
+Refunds: All subscription payments are final except as required by law. We do not offer refunds for unused subscription periods beyond the policies of Apple and Google[4]. If you believe you are entitled to a refund (for example, double-billing or unauthorized purchase), please contact Apple Support or Google Play Support directly. You can also use the “Report a Problem” feature in your App Store/Google account. We cannot issue refunds ourselves for in-app purchases. Any refunds granted will be processed by Apple/Google; we will comply by canceling the subscription upon refund request.
 
-Refunds: Any future refunds would be handled by Apple/Google in line with their policies. We cannot issue refunds directly for store purchases.
+App Store and Google Play: This app and its subscription are distributed through the Apple App Store and/or Google Play. By purchasing through these platforms, you agree to their terms. You must use the tools provided by Apple or Google to manage or cancel subscriptions[9]. We recommend bookmarking or saving the link to the thebrxnd app.
 
-Billing Platform: Any future billing would be through Apple/Google. We will not store your full payment details.
-
-Support: Questions? tbrxnd@gmail.com.`;
+For any billing issues, contact Apple or Google support first. For other help, email us at tbrxnd@gmail.com.`;
 
 export default function SubscriptionScreen() {
   return <LegalDoc title="Subscription Addendum" body={BODY} />;
