@@ -1,9 +1,9 @@
 import LegalDoc from "@/components/LegalDoc";
 
 const BODY = `DMCA Takedown Policy
-Thebrxnd LLC respects copyright and intellectual property rights. If you believe that content on thebrxnd infringes your copyright, please submit a Copyright Infringement Notice in writing to our Designated Copyright Agent.
+thebrxnd LLC respects copyright and intellectual property rights. If you believe that content on thebrxnd infringes your copyright, please submit a Copyright Infringement Notice in writing to our Designated Copyright Agent.
 
-How to Submit a Notice: Send an email to richreporter70@gmail.com with all of the following information (as required by U.S. law, 17 U.S.C. §512):
+How to Submit a Notice: Send an email to [AGENT_EMAIL] with all of the following information (as required by U.S. law, 17 U.S.C. §512):
 - A physical or electronic signature of the copyright owner or authorized agent.
 - Identification of the copyrighted work you claim has been infringed (e.g. title, description).
 - Identification of the material you claim is infringing (with exact location in the app, e.g. link or screenshots).

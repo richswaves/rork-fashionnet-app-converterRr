@@ -13,7 +13,22 @@ thebrxnd is a mobile app and does not use web browser cookies. We do not current
 
 For now, your privacy is protected: thebrxnd does not track your activity outside the app. We recommend you keep the app updated; any future analytics tools will be described in this policy.
 
-If you have questions about our tracking practices, contact tbrxnd@gmail.com.`;
+If you have questions about our tracking practices, contact [SUPPORT_EMAIL].
+________________________________________
+[1] [3] [5] Legal - Apple Media Services - Apple
+https://www.apple.com/legal/internet-services/itunes/
+[2] [4] [9] Pandora - Subscription Terms
+https://www.pandora.com/legal/subscription
+[6] [7] [10] 6 essential community guidelines for moderating content in-app | Sendbird
+https://sendbird.com/blog/6-essential-community-guidelines-for-content-moderation
+[8] Privacy Policy | Supabase
+https://supabase.com/privacy
+[11] Example DMCA Policy Text
+https://www.thelonesgroup.com/customer/vault.asp?op=item&vid=3558
+[12] [13] What is a data controller or a data processor? - European Commission
+https://commission.europa.eu/law/law-topic/data-protection/rules-business-and-organisations/obligations/controllerprocessor/what-data-controller-or-data-processor_en
+[14] Data Processing Addendum (DPA) – RevenueCat
+https://www.revenuecat.com/dpa/`;
 
 export default function CookiePolicyScreen() {
   return <LegalDoc title="Cookie / Tracking Policy" body={BODY} />;
