@@ -297,12 +297,33 @@ export default function NetworkScreen() {
               placeholder="Search by display name"
               placeholderTextColor="#6B7280"
               value={searchInput}
-              onChangeText={(text) => {
+              onChangeText={async (text) => {
                 setSearchInput(text);
                 if (!text.trim()) {
                   setSearchQuery("");
                   setSearchResultCount(null);
                   setHasSearched(false);
+                } else {
+                  const lowerQuery = text.trim().toLowerCase();
+                  let query: Record<string, string> = { account_status: "eq.approved" };
+                  const rows = await sbSelect<ProfileRow>("profiles", {
+                    select: "user_id,full_name,profile_picture,location,profession,username,created_at",
+                    query,
+                    limit: 100,
+                  });
+                  let filtered = rows;
+                  if (selectedRoles.size > 0) {
+                    filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+                  }
+                  if (selectedLocations.size > 0) {
+                    filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+                  }
+                  filtered = filtered.filter((r) => {
+                    const d = getDisplayForProfile(r);
+                    return d.displayName.toLowerCase().includes(lowerQuery);
+                  });
+                  filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
+                  setSearchResultCount(filtered.length);
                 }
               }}
               autoFocus
@@ -324,30 +345,9 @@ export default function NetworkScreen() {
           </View>
           <Pressable
             style={styles.searchBtn}
-            onPress={async () => {
+            onPress={() => {
               const trimmed = searchInput.trim();
-              if (trimmed) {
-                const lowerQuery = trimmed.toLowerCase();
-                let query: Record<string, string> = { account_status: "eq.approved" };
-                const rows = await sbSelect<ProfileRow>("profiles", {
-                  select: "user_id,full_name,profile_picture,location,profession,username,created_at",
-                  query,
-                  limit: 100,
-                });
-                let filtered = rows;
-                if (selectedRoles.size > 0) {
-                  filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
-                }
-                if (selectedLocations.size > 0) {
-                  filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
-                }
-                filtered = filtered.filter((r) => {
-                  const d = getDisplayForProfile(r);
-                  return d.displayName.toLowerCase().includes(lowerQuery);
-                });
-                filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
-                const count = filtered.length;
-                setSearchResultCount(count);
+              if (trimmed && searchResultCount !== null) {
                 setSearchQuery(trimmed);
                 setHasSearched(true);
                 trackNetworkInteraction({
@@ -355,7 +355,7 @@ export default function NetworkScreen() {
                   interaction_type: "search",
                   metadata: {
                     query: trimmed,
-                    results_count: count,
+                    results_count: searchResultCount,
                   },
                 });
               } else {
@@ -368,7 +368,7 @@ export default function NetworkScreen() {
           >
             <Text style={styles.searchBtnText}>Search</Text>
           </Pressable>
-          {searchResultCount !== null && (
+          {searchResultCount !== null && searchInput.trim().length > 0 && (
             <View style={styles.searchResultPreview}>
               <Text style={styles.searchResultText}>
                 {searchResultCount} {searchResultCount === 1 ? "result" : "results"} found

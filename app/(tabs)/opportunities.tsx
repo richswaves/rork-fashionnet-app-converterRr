@@ -881,19 +881,9 @@ export default function OpportunitiesScreen() {
                   setSearchQuery("");
                   setSearchResultCount(null);
                   setHasSearched(false);
-                }
-              }}
-              testID="opp-search-input"
-            />
-            <Pressable
-              style={styles.searchBtn}
-              onPress={() => {
-                const trimmed = searchInput.trim();
-                if (trimmed) {
-                  setSearchQuery(trimmed);
-                  setHasSearched(true);
+                } else {
+                  const normalizedSearch = normalizeFilterValue(text);
                   const count = filteredOpportunities.filter((opp) => {
-                    const normalizedSearch = normalizeFilterValue(trimmed);
                     const normalizedTitle = normalizeFilterValue(opp.title);
                     const normalizedCompany = normalizeFilterValue(opp.company);
                     const normalizedLocation = normalizeFilterValue(opp.location);
@@ -904,10 +894,21 @@ export default function OpportunitiesScreen() {
                     );
                   }).length;
                   setSearchResultCount(count);
+                }
+              }}
+              testID="opp-search-input"
+            />
+            <Pressable
+              style={styles.searchBtn}
+              onPress={() => {
+                const trimmed = searchInput.trim();
+                if (trimmed && searchResultCount !== null) {
+                  setSearchQuery(trimmed);
+                  setHasSearched(true);
                   trackSearch({
                     page: "opportunities_search",
                     query: trimmed,
-                    resultsCount: count,
+                    resultsCount: searchResultCount,
                   });
                 } else {
                   setSearchQuery("");
@@ -920,7 +921,7 @@ export default function OpportunitiesScreen() {
               <Text style={styles.searchBtnText}>Search</Text>
             </Pressable>
           </View>
-          {searchResultCount !== null && (
+          {searchResultCount !== null && searchInput.trim().length > 0 && (
             <View style={styles.searchResultPreview}>
               <Text style={styles.searchResultText}>
                 {searchResultCount} {searchResultCount === 1 ? "result" : "results"} found
