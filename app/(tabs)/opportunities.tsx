@@ -296,6 +296,11 @@ export default function OpportunitiesScreen() {
   const router = useRouter();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
   const { trackSearch, trackOpportunityInteraction } = useActivityTracking();
+  const trackOpportunityInteractionRef = useRef(trackOpportunityInteraction);
+
+  useEffect(() => {
+    trackOpportunityInteractionRef.current = trackOpportunityInteraction;
+  }, [trackOpportunityInteraction]);
 
   const handleApplyFilters = useCallback(async () => {
     if (isApplyingFilters) {
@@ -735,8 +740,9 @@ export default function OpportunitiesScreen() {
   const viewTimersRef = useRef<Record<string, number>>({});
   const viewedOnceRef = useRef<Set<string>>(new Set());
 
-  const handleViewableItemsChanged = useCallback(
-    ({ changed }: { changed: ViewToken[] }) => {
+  const handleViewableItemsChanged = useMemo(() => {
+    return ({ changed }: { changed: ViewToken[] }) => {
+      const tracker = trackOpportunityInteractionRef.current;
       changed.forEach((item) => {
         const opportunity = item.item as OpportunityRow | undefined;
         const id = opportunity?.id;
@@ -746,15 +752,17 @@ export default function OpportunitiesScreen() {
         if (item.isViewable) {
           viewTimersRef.current[id] = Date.now();
           if (!viewedOnceRef.current.has(id)) {
-            trackOpportunityInteraction({ opportunity_id: id, interaction_type: "view" });
+            if (tracker) {
+              tracker({ opportunity_id: id, interaction_type: "view" });
+            }
             viewedOnceRef.current.add(id);
           }
         } else {
           const start = viewTimersRef.current[id];
           if (typeof start === "number") {
             const duration = Math.max(0, Math.round((Date.now() - start) / 1000));
-            if (duration > 0) {
-              trackOpportunityInteraction({
+            if (duration > 0 && tracker) {
+              tracker({
                 opportunity_id: id,
                 interaction_type: "view_duration",
                 time_spent_seconds: duration,
@@ -764,9 +772,8 @@ export default function OpportunitiesScreen() {
           }
         }
       });
-    },
-    [trackOpportunityInteraction],
-  );
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
