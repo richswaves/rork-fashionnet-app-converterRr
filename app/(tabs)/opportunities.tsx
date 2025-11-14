@@ -16,6 +16,7 @@ interface ProfileRow {
   full_name?: string;
   profile_picture?: string;
   profession?: string;
+  professions?: string[] | null;
   username?: string;
   instagram_website?: string;
   social_links?: {
@@ -707,9 +708,22 @@ export default function OpportunitiesScreen() {
           if (!role) return false;
           if (normalizedProfession === role) return true;
           if (normalizedProfession.includes(role)) return true;
-          if (professionTokens.size === 0) return false;
-          const roleTokens = role.split(" ");
-          return roleTokens.every((token) => professionTokens.has(token));
+          if (professionTokens.size > 0) {
+            const roleTokens = role.split(" ");
+            if (roleTokens.every((token) => professionTokens.has(token))) return true;
+          }
+          if (profile?.professions && Array.isArray(profile.professions)) {
+            return profile.professions.some(p => {
+              const normalizedSecondary = normalizeFilterValue(p);
+              if (normalizedSecondary === role) return true;
+              if (normalizedSecondary.includes(role)) return true;
+              const secondaryTokens = new Set(splitFilterTokens(p));
+              if (secondaryTokens.size === 0) return false;
+              const roleTokens = role.split(" ");
+              return roleTokens.every((token) => secondaryTokens.has(token));
+            });
+          }
+          return false;
         });
         if (!matchesPoster) {
           return false;

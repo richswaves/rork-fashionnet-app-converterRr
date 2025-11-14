@@ -63,14 +63,21 @@ export default function NetworkScreen() {
   const { data: availableRoles = [] } = useQuery<string[]>({
     queryKey: ["profiles", "roles"],
     queryFn: async () => {
-      const rows = await sbSelect<{ profession?: string }>("profiles", {
-        select: "profession",
+      const rows = await sbSelect<{ profession?: string; professions?: string[] | null }>("profiles", {
+        select: "profession,professions",
         query: { account_status: "eq.approved" },
       });
       const uniqueRoles = new Set<string>();
       rows.forEach((r) => {
         if (r.profession && r.profession.trim() && r.profession.toLowerCase() !== "general") {
           uniqueRoles.add(r.profession);
+        }
+        if (r.professions && Array.isArray(r.professions)) {
+          r.professions.forEach((p) => {
+            if (p && p.trim() && p.toLowerCase() !== "general") {
+              uniqueRoles.add(p);
+            }
+          });
         }
       });
       return Array.from(uniqueRoles).sort();
@@ -109,7 +116,13 @@ export default function NetworkScreen() {
       });
       let filtered = rows;
       if (selectedRoles.size > 0) {
-        filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+        filtered = filtered.filter((r) => {
+          if (r.profession && selectedRoles.has(r.profession)) return true;
+          if (r.professions && Array.isArray(r.professions)) {
+            return r.professions.some(p => p && selectedRoles.has(p));
+          }
+          return false;
+        });
       }
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
@@ -141,14 +154,20 @@ export default function NetworkScreen() {
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
-        select: "user_id,full_name,profile_picture,location,profession,username,created_at",
+        select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
         query,
         order: { column: "created_at", ascending: false },
         limit: 100,
       });
       let filtered = rows;
       if (selectedRoles.size > 0) {
-        filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+        filtered = filtered.filter((r) => {
+          if (r.profession && selectedRoles.has(r.profession)) return true;
+          if (r.professions && Array.isArray(r.professions)) {
+            return r.professions.some(p => p && selectedRoles.has(p));
+          }
+          return false;
+        });
       }
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
@@ -307,13 +326,19 @@ export default function NetworkScreen() {
                   const lowerQuery = text.trim().toLowerCase();
                   let query: Record<string, string> = { account_status: "eq.approved" };
                   const rows = await sbSelect<ProfileRow>("profiles", {
-                    select: "user_id,full_name,profile_picture,location,profession,username,created_at",
+                    select: "user_id,full_name,profile_picture,location,profession,professions,username,created_at",
                     query,
                     limit: 100,
                   });
                   let filtered = rows;
                   if (selectedRoles.size > 0) {
-                    filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+                    filtered = filtered.filter((r) => {
+                      if (r.profession && selectedRoles.has(r.profession)) return true;
+                      if (r.professions && Array.isArray(r.professions)) {
+                        return r.professions.some(p => p && selectedRoles.has(p));
+                      }
+                      return false;
+                    });
                   }
                   if (selectedLocations.size > 0) {
                     filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
