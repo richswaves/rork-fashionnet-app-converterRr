@@ -32,8 +32,8 @@ export type OpportunityInteraction = {
 };
 
 export type NetworkInteraction = {
-  target_user_id: string;
-  interaction_type: "view_profile" | "follow" | "unfollow" | "message";
+  target_user_id: string | null;
+  interaction_type: "view_profile" | "follow" | "unfollow" | "message" | "search";
   metadata?: Record<string, any>;
 };
 
@@ -126,7 +126,7 @@ export function useActivityTracking() {
       try {
         await sbInsert("network_interactions", {
           user_id: currentUserId ?? null,
-          target_user_id: interaction.target_user_id,
+          target_user_id: interaction.target_user_id ?? null,
           interaction_type: interaction.interaction_type,
           metadata: interaction.metadata || null,
         });

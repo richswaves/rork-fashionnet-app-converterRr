@@ -193,6 +193,9 @@ export default function OpportunitiesScreen() {
   const [paymentStatus, setPaymentStatus] = useState<string[]>([]);
   const [view, setView] = useState<ViewKey>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [searchResultCount, setSearchResultCount] = useState<number | null>(null);
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [viewMenuOpen, setViewMenuOpen] = useState<boolean>(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [searchVisible, setSearchVisible] = useState<boolean>(false);
@@ -633,7 +636,7 @@ export default function OpportunitiesScreen() {
   });
 
   const filteredOpportunities = useMemo<OpportunityRow[]>(() => {
-    const normalizedSearch = normalizeFilterValue(searchQuery);
+    const normalizedSearch = hasSearched ? normalizeFilterValue(searchQuery) : "";
     const normalizedCities = city.map(normalizeFilterValue).filter(Boolean);
     const normalizedSeekingRoles = seekingRole.map(normalizeFilterValue).filter(Boolean);
     const normalizedPosterRoles = postedByRole.map(normalizeFilterValue).filter(Boolean);
@@ -735,7 +738,7 @@ export default function OpportunitiesScreen() {
 
       return true;
     });
-  }, [opportunities, blockedUserIds, searchQuery, city, seekingRole, paymentStatus, postedByRole]);
+  }, [opportunities, blockedUserIds, searchQuery, hasSearched, city, seekingRole, paymentStatus, postedByRole]);
 
   const viewTimersRef = useRef<Record<string, number>>({});
   const viewedOnceRef = useRef<Set<string>>(new Set());
@@ -864,26 +867,66 @@ export default function OpportunitiesScreen() {
       </View>
 
       {searchVisible && (
-        <View style={styles.searchRow}>
-          <Search color="#9CA3AF" size={16} />
-          <TextInput
-            placeholder="Search title, company, or location"
-            placeholderTextColor="#6B7280"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={() => {
-              const trimmed = searchQuery.trim();
-              if (trimmed) {
-                trackSearch({
-                  page: "opportunities_search",
-                  query: trimmed,
-                  resultsCount: filteredOpportunities.length,
-                });
-              }
-            }}
-            testID="opp-search-input"
-          />
+        <View style={styles.searchContainer}>
+          <View style={styles.searchRow}>
+            <Search color="#9CA3AF" size={16} />
+            <TextInput
+              placeholder="Search title, company, or location"
+              placeholderTextColor="#6B7280"
+              style={styles.searchInput}
+              value={searchInput}
+              onChangeText={(text) => {
+                setSearchInput(text);
+                if (!text.trim()) {
+                  setSearchQuery("");
+                  setSearchResultCount(null);
+                  setHasSearched(false);
+                }
+              }}
+              testID="opp-search-input"
+            />
+            <Pressable
+              style={styles.searchBtn}
+              onPress={() => {
+                const trimmed = searchInput.trim();
+                if (trimmed) {
+                  setSearchQuery(trimmed);
+                  setHasSearched(true);
+                  const count = filteredOpportunities.filter((opp) => {
+                    const normalizedSearch = normalizeFilterValue(trimmed);
+                    const normalizedTitle = normalizeFilterValue(opp.title);
+                    const normalizedCompany = normalizeFilterValue(opp.company);
+                    const normalizedLocation = normalizeFilterValue(opp.location);
+                    return (
+                      normalizedTitle.includes(normalizedSearch) ||
+                      normalizedCompany.includes(normalizedSearch) ||
+                      normalizedLocation.includes(normalizedSearch)
+                    );
+                  }).length;
+                  setSearchResultCount(count);
+                  trackSearch({
+                    page: "opportunities_search",
+                    query: trimmed,
+                    resultsCount: count,
+                  });
+                } else {
+                  setSearchQuery("");
+                  setSearchResultCount(null);
+                  setHasSearched(false);
+                }
+              }}
+              testID="opp-search-btn"
+            >
+              <Text style={styles.searchBtnText}>Search</Text>
+            </Pressable>
+          </View>
+          {searchResultCount !== null && (
+            <View style={styles.searchResultPreview}>
+              <Text style={styles.searchResultText}>
+                {searchResultCount} {searchResultCount === 1 ? "result" : "results"} found
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -1698,8 +1741,13 @@ const styles = StyleSheet.create({
   applyFiltersBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB" },
   applyFiltersBtnDisabled: { opacity: 0.7 },
   applyFiltersText: { color: "#000000", fontSize: 14, fontWeight: "900" },
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 as const, paddingHorizontal: 12, paddingVertical: 8 },
+  searchContainer: { paddingHorizontal: 12, paddingVertical: 8 },
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 as const },
   searchInput: { flex: 1, backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 10, color: "#E5E7EB", paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
+  searchBtn: { backgroundColor: "#4CB963", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
+  searchBtnText: { color: "#000000", fontSize: 14, fontWeight: "700" },
+  searchResultPreview: { marginTop: 8, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: "rgba(20, 20, 20, 0.85)", borderRadius: 8, borderWidth: 1, borderColor: "#404040" },
+  searchResultText: { color: "#9CA3AF", fontSize: 13, fontWeight: "600" },
   ddContainer: { marginBottom: 10 },
   ddHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "rgba(20, 20, 20, 0.85)", paddingVertical: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: "#404040" },
   ddLabel: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },

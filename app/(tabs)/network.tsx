@@ -38,6 +38,9 @@ export default function NetworkScreen() {
   const [roleMenuOpen, setRoleMenuOpen] = useState<boolean>(false);
   const [locationMenuOpen, setLocationMenuOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [searchResultCount, setSearchResultCount] = useState<number | null>(null);
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 
   const { resolvedProfile, getDisplayForProfile, currentUserId } = useProfile();
@@ -94,7 +97,7 @@ export default function NetworkScreen() {
   });
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery],
+    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery, hasSearched],
     staleTime: 30000,
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
@@ -111,7 +114,7 @@ export default function NetworkScreen() {
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
       }
-      if (searchQuery.trim()) {
+      if (hasSearched && searchQuery.trim()) {
         const lowerQuery = searchQuery.toLowerCase();
         filtered = filtered.filter((r) => {
           const d = getDisplayForProfile(r);
@@ -133,7 +136,7 @@ export default function NetworkScreen() {
   });
 
   const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery],
+    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery, hasSearched],
     staleTime: 30000,
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
@@ -150,7 +153,7 @@ export default function NetworkScreen() {
       if (selectedLocations.size > 0) {
         filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
       }
-      if (searchQuery.trim()) {
+      if (hasSearched && searchQuery.trim()) {
         const lowerQuery = searchQuery.toLowerCase();
         filtered = filtered.filter((r) => {
           const d = getDisplayForProfile(r);
@@ -293,17 +296,85 @@ export default function NetworkScreen() {
               style={styles.searchInput}
               placeholder="Search by display name"
               placeholderTextColor="#6B7280"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
+              value={searchInput}
+              onChangeText={(text) => {
+                setSearchInput(text);
+                if (!text.trim()) {
+                  setSearchQuery("");
+                  setSearchResultCount(null);
+                  setHasSearched(false);
+                }
+              }}
               autoFocus
               testID="search-input"
             />
-            {searchQuery.length > 0 && (
-              <Pressable onPress={() => setSearchQuery("")} testID="clear-search">
+            {searchInput.length > 0 && (
+              <Pressable
+                onPress={() => {
+                  setSearchInput("");
+                  setSearchQuery("");
+                  setSearchResultCount(null);
+                  setHasSearched(false);
+                }}
+                testID="clear-search"
+              >
                 <X color="#9CA3AF" size={18} />
               </Pressable>
             )}
           </View>
+          <Pressable
+            style={styles.searchBtn}
+            onPress={async () => {
+              const trimmed = searchInput.trim();
+              if (trimmed) {
+                const lowerQuery = trimmed.toLowerCase();
+                let query: Record<string, string> = { account_status: "eq.approved" };
+                const rows = await sbSelect<ProfileRow>("profiles", {
+                  select: "user_id,full_name,profile_picture,location,profession,username,created_at",
+                  query,
+                  limit: 100,
+                });
+                let filtered = rows;
+                if (selectedRoles.size > 0) {
+                  filtered = filtered.filter((r) => r.profession && selectedRoles.has(r.profession));
+                }
+                if (selectedLocations.size > 0) {
+                  filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+                }
+                filtered = filtered.filter((r) => {
+                  const d = getDisplayForProfile(r);
+                  return d.displayName.toLowerCase().includes(lowerQuery);
+                });
+                filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
+                const count = filtered.length;
+                setSearchResultCount(count);
+                setSearchQuery(trimmed);
+                setHasSearched(true);
+                trackNetworkInteraction({
+                  target_user_id: null,
+                  interaction_type: "search",
+                  metadata: {
+                    query: trimmed,
+                    results_count: count,
+                  },
+                });
+              } else {
+                setSearchQuery("");
+                setSearchResultCount(null);
+                setHasSearched(false);
+              }
+            }}
+            testID="search-btn"
+          >
+            <Text style={styles.searchBtnText}>Search</Text>
+          </Pressable>
+          {searchResultCount !== null && (
+            <View style={styles.searchResultPreview}>
+              <Text style={styles.searchResultText}>
+                {searchResultCount} {searchResultCount === 1 ? "result" : "results"} found
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -593,6 +664,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#23232B",
+    gap: 10,
   },
   searchInputWrapper: {
     flexDirection: "row",
@@ -611,6 +683,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600" as const,
     paddingVertical: 4,
+  },
+  searchBtn: {
+    backgroundColor: "#3B82F6",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  searchBtnText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  searchResultPreview: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#121218",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#23232B",
+  },
+  searchResultText: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "600",
   },
 
   scroll: { paddingHorizontal: 12, paddingBottom: 24 },
