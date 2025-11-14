@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
 import { ChevronDown, Filter, Layers, CheckCircle2, Send, Bookmark, Instagram, Search, Bell, Users, Trash2, MoreVertical, Twitter, Youtube, ShieldCheck } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
+import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
@@ -199,6 +199,7 @@ export default function OpportunitiesScreen() {
   const [applyModalVisible, setApplyModalVisible] = useState<boolean>(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [applicationNote, setApplicationNote] = useState<string>("");
+  const [isApplyingFilters, setIsApplyingFilters] = useState<boolean>(false);
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
   const windowHeight = Dimensions.get("window").height;
   const sheetTranslateY = useRef<Animated.Value>(new Animated.Value(0)).current;
@@ -294,7 +295,86 @@ export default function OpportunitiesScreen() {
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
-  const { trackSearch, trackFilterApplication, trackOpportunityInteraction } = useActivityTracking();
+  const { trackSearch, trackOpportunityInteraction } = useActivityTracking();
+
+  const handleApplyFilters = useCallback(async () => {
+    if (isApplyingFilters) {
+      console.log("[Filters] Apply action ignored while pending");
+      return;
+    }
+    setIsApplyingFilters(true);
+    console.log("[Filters] Applying filters", {
+      city,
+      seekingRole,
+      postedByRole,
+      paymentStatus,
+    });
+
+    const filtersPayload: Record<string, unknown> = {};
+
+    if (city.length > 0) {
+      filtersPayload.cities = [...city];
+    }
+    if (seekingRole.length > 0) {
+      filtersPayload.seeking_roles = [...seekingRole];
+    }
+    if (postedByRole.length > 0) {
+      filtersPayload.posted_by_roles = [...postedByRole];
+    }
+    if (paymentStatus.length > 0) {
+      filtersPayload.payment_status = [...paymentStatus];
+    }
+
+    if (Object.keys(filtersPayload).length === 0) {
+      console.log("[Filters] No filters selected, skipping analytics");
+      setIsApplyingFilters(false);
+      closeFilterSheet();
+      return;
+    }
+
+    const supabase = getSupabase();
+    const locationValue = city.length === 1 ? city[0] : null;
+    let resolvedUserId: string | null = currentUserId ?? null;
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) {
+          console.log("[Filters] Supabase auth getUser error", error);
+        } else if (data?.user?.id) {
+          resolvedUserId = data.user.id;
+        }
+      } catch (authError) {
+        console.log("[Filters] Unexpected error fetching Supabase user", authError);
+      }
+    }
+
+    const payload = {
+      user_id: resolvedUserId,
+      page: "opportunities",
+      query: "filter_applied",
+      filters: filtersPayload,
+      location: locationValue,
+    };
+
+    try {
+      if (supabase) {
+        const { error: insertError } = await supabase.from("search_analytics").insert(payload);
+        if (insertError) {
+          throw insertError;
+        }
+        console.log("[Filters] Recorded analytics via Supabase client", payload);
+      } else {
+        await sbInsert("search_analytics", payload, "return=minimal");
+        console.log("[Filters] Recorded analytics via REST helper", payload);
+      }
+    } catch (error) {
+      console.log("[Filters] Failed to record filter analytics", error);
+    } finally {
+      setIsApplyingFilters(false);
+      closeFilterSheet();
+    }
+  }, [city, seekingRole, postedByRole, paymentStatus, currentUserId, isApplyingFilters, closeFilterSheet]);
 
   const { data: blockedList } = trpc.block.listBlocked.useQuery(undefined, {
     enabled: !!currentUserId,
@@ -1261,26 +1341,16 @@ export default function OpportunitiesScreen() {
               <Text style={styles.resetText}>Reset</Text>
             </Pressable>
             <Pressable
-              style={styles.applyFiltersBtn}
-              onPress={() => {
-                const filters: Record<string, any> = {};
-                if (city.length > 0) filters.cities = city;
-                if (seekingRole.length > 0) filters.seeking_roles = seekingRole;
-                if (postedByRole.length > 0) filters.posted_by_roles = postedByRole;
-                if (paymentStatus.length > 0) filters.payment_status = paymentStatus;
-                if (Object.keys(filters).length > 0) {
-                  trackFilterApplication({
-                    page: "opportunities",
-                    filters,
-                    location: city.length === 1 ? city[0] : null,
-                  });
-                }
-                console.log("apply filters", { city, seekingRole, postedByRole, paymentStatus });
-                closeFilterSheet();
-              }}
+              style={[styles.applyFiltersBtn, isApplyingFilters && styles.applyFiltersBtnDisabled]}
+              onPress={handleApplyFilters}
+              disabled={isApplyingFilters}
               testID="filters-apply"
             >
-              <Text style={styles.applyFiltersText}>Apply</Text>
+              {isApplyingFilters ? (
+                <ActivityIndicator color="#000000" />
+              ) : (
+                <Text style={styles.applyFiltersText}>Apply</Text>
+              )}
             </Pressable>
           </View>
         </Animated.View>
@@ -1619,6 +1689,7 @@ const styles = StyleSheet.create({
   resetBtn: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1 },
   resetText: { color: "#9CA3AF", fontSize: 13, fontWeight: "700" },
   applyFiltersBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#E5E7EB" },
+  applyFiltersBtnDisabled: { opacity: 0.7 },
   applyFiltersText: { color: "#000000", fontSize: 14, fontWeight: "900" },
   searchRow: { flexDirection: "row", alignItems: "center", gap: 8 as const, paddingHorizontal: 12, paddingVertical: 8 },
   searchInput: { flex: 1, backgroundColor: "rgba(20, 20, 20, 0.85)", borderColor: "#404040", borderWidth: 1, borderRadius: 10, color: "#E5E7EB", paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
