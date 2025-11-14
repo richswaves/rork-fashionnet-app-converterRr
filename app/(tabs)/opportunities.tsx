@@ -108,6 +108,81 @@ function splitFilterTokens(value?: string | null): string[] {
   return normalized.split(" ").filter(Boolean);
 }
 
+type PaymentCategory = "paid" | "unpaid" | "mixed" | "unknown";
+
+const PAID_KEYWORDS = [
+  "paid",
+  "compensated",
+  "stipend",
+  "salary",
+  "rate",
+  "hourly",
+  "daily",
+  "weekly",
+  "monthly",
+  "per hour",
+  "per project",
+  "per day",
+  "per shoot",
+  "per gig",
+  "per job",
+  "commission",
+  "honorarium",
+  "budget",
+  "grant",
+  "payment",
+  "paying",
+];
+
+const UNPAID_KEYWORDS = [
+  "unpaid",
+  "volunteer",
+  "collab",
+  "collaboration",
+  "trade",
+  "tfp",
+  "trade for print",
+  "exposure",
+  "experience",
+  "no pay",
+  "non paid",
+  "pro bono",
+  "uncompensated",
+];
+
+function classifyPaymentStatus(budget?: string | null): PaymentCategory {
+  if (!budget) return "unknown";
+  const normalized = normalizeFilterValue(budget);
+  if (!normalized) return "unknown";
+  const tokens = new Set(normalized.split(" ").filter(Boolean));
+  const hasDigits = /\d/.test(budget);
+  const hasCurrency = /[$€£¥₹₩₽₺₱]/.test(budget);
+  const paidMatch = PAID_KEYWORDS.some((keyword) => {
+    if (keyword.includes(" ")) {
+      return normalized.includes(keyword);
+    }
+    return tokens.has(keyword);
+  });
+  const unpaidMatch = UNPAID_KEYWORDS.some((keyword) => {
+    if (keyword.includes(" ")) {
+      return normalized.includes(keyword);
+    }
+    return tokens.has(keyword);
+  });
+  const hasPaidSignal = paidMatch || hasDigits || hasCurrency;
+  const hasUnpaidSignal = unpaidMatch;
+  if (hasPaidSignal && hasUnpaidSignal) {
+    return "mixed";
+  }
+  if (hasPaidSignal) {
+    return "paid";
+  }
+  if (hasUnpaidSignal) {
+    return "unpaid";
+  }
+  return "unknown";
+}
+
 export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -414,7 +489,7 @@ export default function OpportunitiesScreen() {
       const normalizedProfession = normalizeFilterValue(profile?.profession);
       const professionTokens = new Set(splitFilterTokens(profile?.profession));
       const budgetRaw = opp.budget ?? "";
-      const normalizedBudget = normalizeFilterValue(opp.budget);
+      const paymentCategory = classifyPaymentStatus(budgetRaw);
 
       if (normalizedSearch) {
         const matchesSearch =
@@ -464,25 +539,17 @@ export default function OpportunitiesScreen() {
       }
 
       if (normalizedPaymentStatuses.length > 0) {
-        const hasNumericBudget = /\d/.test(budgetRaw);
+        console.log("[Filter] Payment evaluation", {
+          budgetRaw,
+          paymentCategory,
+          normalizedPaymentStatuses,
+        });
         const matchesPayment = normalizedPaymentStatuses.some((status) => {
           if (status === "paid") {
-            return (
-              hasNumericBudget ||
-              normalizedBudget.includes("paid") ||
-              normalizedBudget.includes("compensated") ||
-              normalizedBudget.includes("stipend")
-            );
+            return paymentCategory === "paid" || paymentCategory === "mixed";
           }
           if (status === "unpaid") {
-            return (
-              !hasNumericBudget &&
-              (!normalizedBudget ||
-                normalizedBudget.includes("unpaid") ||
-                normalizedBudget.includes("volunteer") ||
-                normalizedBudget.includes("collab") ||
-                normalizedBudget.includes("trade"))
-            );
+            return paymentCategory === "unpaid" || paymentCategory === "mixed";
           }
           return false;
         });
@@ -1000,9 +1067,9 @@ export default function OpportunitiesScreen() {
                     ]}
                     onPress={() => {
                       if (isSelected) {
-                        setPaymentStatus(paymentStatus.filter(p => p !== opt.value));
+                        setPaymentStatus([]);
                       } else {
-                        setPaymentStatus([...paymentStatus, opt.value]);
+                        setPaymentStatus([opt.value]);
                       }
                     }}
                     testID={`payment-${opt.value}`}
