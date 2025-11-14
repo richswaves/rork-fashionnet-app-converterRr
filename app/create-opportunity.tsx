@@ -1637,6 +1637,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+    overflow: "visible",
   },
   subtitle: {
     color: "#9CA3AF",
@@ -1678,9 +1679,10 @@ const styles = StyleSheet.create({
   halfField: {
     flex: 1,
     position: "relative",
+    zIndex: 1,
   },
   activeDropdownContainer: {
-    zIndex: 20,
+    zIndex: 200,
     elevation: 20,
   },
   dropdown: {
@@ -1711,11 +1713,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 10,
     maxHeight: 200,
-    zIndex: 1000,
+    zIndex: Platform.OS === "web" ? 9999 : 1000,
     ...(Platform.OS === "web" && {
       boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
     }),
-    elevation: 8,
+    elevation: 12,
   },
   locationDropdownMenu: {
     position: "absolute",
@@ -1727,11 +1729,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 10,
     maxHeight: 250,
-    zIndex: 1000,
+    zIndex: Platform.OS === "web" ? 9999 : 1000,
     ...(Platform.OS === "web" && {
       boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
     }),
-    elevation: 8,
+    elevation: 12,
   },
   dropdownScroll: {
     maxHeight: 200,
