@@ -1,16 +1,31 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Dimensions } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield } from "lucide-react-native";
+import { Check, X, Loader2, Pencil, MapPin, Instagram, Youtube, CircleX, Image as ImageIcon, Plus, Trash2, Play, Shield, ChevronDown } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PortfolioItem } from "@/integrations/supabase/portfolio-types";
+
+const ROLE_OPTIONS = [
+  "Model",
+  "Photographer",
+  "Videographer",
+  "Content Creator",
+  "Stylist",
+  "Designer",
+  "Creative Director",
+  "Clothing Brand",
+  "Agency",
+  "Publisher",
+  "Photography Business",
+  "Other",
+];
 import { trpc } from "@/lib/trpc";
 import * as FileSystem from "expo-file-system";
 
@@ -48,6 +63,7 @@ export default function EditProfileScreen() {
     | "delete_confirm"
     | "delete_reason"
     | "custom_link"
+    | "roles"
   >(null);
   const [temp, setTemp] = useState<string>("");
   const [socialLinks, setSocialLinks] = useState<{
@@ -67,6 +83,18 @@ export default function EditProfileScreen() {
   const [linkUrl, setLinkUrl] = useState<string>("");
   const [inlineEditingIndex, setInlineEditingIndex] = useState<number>(-1);
   const [showBlockedUsers, setShowBlockedUsers] = useState<boolean>(false);
+  const [primaryRole, setPrimaryRole] = useState<string>(profile?.profession || "");
+  const [secondaryRole, setSecondaryRole] = useState<string>(
+    (profile?.professions && profile.professions.length > 1) ? profile.professions[1] : ""
+  );
+  const [showRoleDropdown, setShowRoleDropdown] = useState<"primary" | "secondary" | null>(null);
+
+  useEffect(() => {
+    setPrimaryRole(profile?.profession || "");
+    setSecondaryRole(
+      (profile?.professions && profile.professions.length > 1) ? profile.professions[1] : ""
+    );
+  }, [profile?.profession, profile?.professions]);
 
   const queryClient = useQueryClient();
   const currentUserId = profile?.user_id;
@@ -304,6 +332,13 @@ export default function EditProfileScreen() {
         setLinkName("");
         setLinkUrl("");
         setEditingLinkIndex(-1);
+        break;
+      case "roles":
+        setPrimaryRole(profile?.profession || "");
+        setSecondaryRole(
+          (profile?.professions && profile.professions.length > 1) ? profile.professions[1] : ""
+        );
+        setShowRoleDropdown(null);
         break;
       default:
         setTemp("");
@@ -575,6 +610,23 @@ export default function EditProfileScreen() {
         console.log("[onSave] Adding custom_links to updates:", customLinks);
       }
 
+      if (primaryRole !== (profile?.profession ?? "")) {
+        updates.profession = primaryRole;
+        const roles = [primaryRole];
+        if (secondaryRole && secondaryRole.trim().length > 0) {
+          roles.push(secondaryRole);
+        }
+        updates.professions = roles;
+        console.log("[onSave] Adding profession and professions to updates:", updates.profession, updates.professions);
+      } else if (secondaryRole !== ((profile?.professions && profile.professions.length > 1) ? profile.professions[1] : "")) {
+        const roles = [primaryRole || profile?.profession || ""];
+        if (secondaryRole && secondaryRole.trim().length > 0) {
+          roles.push(secondaryRole);
+        }
+        updates.professions = roles;
+        console.log("[onSave] Adding professions to updates:", updates.professions);
+      }
+
       if (Object.keys(updates).length === 0) {
         console.log("[onSave] No changes to save");
         router.back();
@@ -726,6 +778,33 @@ export default function EditProfileScreen() {
                 <Pencil color="#E5E7EB" size={16} />
               </Pressable>
             </View>
+          </View>
+        </View>
+
+        <View style={styles.rolesSection}>
+          <View style={styles.rolesSectionHeader}>
+            <Text style={styles.rolesSectionTitle}>Professional Roles</Text>
+            <Pressable
+              onPress={() => openEditor("roles")}
+              style={styles.editRolesBtn}
+              testID="edit-roles-btn"
+            >
+              <Pencil color="#E5E7EB" size={16} />
+            </Pressable>
+          </View>
+          <View style={styles.rolesCards}>
+            <View style={styles.roleCard}>
+              <Text style={styles.roleCardLabel}>Primary Role</Text>
+              <Text style={styles.roleCardValue}>{primaryRole || profile?.profession || "Not set"}</Text>
+            </View>
+            {(secondaryRole || (profile?.professions && profile.professions.length > 1)) && (
+              <View style={styles.roleCard}>
+                <Text style={styles.roleCardLabel}>Secondary Role</Text>
+                <Text style={styles.roleCardValue}>
+                  {secondaryRole || (profile?.professions && profile.professions[1]) || "None"}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1088,6 +1167,97 @@ export default function EditProfileScreen() {
                     disabled={!deleteReason}
                   >
                     <Text style={[styles.saveText, { color: "#FFF" }]}>Delete Account</Text>
+                  </Pressable>
+                </View>
+              </>
+            ) : editing === "roles" ? (
+              <>
+                <Text style={styles.modalTitle}>Edit Professional Roles</Text>
+                <Text style={styles.fieldLabel}>Primary Role *</Text>
+                <Pressable
+                  style={styles.roleDropdownBtn}
+                  onPress={() => setShowRoleDropdown(showRoleDropdown === "primary" ? null : "primary")}
+                >
+                  <Text style={[styles.roleDropdownText, !primaryRole && styles.placeholder]}>
+                    {primaryRole || "Select primary role"}
+                  </Text>
+                  <ChevronDown color="#E5E7EB" size={16} />
+                </Pressable>
+                {showRoleDropdown === "primary" && (
+                  <ScrollView style={styles.roleDropdownMenu}>
+                    {ROLE_OPTIONS.map((role) => (
+                      <Pressable
+                        key={role}
+                        style={[styles.roleDropdownItem, primaryRole === role && styles.roleDropdownItemActive]}
+                        onPress={() => {
+                          setPrimaryRole(role);
+                          setShowRoleDropdown(null);
+                        }}
+                      >
+                        <Text style={[styles.roleDropdownItemText, primaryRole === role && styles.roleDropdownItemTextActive]}>
+                          {role}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
+                <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Secondary Role (Optional)</Text>
+                <Pressable
+                  style={styles.roleDropdownBtn}
+                  onPress={() => setShowRoleDropdown(showRoleDropdown === "secondary" ? null : "secondary")}
+                >
+                  <Text style={[styles.roleDropdownText, !secondaryRole && styles.placeholder]}>
+                    {secondaryRole || "Select secondary role (optional)"}
+                  </Text>
+                  <ChevronDown color="#E5E7EB" size={16} />
+                </Pressable>
+                {showRoleDropdown === "secondary" && (
+                  <ScrollView style={styles.roleDropdownMenu}>
+                    <Pressable
+                      style={[styles.roleDropdownItem, !secondaryRole && styles.roleDropdownItemActive]}
+                      onPress={() => {
+                        setSecondaryRole("");
+                        setShowRoleDropdown(null);
+                      }}
+                    >
+                      <Text style={[styles.roleDropdownItemText, !secondaryRole && styles.roleDropdownItemTextActive]}>
+                        None
+                      </Text>
+                    </Pressable>
+                    {ROLE_OPTIONS.filter(r => r !== primaryRole).map((role) => (
+                      <Pressable
+                        key={role}
+                        style={[styles.roleDropdownItem, secondaryRole === role && styles.roleDropdownItemActive]}
+                        onPress={() => {
+                          setSecondaryRole(role);
+                          setShowRoleDropdown(null);
+                        }}
+                      >
+                        <Text style={[styles.roleDropdownItemText, secondaryRole === role && styles.roleDropdownItemTextActive]}>
+                          {role}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
+                    <X color="#E5E7EB" size={18} />
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      if (!primaryRole) {
+                        Alert.alert("Error", "Please select a primary role");
+                        return;
+                      }
+                      setEditing(null);
+                      Alert.alert("Remember", "Select Save on profile page for changes to apply");
+                    }}
+                    style={styles.saveBtn}
+                  >
+                    <Check color="#0B0B0F" size={16} />
+                    <Text style={styles.saveText}>Apply</Text>
                   </Pressable>
                 </View>
               </>
@@ -1700,6 +1870,97 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+  },
+  rolesSection: {
+    marginTop: 24,
+    marginHorizontal: 16,
+  },
+  rolesSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  rolesSectionTitle: {
+    color: "#E5E7EB",
+    fontSize: 18,
+    fontWeight: "900" as const,
+  },
+  editRolesBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#14141C",
+    borderWidth: 1,
+    borderColor: "#23232B",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rolesCards: {
+    gap: 12,
+  },
+  roleCard: {
+    backgroundColor: "#111318",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  roleCardLabel: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    fontWeight: "700" as const,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  roleCardValue: {
+    color: "#E5E7EB",
+    fontSize: 16,
+    fontWeight: "700" as const,
+  },
+  roleDropdownBtn: {
+    backgroundColor: "#14141C",
+    borderColor: "#23232B",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 6,
+  },
+  roleDropdownText: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    fontWeight: "600" as const,
+  },
+  roleDropdownMenu: {
+    backgroundColor: "#14141C",
+    borderColor: "#23232B",
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 8,
+    maxHeight: 200,
+  },
+  roleDropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#23232B",
+  },
+  roleDropdownItemActive: {
+    backgroundColor: "#1A1A24",
+  },
+  roleDropdownItemText: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "600" as const,
+  },
+  roleDropdownItemTextActive: {
+    color: "#4CB963",
+    fontWeight: "700" as const,
   },
 
 });

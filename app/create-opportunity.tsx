@@ -1099,7 +1099,7 @@ export default function CreateOpportunityScreen() {
   const { currentUserId, resolvedProfile, profile } = useProfile();
 
   const [title, setTitle] = useState("");
-  const [needType, setNeedType] = useState("");
+  const [needTypes, setNeedTypes] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [paymentType, setPaymentType] = useState<"paid" | "unpaid" | "">("");
   const [priceMin, setPriceMin] = useState<string>("");
@@ -1109,6 +1109,7 @@ export default function CreateOpportunityScreen() {
   const [requirements, setRequirements] = useState<string[]>([]);
   const [newRequirement, setNewRequirement] = useState("");
   const [showNeedDropdown, setShowNeedDropdown] = useState(false);
+  const [tempSelectedTypes, setTempSelectedTypes] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<{ city: string; state: string; display: string }[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -1118,7 +1119,7 @@ export default function CreateOpportunityScreen() {
     mutationFn: async () => {
       if (!currentUserId) throw new Error("Must be logged in");
       if (!title.trim()) throw new Error("Title is required");
-      if (!needType) throw new Error("Need type is required");
+      if (needTypes.length === 0) throw new Error("At least one role type is required");
 
       let budgetString = "";
       if (paymentType === "unpaid") {
@@ -1134,7 +1135,8 @@ export default function CreateOpportunityScreen() {
 
       const opportunityData = {
         title: title.trim(),
-        type: needType,
+        type: needTypes.length === 1 ? needTypes[0] : needTypes.join(", "),
+        roles_needed: needTypes,
         location: location.trim() || null,
         user_id: currentUserId,
         image_url: imageUrl || null,
@@ -1224,8 +1226,8 @@ export default function CreateOpportunityScreen() {
       alert("Please enter a title");
       return;
     }
-    if (!needType) {
-      alert("Please select a need type");
+    if (needTypes.length === 0) {
+      alert("Please select at least one role type");
       return;
     }
     if (paymentType === "paid" && priceMin.trim() === "" && priceMax.trim() === "") {
@@ -1263,35 +1265,67 @@ export default function CreateOpportunityScreen() {
         <View style={[styles.row, styles.dropdownRow]}>
           <View style={[styles.halfField, showNeedDropdown && styles.activeDropdownContainer]}>
             <Text style={styles.label}>
-              Needs <Text style={styles.required}>*</Text>
+              Roles Needed <Text style={styles.required}>*</Text>
             </Text>
             <Pressable
               style={styles.dropdown}
-              onPress={() => setShowNeedDropdown(!showNeedDropdown)}
+              onPress={() => {
+                setTempSelectedTypes([...needTypes]);
+                setShowNeedDropdown(!showNeedDropdown);
+              }}
               testID="dropdown-needs"
             >
-              <Text style={[styles.dropdownText, !needType && styles.placeholder]}>
-                {needType || "Select type"}
+              <Text style={[styles.dropdownText, needTypes.length === 0 && styles.placeholder]} numberOfLines={1}>
+                {needTypes.length === 0 ? "Select roles" : needTypes.length === 1 ? needTypes[0] : `${needTypes.length} roles selected`}
               </Text>
               <ChevronDown color="#E5E7EB" size={16} />
             </Pressable>
             {showNeedDropdown && (
               <View style={styles.dropdownMenu}>
                 <ScrollView style={styles.dropdownScroll}>
-                  {NEED_TYPES.map((type) => (
-                    <Pressable
-                      key={type}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setNeedType(type);
-                        setShowNeedDropdown(false);
-                      }}
-                      testID={`need-${type}`}
-                    >
-                      <Text style={styles.dropdownItemText}>{type}</Text>
-                    </Pressable>
-                  ))}
+                  {NEED_TYPES.map((type) => {
+                    const isSelected = tempSelectedTypes.includes(type);
+                    return (
+                      <Pressable
+                        key={type}
+                        style={[styles.dropdownItem, isSelected && styles.dropdownItemSelected]}
+                        onPress={() => {
+                          setTempSelectedTypes(prev => 
+                            prev.includes(type) 
+                              ? prev.filter(t => t !== type)
+                              : [...prev, type]
+                          );
+                        }}
+                        testID={`need-${type}`}
+                      >
+                        <Text style={[styles.dropdownItemText, isSelected && styles.dropdownItemTextSelected]}>
+                          {type}
+                        </Text>
+                        {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                      </Pressable>
+                    );
+                  })}
                 </ScrollView>
+                <View style={styles.dropdownActions}>
+                  <Pressable
+                    style={styles.dropdownActionBtn}
+                    onPress={() => {
+                      setShowNeedDropdown(false);
+                      setTempSelectedTypes([]);
+                    }}
+                  >
+                    <Text style={styles.dropdownActionText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.dropdownActionBtn, styles.dropdownActionBtnPrimary]}
+                    onPress={() => {
+                      setNeedTypes([...tempSelectedTypes]);
+                      setShowNeedDropdown(false);
+                    }}
+                  >
+                    <Text style={[styles.dropdownActionText, styles.dropdownActionTextPrimary]}>Done</Text>
+                  </Pressable>
+                </View>
               </View>
             )}
           </View>
@@ -1559,11 +1593,11 @@ export default function CreateOpportunityScreen() {
                   <Text numberOfLines={3} style={styles.previewDescription}>{description}</Text>
                 )}
                 <View style={styles.previewMetaRow}>
-                  {!!needType && (
-                    <View style={styles.previewMetaBadge}>
-                      <Text style={styles.previewMetaBadgeText}>{needType}</Text>
+                  {needTypes.length > 0 && needTypes.map((type, idx) => (
+                    <View key={idx} style={styles.previewMetaBadge}>
+                      <Text style={styles.previewMetaBadgeText}>{type}</Text>
                     </View>
-                  )}
+                  ))}
                   {!!location && (
                     <Text style={styles.previewMetaText}>📍 {location}</Text>
                   )}
@@ -1755,10 +1789,56 @@ const styles = StyleSheet.create({
   dropdownItem: {
     paddingHorizontal: 14,
     paddingVertical: 12,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
   },
   dropdownItemText: {
     color: "#E5E7EB",
     fontSize: 14,
+  },
+  dropdownItemSelected: {
+    backgroundColor: "#1A1A24",
+  },
+  dropdownItemTextSelected: {
+    color: "#4CB963",
+    fontWeight: "700" as const,
+  },
+  checkmark: {
+    color: "#4CB963",
+    fontSize: 16,
+    fontWeight: "700" as const,
+  },
+  dropdownActions: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#23232B",
+    gap: 8,
+  },
+  dropdownActionBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#14141C",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#23232B",
+    alignItems: "center" as const,
+  },
+  dropdownActionBtnPrimary: {
+    backgroundColor: "#E5E7EB",
+    borderColor: "#E5E7EB",
+  },
+  dropdownActionText: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "700" as const,
+  },
+  dropdownActionTextPrimary: {
+    color: "#0B0B0F",
   },
   requirementsRow: {
     flexDirection: "row",
