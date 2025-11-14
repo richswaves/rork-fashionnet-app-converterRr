@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -1260,8 +1260,8 @@ export default function CreateOpportunityScreen() {
           testID="input-title"
         />
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
+        <View style={[styles.row, styles.dropdownRow]}>
+          <View style={[styles.halfField, showNeedDropdown && styles.activeDropdownContainer]}>
             <Text style={styles.label}>
               Needs <Text style={styles.required}>*</Text>
             </Text>
@@ -1296,7 +1296,7 @@ export default function CreateOpportunityScreen() {
             )}
           </View>
 
-          <View style={styles.halfField}>
+          <View style={[styles.halfField, showLocationDropdown && styles.activeDropdownContainer]}>
             <Text style={styles.label}>Location</Text>
             <TextInput
               style={styles.input}
@@ -1670,9 +1670,18 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: 12,
+    overflow: "visible",
+  },
+  dropdownRow: {
+    alignItems: "flex-start",
   },
   halfField: {
     flex: 1,
+    position: "relative",
+  },
+  activeDropdownContainer: {
+    zIndex: 20,
+    elevation: 20,
   },
   dropdown: {
     backgroundColor: "#14141C",
