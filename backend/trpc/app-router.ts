@@ -10,6 +10,7 @@ import {
   getOpportunityStatsProcedure,
   getLocationStatsProcedure,
   listRecentUserEventsProcedure,
+  getPostAnalyticsProcedure,
 } from "./routes/admin/analytics/route";
 
 export const appRouter = createTRPCRouter({
@@ -26,6 +27,7 @@ export const appRouter = createTRPCRouter({
       getOpportunityStats: getOpportunityStatsProcedure,
       getLocationStats: getLocationStatsProcedure,
       listRecentUserEvents: listRecentUserEventsProcedure,
+      getPostAnalytics: getPostAnalyticsProcedure,
     }),
   }),
   block: createTRPCRouter({

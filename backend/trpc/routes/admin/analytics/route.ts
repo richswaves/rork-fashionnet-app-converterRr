@@ -11,6 +11,173 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+type CountAccumulator = { label: string; count: number };
+
+function toTitleCaseLabel(input: string) {
+  const normalized = input.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "Unspecified";
+  }
+  return normalized
+    .split(" ")
+    .filter((part) => part.length > 0)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function accumulateCount(
+  map: Map<string, CountAccumulator>,
+  raw: string | null | undefined,
+  fallback: string,
+  options?: { transform?: (value: string) => string },
+) {
+  const base = (raw ?? "").trim();
+  const key = base ? base.toLowerCase() : fallback.toLowerCase();
+  const labelSource = base || fallback;
+  const transform = options?.transform;
+  const label = transform ? transform(labelSource) : labelSource;
+  const existing = map.get(key);
+  if (existing) {
+    existing.count += 1;
+  } else {
+    map.set(key, { label, count: 1 });
+  }
+}
+
+function mapToShare(map: Map<string, CountAccumulator>, total: number): { label: string; count: number; percent: number }[] {
+  return Array.from(map.values())
+    .map((entry) => ({
+      label: entry.label,
+      count: entry.count,
+      percent: total > 0 ? Number(((entry.count / total) * 100).toFixed(2)) : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export const getPostAnalyticsProcedure = publicProcedure
+  .input(z.object({ daysBack: z.number().int().min(1).max(365).optional() }).optional())
+  .query(async ({ input }) => {
+    const supabase = getSupabase();
+    const days = input?.daysBack;
+    const sinceIso = typeof days === "number" ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString() : null;
+
+    let oppQuery = supabase
+      .from("opportunities")
+      .select("id,title,created_at,location,type,user_id,profiles:profiles(profession)")
+      .order("created_at", { ascending: false });
+
+    if (sinceIso) {
+      oppQuery = oppQuery.gte("created_at", sinceIso);
+    }
+
+    const { data: opportunityRows, error: opportunitiesError } = await oppQuery;
+    if (opportunitiesError) {
+      console.error("[analytics.getPostAnalytics] opportunities error", opportunitiesError);
+      return {
+        totalPosts: 0,
+        totalApplications: 0,
+        averageApplicationsPerPost: 0,
+        posterRoleShare: [],
+        seekingRoleShare: [],
+        locationShare: [],
+        posts: [],
+        timeframe: sinceIso,
+      };
+    }
+
+    const opportunities = (opportunityRows ?? []) as {
+      id: string;
+      title: string | null;
+      created_at: string | null;
+      location: string | null;
+      type: string | null;
+      user_id: string | null;
+      profiles: { profession?: string | null } | null;
+    }[];
+
+    const postIds = opportunities.map((opp) => opp.id).filter(Boolean);
+
+    let applicationsData: { opportunity_id: string | null; created_at: string | null }[] = [];
+    if (postIds.length > 0) {
+      let appsQuery = supabase
+        .from("applications")
+        .select("opportunity_id,created_at")
+        .in("opportunity_id", postIds)
+        .limit(10000);
+
+      if (sinceIso) {
+        appsQuery = appsQuery.gte("created_at", sinceIso);
+      }
+
+      const { data: appRows, error: appsError } = await appsQuery;
+      if (appsError) {
+        console.error("[analytics.getPostAnalytics] applications error", appsError);
+      } else {
+        applicationsData = (appRows ?? []) as { opportunity_id: string | null; created_at: string | null }[];
+      }
+    }
+
+    const applicationCounts = new Map<string, number>();
+    applicationsData.forEach((row) => {
+      const key = row.opportunity_id ?? "";
+      if (!key) return;
+      applicationCounts.set(key, (applicationCounts.get(key) ?? 0) + 1);
+    });
+
+    const totalPosts = opportunities.length;
+    const totalApplications = applicationsData.length;
+    const averageApplicationsPerPost = totalPosts > 0 ? Number((totalApplications / totalPosts).toFixed(2)) : 0;
+
+    const posterRoleMap = new Map<string, CountAccumulator>();
+    const seekingRoleMap = new Map<string, CountAccumulator>();
+    const locationMap = new Map<string, CountAccumulator>();
+
+    const posts = opportunities.map((opp) => {
+      const posterRoleRaw = opp.profiles?.profession ?? null;
+      const seekingRoleRaw = opp.type ?? null;
+      const locationRaw = opp.location ?? null;
+
+      accumulateCount(posterRoleMap, posterRoleRaw, "Unspecified", { transform: toTitleCaseLabel });
+      accumulateCount(seekingRoleMap, seekingRoleRaw, "Other", { transform: toTitleCaseLabel });
+      accumulateCount(locationMap, locationRaw, "Unlisted", { transform: (value) => value.trim() || "Unlisted" });
+
+      const applications = applicationCounts.get(opp.id) ?? 0;
+      const applicationsPercent = totalApplications > 0 ? Number(((applications / totalApplications) * 100).toFixed(2)) : 0;
+
+      return {
+        id: opp.id,
+        title: opp.title ?? "Untitled opportunity",
+        createdAt: opp.created_at,
+        location: locationRaw?.trim() || "Unlisted",
+        seekingRole: toTitleCaseLabel(seekingRoleRaw ?? ""),
+        posterRole: toTitleCaseLabel(posterRoleRaw ?? ""),
+        applications,
+        applicationsPercent,
+      };
+    });
+
+    const posterRoleShare = mapToShare(posterRoleMap, totalPosts);
+    const seekingRoleShare = mapToShare(seekingRoleMap, totalPosts);
+    const locationShare = mapToShare(locationMap, totalPosts);
+
+    posts.sort((a, b) => {
+      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bDate - aDate;
+    });
+
+    return {
+      totalPosts,
+      totalApplications,
+      averageApplicationsPerPost,
+      posterRoleShare,
+      seekingRoleShare,
+      locationShare,
+      posts,
+      timeframe: sinceIso,
+    };
+  });
+
 export const getUserActivitySummaryProcedure = publicProcedure
   .input(z.object({ userId: z.string().uuid(), daysBack: z.number().int().min(1).max(365).optional() }).optional())
   .query(async ({ input }) => {
