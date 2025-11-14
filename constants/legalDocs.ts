@@ -23,23 +23,23 @@ export const PRIVACY_POLICY = `Privacy Policy
 This Privacy Policy explains how thebrxnd LLC (“we”, “us”) collects and uses your personal data when you use the thebrxnd mobile app (the “Service”). We are committed to protecting your privacy.
 
 Information We Collect: We collect information you provide and information automatically collected by the app. This may include:
-• Registration & Profile Data: When you sign up, we collect your email address and password. You may also provide a username, profile photo, and other profile details (e.g., bio, location).
-• User Content: Any photos, messages, designs, posts, or other content you create or upload in the app.
-• Communications: If you contact us or reply to our emails, we store your messages and responses.
-• Usage Data: We collect data about how you use the app (features you use, time stamps, crashes, etc.) to help improve our service.
-• Device Data: We may collect technical data such as device type, OS version, app version, and IP address for analytics and security.
-• Payment & Subscription: We do not store your payment details (Apple/Google handle payments). We may receive a record of your subscription status or purchase date from RevenueCat or the app stores.
-• Third-Party Data: If you use social login (e.g. Apple Sign-In), we may receive your name and email (only if you consent). We do not store data from social networks beyond what you choose to share.
+•	Registration & Profile Data: When you sign up, we collect your email address and password. You may also provide a username, profile photo, and other profile details (e.g., bio, location).
+•	User Content: Any photos, messages, designs, posts, or other content you create or upload in the app.
+•	Communications: If you contact us or reply to our emails, we store your messages and responses.
+•	Usage Data: We collect data about how you use the app (features you use, time stamps, crashes, etc.) to help improve our service.
+•	Device Data: We may collect technical data such as device type, OS version, app version, and IP address for analytics and security.
+•	Payment & Subscription: We do not store your payment details (Apple/Google handle payments). We may receive a record of your subscription status or purchase date from RevenueCat or the app stores.
+•	Third-Party Data: If you use social login (e.g. Apple Sign-In), we may receive your name and email (only if you consent). We do not store data from social networks beyond what you choose to share.
 
 Cookies & Tracking: Thebrxnd is a mobile app and does not use browser cookies. We do not use tracking pixels or advertising networks. We may use analytics tools (currently none, but see our Cookie Policy) to understand crashes or usage. Any future analytics services will be added to our Cookie/Tracking Policy.
 
 How We Use Data: We use your information to:
-• Provide and operate the Service (e.g., creating your account, delivering content and messages).
-• Manage your account and subscription.
-• Communicate with you (updates, support, service announcements).
-• Improve and personalize the app (features, recommendations).
-• Detect and prevent fraud or abuse, and enforce our Terms and Community Guidelines.
-• Comply with legal obligations (e.g., respond to court orders, protect rights).
+•	Provide and operate the Service (e.g., creating your account, delivering content and messages).
+•	Manage your account and subscription.
+•	Communicate with you (updates, support, service announcements).
+•	Improve and personalize the app (features, recommendations).
+•	Detect and prevent fraud or abuse, and enforce our Terms and Community Guidelines.
+•	Comply with legal obligations (e.g., respond to court orders, protect rights).
 We will never sell your personal information to third parties.
 
 Data Storage and Third-Party Services: Your data is stored in Supabase, our cloud database service. Supabase stores data on secure servers in the U.S. (and potentially other countries where Supabase operates)[8]. We use industry-standard security measures to protect your data. For payments, we use RevenueCat to manage subscriptions; they process payment receipts and subscription details on our behalf (not thebrxnd). Both Supabase and RevenueCat act as our data processors and adhere to strict security practices. (See our Data Processing Agreement for details.) We will not share personal data with any other third parties without your consent, except for legal requests.
@@ -76,14 +76,14 @@ For any billing issues, contact Apple or Google support first. For other help, e
 export const COMMUNITY_GUIDELINES = `Community Guidelines
 We want thebrxnd to be a creative, positive space for fashion and culture. Please follow these guidelines to keep the community safe and respectful:
 
-• Be Respectful: Treat others kindly. Bullying, harassment, or personal attacks are not allowed.
-• No Hate Speech: Do not post content that attacks or discriminates against others based on race, ethnicity, religion, gender, sexual orientation, disability, or any protected status[6]. Hate symbols, slurs, and extremist content are banned.
-• No Graphic or Adult Content: Do not share excessive violence, gore, or sexual content. If you post fashion content that is edgy, make sure it’s still appropriate for a broad audience. Content intended for adults (nudity, explicit scenes) is not allowed.
-• No Illegal or Dangerous Content: Do not promote illegal activities (drug use, theft, etc.) or instructions for wrongdoing[7]. Criminal behavior or self-harm encouragement is strictly prohibited.
-• No Spam or Scams: Do not spam, flood chat, or promote your products/services without permission. Links to malicious sites, phishing attempts, or fraudulent schemes are forbidden[10].
-• Protect Privacy: Do not post others’ personal information (like addresses, private photos, contact info) without permission[7]. Respect everyone’s privacy.
-• Original Content: Share only content you have the rights to. Do not post copyrighted images, music, or videos that you don’t own (see our [DMCA Policy] for details).
-• Stay on Topic: Keep discussions relevant to fashion, creativity, and culture. Irrelevant or repetitive content can be removed to keep the app enjoyable for everyone.
+•	Be Respectful: Treat others kindly. Bullying, harassment, or personal attacks are not allowed.
+•	No Hate Speech: Do not post content that attacks or discriminates against others based on race, ethnicity, religion, gender, sexual orientation, disability, or any protected status[6]. Hate symbols, slurs, and extremist content are banned.
+•	No Graphic or Adult Content: Do not share excessive violence, gore, or sexual content. If you post fashion content that is edgy, make sure it’s still appropriate for a broad audience. Content intended for adults (nudity, explicit scenes) is not allowed.
+•	No Illegal or Dangerous Content: Do not promote illegal activities (drug use, theft, etc.) or instructions for wrongdoing[7]. Criminal behavior or self-harm encouragement is strictly prohibited.
+•	No Spam or Scams: Do not spam, flood chat, or promote your products/services without permission. Links to malicious sites, phishing attempts, or fraudulent schemes are forbidden[10].
+•	Protect Privacy: Do not post others’ personal information (like addresses, private photos, contact info) without permission[7]. Respect everyone’s privacy.
+•	Original Content: Share only content you have the rights to. Do not post copyrighted images, music, or videos that you don’t own (see our [DMCA Policy] for details).
+•	Stay on Topic: Keep discussions relevant to fashion, creativity, and culture. Irrelevant or repetitive content can be removed to keep the app enjoyable for everyone.
 
 Consequences for violating these rules include content removal, warnings, temporary suspension, or permanent ban, depending on severity. We enforce these guidelines fairly and consistently.
 
@@ -108,10 +108,10 @@ Suspension and Takedowns: Depending on the violation, we may take action such as
 We reserve discretion: even one serious violation (e.g. explicit or illegal content) can lead to immediate suspension.
 
 Appeals: If your content is removed or your account is suspended, you may appeal our decision. Send an email to tbrxnd@gmail.com within 14 days of the action, with:
-1. Your name and username.
-2. Description of the moderation action (e.g. “My post about X was removed on [date]”).
-3. Why you believe the action was in error.
-4. Any additional context.
+1.	Your name and username.
+2.	Description of the moderation action (e.g. “My post about X was removed on [date]”).
+3.	Why you believe the action was in error.
+4.	Any additional context.
 
 Our team will review your appeal in a fair manner. We will respond by email as soon as possible (usually within a few days). If we agree with your appeal, we will restore the content or account. If not, the decision stands. This 14-day window is final: appeals made after 14 days may not be considered.
 
@@ -174,12 +174,12 @@ export const COOKIE_POLICY = `Cookie / Tracking Policy
 
 thebrxnd is a mobile app and does not use web browser cookies. We do not currently use advertising or analytics tracking that identifies you. Here is how we handle tracking:
 
-• No Tracking Cookies: We do not place cookies on your device or browser. The mobile app uses local storage for essential functions only.
-• Essential Analytics: We may use basic analytics (for example, crash reporting or usage statistics) to improve the app. These analytics are anonymous and not linked to you personally. Currently, we do not use any third-party analytics or advertising networks.
-• Future Tracking: We may introduce analytics or metrics (for example, Google Analytics or another tool) to better understand app usage and improve features. If that happens, we will update this policy and give you an option to opt in or out where possible.
-• Opt-Out: If tracking is implemented in the future, we will provide settings or instructions to disable it. We will never sell or share your data with advertisers.
-• Device IDs: The app may use a non-personal unique device ID (automatically generated) to remember your preferences and help prevent fraud or abuse. This is not linked to your identity and is only used internally.
-• Third-Party SDKs: If we integrate any third-party services (e.g. for push notifications or social login), those SDKs may collect data according to their own policies. We will disclose their names and data uses here when applicable.
+•	No Tracking Cookies: We do not place cookies on your device or browser. The mobile app uses local storage for essential functions only.
+•	Essential Analytics: We may use basic analytics (for example, crash reporting or usage statistics) to improve the app. These analytics are anonymous and not linked to you personally. Currently, we do not use any third-party analytics or advertising networks.
+•	Future Tracking: We may introduce analytics or metrics (for example, Google Analytics or another tool) to better understand app usage and improve features. If that happens, we will update this policy and give you an option to opt in or out where possible.
+•	Opt-Out: If tracking is implemented in the future, we will provide settings or instructions to disable it. We will never sell or share your data with advertisers.
+•	Device IDs: The app may use a non-personal unique device ID (automatically generated) to remember your preferences and help prevent fraud or abuse. This is not linked to your identity and is only used internally.
+•	Third-Party SDKs: If we integrate any third-party services (e.g. for push notifications or social login), those SDKs may collect data according to their own policies. We will disclose their names and data uses here when applicable.
 
 For now, your privacy is protected: thebrxnd does not track your activity outside the app. We recommend you keep the app updated; any future analytics tools will be described in this policy.
 

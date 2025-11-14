@@ -226,15 +226,26 @@ export default function EditProfileScreen() {
     mutationFn: async (itemId: string) => {
       if (!currentUserId) throw new Error("Must be logged in");
       await sbDelete("portfolio_items", { id: itemId });
+      return itemId;
+    },
+    onMutate: async (itemId: string) => {
+      console.log("[Portfolio] Starting optimistic delete for", itemId);
+      await queryClient.cancelQueries({ queryKey: ["portfolio", currentUserId] });
+      const previousItems = queryClient.getQueryData<PortfolioItem[]>(["portfolio", currentUserId]);
+      queryClient.setQueryData<PortfolioItem[]>(["portfolio", currentUserId], (old = []) => old.filter((item) => item.id !== itemId));
+      return { previousItems };
+    },
+    onError: (error: any, _variables, context) => {
+      console.error("[Portfolio] Delete error", error);
+      if (context?.previousItems) {
+        queryClient.setQueryData(["portfolio", currentUserId], context.previousItems);
+      }
+      Alert.alert("Error", "Failed to delete portfolio item");
     },
     onSuccess: async () => {
-      console.log("[Portfolio] Delete success, invalidating queries");
+      console.log("[Portfolio] Delete success, ensuring fresh data");
       await queryClient.invalidateQueries({ queryKey: ["portfolio", currentUserId] });
       queryClient.refetchQueries({ queryKey: ["portfolio", currentUserId] });
-    },
-    onError: (error: any) => {
-      console.error("[Portfolio] Delete error", error);
-      Alert.alert("Error", "Failed to delete portfolio item");
     },
   });
 

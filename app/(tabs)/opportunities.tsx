@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -366,6 +366,57 @@ export default function OpportunitiesScreen() {
     },
   });
 
+  const filteredOpportunities = useMemo<OpportunityRow[]>(() => {
+    let filteredData = [...(opportunities ?? [])];
+    filteredData = filteredData.filter((opp) => {
+      const userId = opp.profiles?.user_id ?? opp.user_id;
+      return userId && !blockedUserIds.has(userId);
+    });
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      filteredData = filteredData.filter((app) =>
+        (app?.title ?? "").toLowerCase().includes(q) ||
+        (app?.company ?? "").toLowerCase().includes(q) ||
+        (app?.location ?? "").toLowerCase().includes(q)
+      );
+    }
+    if (city.length > 0) {
+      filteredData = filteredData.filter((opp) => {
+        const oppLocation = (opp.location ?? "").toLowerCase();
+        return city.some((c) => oppLocation.includes(c.toLowerCase()));
+      });
+    }
+    if (seekingRole.length > 0) {
+      filteredData = filteredData.filter((opp) => {
+        const oppType = (opp.type ?? "").toLowerCase();
+        return seekingRole.some((role) => oppType === role.toLowerCase());
+      });
+    }
+    if (paymentStatus.length > 0) {
+      filteredData = filteredData.filter((opp) => {
+        const budget = (opp.budget ?? "").toLowerCase();
+        return paymentStatus.some((status) => {
+          if (status === "paid") {
+            return budget !== "unpaid" && budget !== "";
+          }
+          if (status === "unpaid") {
+            return !budget || budget === "unpaid";
+          }
+          return false;
+        });
+      });
+    }
+    if (postedByRole.length > 0) {
+      filteredData = filteredData.filter((opp) => {
+        const profile = opp.profiles as ProfileRow | undefined;
+        const userProfession = (profile?.profession ?? "").toLowerCase();
+        console.log("[Filter] Checking profession:", userProfession, "against:", postedByRole);
+        return postedByRole.some((role) => userProfession === role.toLowerCase());
+      });
+    }
+    return filteredData;
+  }, [opportunities, blockedUserIds, searchQuery, city, seekingRole, paymentStatus, postedByRole]);
+
 
 
   return (
@@ -485,57 +536,7 @@ export default function OpportunitiesScreen() {
       )}
 
       <FlatList
-        data={useMemo(() => {
-          let filteredData = [...(opportunities ?? [])];
-          filteredData = filteredData.filter((opp) => {
-            const userId = opp.profiles?.user_id ?? opp.user_id;
-            return userId && !blockedUserIds.has(userId);
-          });
-          const q = searchQuery.trim().toLowerCase();
-          if (q) {
-            filteredData = filteredData.filter((app) =>
-              (app?.title ?? "").toLowerCase().includes(q) ||
-              (app?.company ?? "").toLowerCase().includes(q) ||
-              (app?.location ?? "").toLowerCase().includes(q)
-            );
-          }
-          if (city.length > 0) {
-            filteredData = filteredData.filter((opp) => {
-              const oppLocation = (opp.location ?? "").toLowerCase();
-              return city.some(c => oppLocation.includes(c.toLowerCase()));
-            });
-          }
-          if (seekingRole.length > 0) {
-            filteredData = filteredData.filter((opp) => {
-              const oppType = (opp.type ?? "").toLowerCase();
-              return seekingRole.some(role => oppType === role.toLowerCase());
-            });
-          }
-          if (paymentStatus.length > 0) {
-            filteredData = filteredData.filter((opp) => {
-              const budget = (opp.budget ?? "").toLowerCase();
-              return paymentStatus.some(status => {
-                if (status === "paid") {
-                  return budget !== "unpaid" && budget !== "";
-                } else if (status === "unpaid") {
-                  return !budget || budget === "unpaid";
-                }
-                return false;
-              });
-            });
-          }
-          if (postedByRole.length > 0) {
-            filteredData = filteredData.filter((opp) => {
-              const profile = opp.profiles as any;
-              const userProfession = profile?.profession ?? "";
-              console.log("[Filter] Checking profession:", userProfession, "against:", postedByRole);
-              return postedByRole.some(role => {
-                return userProfession === role;
-              });
-            });
-          }
-          return filteredData;
-        }, [opportunities, searchQuery, blockedUserIds])}
+        data={filteredOpportunities}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
