@@ -2,13 +2,52 @@ import { z } from "zod";
 import { publicProcedure } from "../../../create-context";
 import { createClient } from "@supabase/supabase-js";
 
+const ENV_SOURCE = {
+  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
+  SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+} as const;
+
+type EnvKey = keyof typeof ENV_SOURCE;
+
+function resolveEnv(keys: EnvKey[]): string | undefined {
+  for (const key of keys) {
+    const value = ENV_SOURCE[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
 function getSupabase() {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const url = resolveEnv(["EXPO_PUBLIC_SUPABASE_URL", "SUPABASE_URL"]);
+  const serviceKey = resolveEnv([
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_SERVICE_KEY",
+    "SUPABASE_SECRET_KEY",
+  ]);
+  const anonKey = resolveEnv(["EXPO_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_ANON_KEY"]);
+  const key = serviceKey ?? anonKey;
   if (!url || !key) {
     throw new Error("Supabase not configured");
   }
-  return createClient(url, key);
+  const client = createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+  if (serviceKey) {
+    console.log("[analytics.getPostAnalytics] Using service role key for Supabase client");
+  } else {
+    console.log("[analytics.getPostAnalytics] Using anon key for Supabase client");
+  }
+  return client;
 }
 
 type CountAccumulator = { label: string; count: number };
@@ -61,9 +100,11 @@ export const getPostAnalyticsProcedure = publicProcedure
     const days = input?.daysBack;
     const sinceIso = typeof days === "number" ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString() : null;
 
+    console.log("[analytics.getPostAnalytics] Fetching opportunities", { sinceIso });
+
     let oppQuery = supabase
       .from("opportunities")
-      .select("id,title,created_at,location,type,user_id,profiles:profiles(profession)")
+      .select("id,title,created_at,location,type,user_id")
       .order("created_at", { ascending: false });
 
     if (sinceIso) {
@@ -92,8 +133,34 @@ export const getPostAnalyticsProcedure = publicProcedure
       location: string | null;
       type: string | null;
       user_id: string | null;
-      profiles: { profession?: string | null } | null;
     }[];
+
+    console.log("[analytics.getPostAnalytics] Opportunities fetched", { count: opportunities.length });
+
+    const userIds = Array.from(
+      new Set(
+        opportunities
+          .map((opp) => opp.user_id)
+          .filter((value): value is string => typeof value === "string" && value.length > 0),
+      ),
+    );
+
+    let professionMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      console.log("[analytics.getPostAnalytics] Fetching professions for posters", { userIds: userIds.length });
+      const { data: profileRows, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id,profession")
+        .in("user_id", userIds)
+        .returns<{ user_id: string; profession: string | null }[]>();
+      if (profilesError) {
+        console.error("[analytics.getPostAnalytics] profiles fetch error", profilesError);
+      } else {
+        professionMap = new Map(
+          (profileRows ?? []).map((row) => [row.user_id, row.profession ?? ""]),
+        );
+      }
+    }
 
     const postIds = opportunities.map((opp) => opp.id).filter(Boolean);
 
@@ -128,12 +195,18 @@ export const getPostAnalyticsProcedure = publicProcedure
     const totalApplications = applicationsData.length;
     const averageApplicationsPerPost = totalPosts > 0 ? Number((totalApplications / totalPosts).toFixed(2)) : 0;
 
+    console.log("[analytics.getPostAnalytics] Aggregate counts", {
+      totalPosts,
+      totalApplications,
+      averageApplicationsPerPost,
+    });
+
     const posterRoleMap = new Map<string, CountAccumulator>();
     const seekingRoleMap = new Map<string, CountAccumulator>();
     const locationMap = new Map<string, CountAccumulator>();
 
     const posts = opportunities.map((opp) => {
-      const posterRoleRaw = opp.profiles?.profession ?? null;
+      const posterRoleRaw = professionMap.get(opp.user_id ?? "") ?? null;
       const seekingRoleRaw = opp.type ?? null;
       const locationRaw = opp.location ?? null;
 
@@ -159,6 +232,12 @@ export const getPostAnalyticsProcedure = publicProcedure
     const posterRoleShare = mapToShare(posterRoleMap, totalPosts);
     const seekingRoleShare = mapToShare(seekingRoleMap, totalPosts);
     const locationShare = mapToShare(locationMap, totalPosts);
+
+    console.log("[analytics.getPostAnalytics] Computed distributions", {
+      posterRoles: posterRoleShare.length,
+      seekingRoles: seekingRoleShare.length,
+      locations: locationShare.length,
+    });
 
     posts.sort((a, b) => {
       const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
