@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Animated, Dimensions, FlatList, Image, Linking, Modal, NativeScrollEvent, NativeSyntheticEvent, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Animated, Dimensions, FlatList, Image, Linking, Modal, NativeScrollEvent, NativeSyntheticEvent, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
@@ -294,7 +294,7 @@ export default function OpportunitiesScreen() {
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
-  const { trackSearch, trackOpportunityInteraction } = useActivityTracking();
+  const { trackSearch, trackFilterApplication, trackOpportunityInteraction } = useActivityTracking();
 
   const { data: blockedList } = trpc.block.listBlocked.useQuery(undefined, {
     enabled: !!currentUserId,
@@ -652,7 +652,60 @@ export default function OpportunitiesScreen() {
     });
   }, [opportunities, blockedUserIds, searchQuery, city, seekingRole, paymentStatus, postedByRole]);
 
+  const viewTimersRef = useRef<Record<string, number>>({});
+  const viewedOnceRef = useRef<Set<string>>(new Set());
 
+  const handleViewableItemsChanged = useCallback(
+    ({ changed }: { changed: ViewToken[] }) => {
+      changed.forEach((item) => {
+        const opportunity = item.item as OpportunityRow | undefined;
+        const id = opportunity?.id;
+        if (!id) {
+          return;
+        }
+        if (item.isViewable) {
+          viewTimersRef.current[id] = Date.now();
+          if (!viewedOnceRef.current.has(id)) {
+            trackOpportunityInteraction({ opportunity_id: id, interaction_type: "view" });
+            viewedOnceRef.current.add(id);
+          }
+        } else {
+          const start = viewTimersRef.current[id];
+          if (typeof start === "number") {
+            const duration = Math.max(0, Math.round((Date.now() - start) / 1000));
+            if (duration > 0) {
+              trackOpportunityInteraction({
+                opportunity_id: id,
+                interaction_type: "view_duration",
+                time_spent_seconds: duration,
+              });
+            }
+            delete viewTimersRef.current[id];
+          }
+        }
+      });
+    },
+    [trackOpportunityInteraction],
+  );
+
+  useEffect(() => {
+    return () => {
+      const entries = Object.entries(viewTimersRef.current);
+      entries.forEach(([id, start]) => {
+        const duration = Math.max(0, Math.round((Date.now() - start) / 1000));
+        if (duration > 0) {
+          trackOpportunityInteraction({
+            opportunity_id: id,
+            interaction_type: "view_duration",
+            time_spent_seconds: duration,
+          });
+        }
+      });
+      viewTimersRef.current = {};
+    };
+  }, [trackOpportunityInteraction]);
+
+  const viewabilityConfig = useMemo(() => ({ itemVisiblePercentThreshold: 60 }), []);
 
   return (
     <View style={container} testID="opportunities-screen">
@@ -733,8 +786,13 @@ export default function OpportunitiesScreen() {
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={() => {
-              if (searchQuery.trim()) {
-                trackSearch({ page: "opportunities", search_query: searchQuery.trim() });
+              const trimmed = searchQuery.trim();
+              if (trimmed) {
+                trackSearch({
+                  page: "opportunities_search",
+                  query: trimmed,
+                  resultsCount: filteredOpportunities.length,
+                });
               }
             }}
             testID="opp-search-input"
@@ -774,6 +832,8 @@ export default function OpportunitiesScreen() {
         data={filteredOpportunities}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        onViewableItemsChanged={handleViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         renderItem={({ item }) => {
           const title = item.title ?? "";
           const display = getDisplayForProfile(item.profiles);
@@ -1209,7 +1269,11 @@ export default function OpportunitiesScreen() {
                 if (postedByRole.length > 0) filters.posted_by_roles = postedByRole;
                 if (paymentStatus.length > 0) filters.payment_status = paymentStatus;
                 if (Object.keys(filters).length > 0) {
-                  trackSearch({ page: "opportunities", filters });
+                  trackFilterApplication({
+                    page: "opportunities",
+                    filters,
+                    location: city.length === 1 ? city[0] : null,
+                  });
                 }
                 console.log("apply filters", { city, seekingRole, postedByRole, paymentStatus });
                 closeFilterSheet();
