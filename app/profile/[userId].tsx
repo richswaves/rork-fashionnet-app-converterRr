@@ -580,7 +580,12 @@ export default function UserProfileScreen() {
           </Pressable>
           <Text style={styles.usernameXL}>{display.displayName}</Text>
           {!!data?.profession && (
-            <Text style={styles.roleText}>{data.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+            <View style={styles.rolesContainer}>
+              <Text style={styles.roleText}>{data.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+              {data?.professions && data.professions.length > 1 && (
+                <Text style={styles.secondaryRoleText}>{data.professions[1].replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+              )}
+            </View>
           )}
           {!!data?.location && (
             <View style={styles.locationRowCenter}>
@@ -1104,7 +1109,9 @@ const styles = StyleSheet.create({
   avatarWrapLarge: { width: 116, height: 116, borderRadius: 58, overflow: "hidden", borderWidth: 4, borderColor: "#0B0B0F", backgroundColor: "#0B0B0F" },
   avatarLarge: { width: 116, height: 116 },
   usernameXL: { color: "#E5E7EB", fontSize: 28, fontWeight: "900", marginTop: 12 },
-  roleText: { color: "#9CA3AF", fontSize: 14, fontWeight: "600", marginTop: 4, textTransform: "capitalize" as const },
+  rolesContainer: { alignItems: "center", marginTop: 4, gap: 4 },
+  roleText: { color: "#9CA3AF", fontSize: 14, fontWeight: "600", textTransform: "capitalize" as const },
+  secondaryRoleText: { color: "#6B7280", fontSize: 12, fontWeight: "600", textTransform: "capitalize" as const },
   locationRowCenter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   locationText: { color: "#9CA3AF", fontSize: 13, maxWidth: 220 },
   statsAndFollow: { flexDirection: "row", alignItems: "center", gap: 24, marginTop: 14 },
