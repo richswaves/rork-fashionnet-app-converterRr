@@ -77,19 +77,35 @@ function formatRelativeTime(iso?: string) {
 }
 
 function formatBudget(budget: string): string {
-  if (budget.toLowerCase().includes('unpaid')) {
+  if (budget.toLowerCase().includes("unpaid")) {
     return budget;
   }
-  const parts = budget.split(' ');
-  if (parts[0] === 'Paid' && parts.length > 1) {
-    const numbers = parts.slice(1).map(part => {
-      if (part === '-') return part;
-      const num = part.replace(/[^0-9,]/g, '');
+  const parts = budget.split(" ");
+  if (parts[0] === "Paid" && parts.length > 1) {
+    const numbers = parts.slice(1).map((part) => {
+      if (part === "-") return part;
+      const num = part.replace(/[^0-9,]/g, "");
       return num ? `${num}` : part;
     });
-    return `${parts[0]} ${numbers.join(' ')}`;
+    return `${parts[0]} ${numbers.join(" ")}`;
   }
   return budget;
+}
+
+function normalizeFilterValue(value?: string | null): string {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitFilterTokens(value?: string | null): string[] {
+  const normalized = normalizeFilterValue(value);
+  if (!normalized) return [];
+  return normalized.split(" ").filter(Boolean);
 }
 
 export default function OpportunitiesScreen() {
@@ -367,54 +383,116 @@ export default function OpportunitiesScreen() {
   });
 
   const filteredOpportunities = useMemo<OpportunityRow[]>(() => {
-    let filteredData = [...(opportunities ?? [])];
-    filteredData = filteredData.filter((opp) => {
+    const normalizedSearch = normalizeFilterValue(searchQuery);
+    const normalizedCities = city.map(normalizeFilterValue).filter(Boolean);
+    const normalizedSeekingRoles = seekingRole.map(normalizeFilterValue).filter(Boolean);
+    const normalizedPosterRoles = postedByRole.map(normalizeFilterValue).filter(Boolean);
+    const normalizedPaymentStatuses = paymentStatus.map(normalizeFilterValue).filter(Boolean);
+
+    const baseList = (opportunities ?? []).filter((opp) => {
       const userId = opp.profiles?.user_id ?? opp.user_id;
       return userId && !blockedUserIds.has(userId);
     });
-    const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      filteredData = filteredData.filter((app) =>
-        (app?.title ?? "").toLowerCase().includes(q) ||
-        (app?.company ?? "").toLowerCase().includes(q) ||
-        (app?.location ?? "").toLowerCase().includes(q)
-      );
-    }
-    if (city.length > 0) {
-      filteredData = filteredData.filter((opp) => {
-        const oppLocation = (opp.location ?? "").toLowerCase();
-        return city.some((c) => oppLocation.includes(c.toLowerCase()));
-      });
-    }
-    if (seekingRole.length > 0) {
-      filteredData = filteredData.filter((opp) => {
-        const oppType = (opp.type ?? "").toLowerCase();
-        return seekingRole.some((role) => oppType === role.toLowerCase());
-      });
-    }
-    if (paymentStatus.length > 0) {
-      filteredData = filteredData.filter((opp) => {
-        const budget = (opp.budget ?? "").toLowerCase();
-        return paymentStatus.some((status) => {
+
+    console.log("[Filter] Applying opportunities filters", {
+      total: opportunities?.length ?? 0,
+      baseCount: baseList.length,
+      normalizedSearch,
+      normalizedCities,
+      normalizedSeekingRoles,
+      normalizedPosterRoles,
+      normalizedPaymentStatuses,
+    });
+
+    return baseList.filter((opp) => {
+      const normalizedTitle = normalizeFilterValue(opp.title);
+      const normalizedCompany = normalizeFilterValue(opp.company);
+      const normalizedLocation = normalizeFilterValue(opp.location);
+      const normalizedType = normalizeFilterValue(opp.type);
+      const typeTokens = new Set(splitFilterTokens(opp.type));
+      const profile = opp.profiles as ProfileRow | undefined;
+      const normalizedProfession = normalizeFilterValue(profile?.profession);
+      const professionTokens = new Set(splitFilterTokens(profile?.profession));
+      const budgetRaw = opp.budget ?? "";
+      const normalizedBudget = normalizeFilterValue(opp.budget);
+
+      if (normalizedSearch) {
+        const matchesSearch =
+          normalizedTitle.includes(normalizedSearch) ||
+          normalizedCompany.includes(normalizedSearch) ||
+          normalizedLocation.includes(normalizedSearch);
+        if (!matchesSearch) {
+          return false;
+        }
+      }
+
+      if (normalizedCities.length > 0) {
+        const matchesCity = normalizedCities.some((cityValue) =>
+          normalizedLocation.includes(cityValue),
+        );
+        if (!matchesCity) {
+          return false;
+        }
+      }
+
+      if (normalizedSeekingRoles.length > 0) {
+        const matchesSeeking = normalizedSeekingRoles.some((role) => {
+          if (!role) return false;
+          if (normalizedType === role) return true;
+          if (normalizedType.includes(role)) return true;
+          if (typeTokens.size === 0) return false;
+          const roleTokens = role.split(" ");
+          return roleTokens.every((token) => typeTokens.has(token));
+        });
+        if (!matchesSeeking) {
+          return false;
+        }
+      }
+
+      if (normalizedPosterRoles.length > 0) {
+        const matchesPoster = normalizedPosterRoles.some((role) => {
+          if (!role) return false;
+          if (normalizedProfession === role) return true;
+          if (normalizedProfession.includes(role)) return true;
+          if (professionTokens.size === 0) return false;
+          const roleTokens = role.split(" ");
+          return roleTokens.every((token) => professionTokens.has(token));
+        });
+        if (!matchesPoster) {
+          return false;
+        }
+      }
+
+      if (normalizedPaymentStatuses.length > 0) {
+        const hasNumericBudget = /\d/.test(budgetRaw);
+        const matchesPayment = normalizedPaymentStatuses.some((status) => {
           if (status === "paid") {
-            return budget !== "unpaid" && budget !== "";
+            return (
+              hasNumericBudget ||
+              normalizedBudget.includes("paid") ||
+              normalizedBudget.includes("compensated") ||
+              normalizedBudget.includes("stipend")
+            );
           }
           if (status === "unpaid") {
-            return !budget || budget === "unpaid";
+            return (
+              !hasNumericBudget &&
+              (!normalizedBudget ||
+                normalizedBudget.includes("unpaid") ||
+                normalizedBudget.includes("volunteer") ||
+                normalizedBudget.includes("collab") ||
+                normalizedBudget.includes("trade"))
+            );
           }
           return false;
         });
-      });
-    }
-    if (postedByRole.length > 0) {
-      filteredData = filteredData.filter((opp) => {
-        const profile = opp.profiles as ProfileRow | undefined;
-        const userProfession = (profile?.profession ?? "").toLowerCase();
-        console.log("[Filter] Checking profession:", userProfession, "against:", postedByRole);
-        return postedByRole.some((role) => userProfession === role.toLowerCase());
-      });
-    }
-    return filteredData;
+        if (!matchesPayment) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   }, [opportunities, blockedUserIds, searchQuery, city, seekingRole, paymentStatus, postedByRole]);
 
 
