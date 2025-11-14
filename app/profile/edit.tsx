@@ -1174,33 +1174,13 @@ export default function EditProfileScreen() {
               <>
                 <Text style={styles.modalTitle}>Edit Professional Roles</Text>
                 <Text style={styles.fieldLabel}>Primary Role *</Text>
-                <Pressable
-                  style={styles.roleDropdownBtn}
-                  onPress={() => setShowRoleDropdown(showRoleDropdown === "primary" ? null : "primary")}
-                >
-                  <Text style={[styles.roleDropdownText, !primaryRole && styles.placeholder]}>
+                <View style={[styles.roleDropdownBtn, styles.roleDropdownBtnDisabled]}>
+                  <Text style={styles.roleDropdownText}>
                     {primaryRole || "Select primary role"}
                   </Text>
-                  <ChevronDown color="#E5E7EB" size={16} />
-                </Pressable>
-                {showRoleDropdown === "primary" && (
-                  <ScrollView style={styles.roleDropdownMenu}>
-                    {ROLE_OPTIONS.map((role) => (
-                      <Pressable
-                        key={role}
-                        style={[styles.roleDropdownItem, primaryRole === role && styles.roleDropdownItemActive]}
-                        onPress={() => {
-                          setPrimaryRole(role);
-                          setShowRoleDropdown(null);
-                        }}
-                      >
-                        <Text style={[styles.roleDropdownItemText, primaryRole === role && styles.roleDropdownItemTextActive]}>
-                          {role}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                )}
+                  <Text style={styles.lockedBadge}>🔒 Locked</Text>
+                </View>
+                <Text style={styles.roleHint}>Primary role cannot be changed</Text>
                 <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Secondary Role (Optional)</Text>
                 <Pressable
                   style={styles.roleDropdownBtn}
@@ -1961,6 +1941,21 @@ const styles = StyleSheet.create({
   roleDropdownItemTextActive: {
     color: "#4CB963",
     fontWeight: "700" as const,
+  },
+  roleDropdownBtnDisabled: {
+    opacity: 0.6,
+    backgroundColor: "#0F0F14",
+  },
+  lockedBadge: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    fontWeight: "700" as const,
+  },
+  roleHint: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
 
 });
