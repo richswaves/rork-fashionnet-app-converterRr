@@ -1144,7 +1144,7 @@ export default function CreateOpportunityScreen() {
       };
 
       if (needTypes.length > 0) {
-        opportunityData.type = needTypes.length === 1 ? needTypes[0] : needTypes.join(", ");
+        opportunityData.type = needTypes.join(", ");
         opportunityData.roles_needed = needTypes;
       }
 
@@ -1171,7 +1171,9 @@ export default function CreateOpportunityScreen() {
     onError: (error) => {
       console.error("[CreateOpportunity] Error:", error);
       console.error("[CreateOpportunity] Error message:", (error as any)?.message);
-      alert("Failed to create opportunity. Please try again.");
+      console.error("[CreateOpportunity] Error stack:", (error as any)?.stack);
+      const errorMsg = (error as any)?.message || "Unknown error";
+      alert(`Failed to create opportunity. ${errorMsg}`);
     },
   });
 
