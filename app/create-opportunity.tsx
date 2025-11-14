@@ -1133,18 +1133,24 @@ export default function CreateOpportunityScreen() {
         budgetString = parts.length > 0 ? `Paid ${parts.join(" - ")}` : "Paid";
       }
 
-      const opportunityData = {
+      const opportunityData: Record<string, unknown> = {
         title: title.trim(),
         type: needTypes.length === 1 ? needTypes[0] : needTypes.join(", "),
-        roles_needed: needTypes,
         location: location.trim() || null,
         user_id: currentUserId,
         image_url: imageUrl || null,
         description: description.trim() || null,
-        requirements: requirements.length > 0 ? requirements : null,
         budget: budgetString || null,
         company: resolvedProfile.displayName || "Unknown",
-      } as Record<string, unknown>;
+      };
+
+      if (needTypes.length > 0) {
+        opportunityData.roles_needed = needTypes;
+      }
+
+      if (requirements.length > 0) {
+        opportunityData.requirements = requirements;
+      }
 
       console.log("[CreateOpportunity] Inserting:", JSON.stringify(opportunityData, null, 2));
       const result = await sbInsert("opportunities", opportunityData);
