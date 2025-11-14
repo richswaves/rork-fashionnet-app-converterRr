@@ -1135,7 +1135,6 @@ export default function CreateOpportunityScreen() {
 
       const opportunityData: Record<string, unknown> = {
         title: title.trim(),
-        type: needTypes.length === 1 ? needTypes[0] : needTypes.join(", "),
         location: location.trim() || null,
         user_id: currentUserId,
         image_url: imageUrl || null,
@@ -1145,6 +1144,7 @@ export default function CreateOpportunityScreen() {
       };
 
       if (needTypes.length > 0) {
+        opportunityData.type = needTypes.length === 1 ? needTypes[0] : needTypes.join(", ");
         opportunityData.roles_needed = needTypes;
       }
 
