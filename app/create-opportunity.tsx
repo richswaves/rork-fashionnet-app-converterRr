@@ -1704,8 +1704,6 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   dropdownMenu: {
-    position: "absolute",
-    top: 70,
     left: 0,
     right: 0,
     backgroundColor: "#14141C",
@@ -1714,14 +1712,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     maxHeight: 200,
     zIndex: Platform.OS === "web" ? 9999 : 1000,
+    elevation: 12,
+    ...(Platform.OS === "web"
+      ? {
+          position: "relative" as const,
+          marginTop: 8,
+        }
+      : {
+          position: "absolute" as const,
+          top: 70,
+        }),
     ...(Platform.OS === "web" && {
       boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
     }),
-    elevation: 12,
   },
   locationDropdownMenu: {
-    position: "absolute",
-    top: 70,
     left: 0,
     right: 0,
     backgroundColor: "#14141C",
@@ -1730,10 +1735,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     maxHeight: 250,
     zIndex: Platform.OS === "web" ? 9999 : 1000,
+    elevation: 12,
+    ...(Platform.OS === "web"
+      ? {
+          position: "relative" as const,
+          marginTop: 8,
+        }
+      : {
+          position: "absolute" as const,
+          top: 70,
+        }),
     ...(Platform.OS === "web" && {
       boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
     }),
-    elevation: 12,
   },
   dropdownScroll: {
     maxHeight: 200,
