@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Dimensions, FlatList, Image, Linking, Modal, NativeScrollEvent, NativeSyntheticEvent, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import GrainTexture from "@/components/GrainTexture";
@@ -200,6 +200,96 @@ export default function OpportunitiesScreen() {
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [applicationNote, setApplicationNote] = useState<string>("");
   const container = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
+  const windowHeight = Dimensions.get("window").height;
+  const sheetTranslateY = useRef<Animated.Value>(new Animated.Value(0)).current;
+  const sheetScrollOffset = useRef<number>(0);
+  const isClosingRef = useRef<boolean>(false);
+
+  const animateSheetToZero = useCallback(() => {
+    sheetTranslateY.stopAnimation();
+    Animated.spring(sheetTranslateY, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 18,
+      stiffness: 180,
+      mass: 1,
+      overshootClamping: false,
+      restDisplacementThreshold: 0.5,
+      restSpeedThreshold: 0.5,
+    }).start();
+  }, [sheetTranslateY]);
+
+  const handleSheetScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    sheetScrollOffset.current = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  const openFilterSheet = useCallback(() => {
+    console.log("[Filters] Opening sheet");
+    isClosingRef.current = false;
+    sheetScrollOffset.current = 0;
+    sheetTranslateY.stopAnimation();
+    sheetTranslateY.setValue(windowHeight);
+    animateSheetToZero();
+  }, [animateSheetToZero, sheetTranslateY, windowHeight]);
+
+  const closeFilterSheet = useCallback(() => {
+    if (!showFilters || isClosingRef.current) {
+      return;
+    }
+    console.log("[Filters] Closing sheet");
+    isClosingRef.current = true;
+    sheetScrollOffset.current = 0;
+    sheetTranslateY.stopAnimation();
+    Animated.timing(sheetTranslateY, {
+      toValue: windowHeight,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowFilters(false);
+      sheetTranslateY.setValue(0);
+      isClosingRef.current = false;
+    });
+  }, [sheetTranslateY, windowHeight, showFilters]);
+
+  useEffect(() => {
+    if (showFilters) {
+      openFilterSheet();
+    } else {
+      sheetTranslateY.setValue(0);
+      sheetScrollOffset.current = 0;
+      isClosingRef.current = false;
+    }
+  }, [openFilterSheet, sheetTranslateY, showFilters]);
+
+  const panResponder = useMemo(() => {
+    return PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        if (sheetScrollOffset.current > 0) {
+          return false;
+        }
+        const vertical = Math.abs(gestureState.dy);
+        const horizontal = Math.abs(gestureState.dx);
+        return vertical > horizontal && gestureState.dy > 6;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          sheetTranslateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const shouldClose = gestureState.dy > 140 || gestureState.vy > 0.9;
+        if (shouldClose) {
+          closeFilterSheet();
+        } else {
+          animateSheetToZero();
+        }
+      },
+      onPanResponderTerminate: () => {
+        animateSheetToZero();
+      },
+      onPanResponderTerminationRequest: () => false,
+    });
+  }, [animateSheetToZero, closeFilterSheet, sheetTranslateY]);
 
   const { currentUserId, resolvedProfile, getDisplayForProfile } = useProfile();
   const router = useRouter();
@@ -943,15 +1033,24 @@ export default function OpportunitiesScreen() {
       <Modal
         visible={showFilters}
         transparent
-        animationType={Platform.OS === "web" ? "fade" : "slide"}
-        onRequestClose={() => setShowFilters(false)}
+        animationType={Platform.OS === "web" ? "fade" : "none"}
+        onRequestClose={closeFilterSheet}
       >
-        <Pressable style={styles.backdrop} onPress={() => setShowFilters(false)} testID="filters-backdrop" />
-        <View style={styles.sheet} testID="filters-sheet">
+        <Pressable style={styles.backdrop} onPress={closeFilterSheet} testID="filters-backdrop" />
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}
+          testID="filters-sheet"
+        >
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Filter Opportunities</Text>
 
-          <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetScrollContent}>
+          <ScrollView
+            style={styles.sheetScroll}
+            contentContainerStyle={styles.sheetScrollContent}
+            onScroll={handleSheetScroll}
+            scrollEventThrottle={16}
+          >
             <Text style={styles.fieldLabel}>Location</Text>
             <View style={styles.locationChips}>
               {(uniqueLocations ?? []).map((loc) => {
@@ -1112,15 +1211,15 @@ export default function OpportunitiesScreen() {
                 if (Object.keys(filters).length > 0) {
                   trackSearch({ page: "opportunities", filters });
                 }
-                setShowFilters(false);
                 console.log("apply filters", { city, seekingRole, postedByRole, paymentStatus });
+                closeFilterSheet();
               }}
               testID="filters-apply"
             >
               <Text style={styles.applyFiltersText}>Apply</Text>
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </Modal>
 
       <Modal
