@@ -34,8 +34,10 @@ const ensurePlatformConstants = () => {
       })
     : undefined;
 
-  const originalGet = turboRegistry?.get?.bind(TurboModuleRegistry);
-  const originalGetEnforcing = turboRegistry?.getEnforcing?.bind(TurboModuleRegistry);
+  const originalGet = turboRegistry?.get ? turboRegistry.get.bind(TurboModuleRegistry) : undefined;
+  const originalGetEnforcing = turboRegistry?.getEnforcing
+    ? turboRegistry.getEnforcing.bind(TurboModuleRegistry)
+    : undefined;
 
   if (turboRegistry && originalGet) {
     turboRegistry.get = (name: string) => {
