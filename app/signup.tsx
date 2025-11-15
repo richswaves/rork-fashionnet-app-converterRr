@@ -8,6 +8,7 @@ import GrainTexture from "@/components/GrainTexture";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import * as Clipboard from "expo-clipboard";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 
 type ChoiceQuestion = { id: string; prompt: string; options: string[]; multiple?: boolean };
 
@@ -485,15 +486,16 @@ export default function SignupScreen() {
                 maximumDate={new Date()}
               />
             )}
-            <TextInput
-              testID="signup-location"
-              placeholder="City, Country"
-              placeholderTextColor="#9CA3AF"
-              value={cityLocation}
-              onChangeText={setCityLocation}
-              style={[styles.input, styles.inputHalf]}
-              autoCorrect={false}
-            />
+            <View style={[styles.inputHalf]}>
+              <LocationAutocomplete
+                testID="signup-location"
+                placeholder="City, State"
+                value={cityLocation}
+                onChangeText={setCityLocation}
+                onSelectLocation={(location) => setCityLocation(location)}
+                style={[styles.input, { marginTop: 0, marginBottom: 0 }]}
+              />
+            </View>
           </View>
           {showDatePicker && Platform.OS === "ios" && (
             <TouchableOpacity

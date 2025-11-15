@@ -10,28 +10,17 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-const US_CITIES = [
-  { city: "Manhattan", state: "NY" },
-  { city: "Brooklyn", state: "NY" },
-  { city: "Los Angeles", state: "CA" },
-  { city: "Chicago", state: "IL" },
-  { city: "Houston", state: "TX" },
-  { city: "Phoenix", state: "AZ" },
-  { city: "Philadelphia", state: "PA" },
-  { city: "San Antonio", state: "TX" },
-  { city: "San Diego", state: "CA" },
-  { city: "Dallas", state: "TX" },
-  { city: "San Jose", state: "CA" },
-  { city: "Austin", state: "TX" },
-  { city: "San Francisco", state: "CA" },
-  { city: "Boston", state: "MA" },
-  { city: "Seattle", state: "WA" },
-  { city: "Miami", state: "FL" },
-  { city: "Atlanta", state: "GA" },
-  { city: "Denver", state: "CO" },
-  { city: "Portland", state: "OR" },
-  { city: "Las Vegas", state: "NV" },
-];
+declare global {
+  interface Window {
+    mapkit?: any;
+  }
+}
+
+interface LocationSuggestion {
+  display: string;
+  city?: string;
+  state?: string;
+}
 
 interface LocationAutocompleteProps {
   value: string;
@@ -50,12 +39,88 @@ export default function LocationAutocomplete({
   style,
   testID,
 }: LocationAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<
-    Array<{ city: string; state: string; display: string }>
-  >([]);
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mapkitReady, setMapkitReady] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const searchRef = useRef<any>(null);
+  const initAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (Platform.OS === "web" && !initAttemptedRef.current) {
+      initAttemptedRef.current = true;
+      initMapKit();
+    }
+  }, [initMapKit]);
+
+  const initMapKit = useCallback(async () => {
+    if (typeof window === "undefined") return;
+
+    try {
+      if (window.mapkit && window.mapkit.init) {
+        console.log("[MapKit] Already loaded");
+        window.mapkit.init({
+          authorizationCallback: async (done: any) => {
+            try {
+              const response = await fetch(
+                "https://mnqgmpvkdmgmyoqhgswc.supabase.co/functions/v1/mapkit-token",
+                { method: "POST" }
+              );
+              const data = await response.json();
+              if (data.token) {
+                done(data.token);
+              } else {
+                console.error("[MapKit] No token received");
+              }
+            } catch (error) {
+              console.error("[MapKit] Token fetch error:", error);
+            }
+          },
+        });
+        setMapkitReady(true);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js";
+      script.crossOrigin = "anonymous";
+      script.async = true;
+
+      script.onload = () => {
+        console.log("[MapKit] Script loaded");
+        if (window.mapkit) {
+          window.mapkit.init({
+            authorizationCallback: async (done: any) => {
+              try {
+                const response = await fetch(
+                  "https://mnqgmpvkdmgmyoqhgswc.supabase.co/functions/v1/mapkit-token",
+                  { method: "POST" }
+                );
+                const data = await response.json();
+                if (data.token) {
+                  done(data.token);
+                  setMapkitReady(true);
+                } else {
+                  console.error("[MapKit] No token in response");
+                }
+              } catch (error) {
+                console.error("[MapKit] Token fetch failed:", error);
+              }
+            },
+          });
+        }
+      };
+
+      script.onerror = () => {
+        console.error("[MapKit] Failed to load script");
+      };
+
+      document.head.appendChild(script);
+    } catch (error) {
+      console.error("[MapKit] Init error:", error);
+    }
+  }, []);
 
   const searchLocations = useCallback(
     async (query: string) => {
@@ -68,24 +133,63 @@ export default function LocationAutocomplete({
       setLoading(true);
 
       try {
-        const searchLower = query.toLowerCase().trim();
-        const matches = US_CITIES.filter((loc) => {
-          const cityMatch = loc.city.toLowerCase().includes(searchLower);
-          const stateMatch = loc.state.toLowerCase().includes(searchLower);
-          const fullMatch = `${loc.city}, ${loc.state}`
-            .toLowerCase()
-            .includes(searchLower);
-          return cityMatch || stateMatch || fullMatch;
-        })
-          .slice(0, 10)
-          .map((loc) => ({
-            city: loc.city,
-            state: loc.state,
-            display: `${loc.city}, ${loc.state}`,
-          }));
+        if (Platform.OS === "web" && window.mapkit && mapkitReady) {
+          if (!searchRef.current) {
+            searchRef.current = new window.mapkit.Search({
+              getsUserLocation: false,
+            });
+          }
 
-        setSuggestions(matches);
-        setShowDropdown(matches.length > 0);
+          const searchOptions = {
+            query,
+            language: "en-US",
+            coordinate: new window.mapkit.Coordinate(40.7128, -74.006),
+            region: new window.mapkit.CoordinateRegion(
+              new window.mapkit.Coordinate(39.8283, -98.5795),
+              new window.mapkit.CoordinateSpan(50, 50)
+            ),
+          };
+
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Search timeout")), 5000)
+          );
+
+          const searchPromise = new Promise((resolve, reject) => {
+            searchRef.current.search(searchOptions, (error: any, data: any) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(data);
+              }
+            });
+          });
+
+          const data: any = await Promise.race([searchPromise, timeoutPromise]);
+
+          if (data && data.places && data.places.length > 0) {
+            const matches: LocationSuggestion[] = data.places
+              .filter((place: any) => place.locality || place.administrativeArea)
+              .slice(0, 10)
+              .map((place: any) => {
+                const city = place.locality || place.name;
+                const state = place.administrativeArea;
+                return {
+                  city,
+                  state,
+                  display: state ? `${city}, ${state}` : city,
+                };
+              });
+
+            setSuggestions(matches);
+            setShowDropdown(matches.length > 0);
+          } else {
+            setSuggestions([]);
+            setShowDropdown(false);
+          }
+        } else {
+          setSuggestions([]);
+          setShowDropdown(false);
+        }
       } catch (error) {
         console.error("[LocationAutocomplete] Search error:", error);
         setSuggestions([]);
@@ -94,7 +198,7 @@ export default function LocationAutocomplete({
         setLoading(false);
       }
     },
-    []
+    [mapkitReady]
   );
 
   useEffect(() => {
