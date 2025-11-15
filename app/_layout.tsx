@@ -1,13 +1,14 @@
 // template
+import "../polyfills/ensurePlatformConstants";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { ProfileProvider } from "@/contexts/ProfileContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
-import { trpc, trpcClient } from "@/lib/trpc";
-import { getSupabase, setRuntimeSupabaseEnv } from "@/integrations/supabase/client";
+import { ProfileProvider } from "../contexts/ProfileContext";
+import { NotificationProvider } from "../contexts/NotificationContext";
+import { trpc, trpcClient } from "../lib/trpc";
+import { getSupabase, setRuntimeSupabaseEnv } from "../integrations/supabase/client";
 
 const envUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const envAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
