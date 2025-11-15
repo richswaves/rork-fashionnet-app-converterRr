@@ -42,6 +42,8 @@ export default function NetworkScreen() {
   const [searchResultCount, setSearchResultCount] = useState<number | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const [pendingFilterCount, setPendingFilterCount] = useState<number | null>(null);
 
   const { resolvedProfile, getDisplayForProfile, currentUserId } = useProfile();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
@@ -112,11 +114,13 @@ export default function NetworkScreen() {
   const handleClearAll = useCallback(() => {
     setSelectedRoles(new Set());
     setSelectedLocations(new Set());
+    setPendingFilterCount(null);
   }, []);
 
-  const handleApplyFilters = useCallback(() => {
+  const handleApplyFilters = useCallback(async () => {
     setRoleMenuOpen(false);
     setLocationMenuOpen(false);
+    setShowResults(true);
     const roles = Array.from(selectedRoles).sort();
     const locations = Array.from(selectedLocations).sort();
     const nextKey = JSON.stringify({ roles, locations });
@@ -124,6 +128,7 @@ export default function NetworkScreen() {
       lastLoggedKeyRef.current = nextKey;
       void logFilters(roles, locations);
     }
+    setPendingFilterCount(null);
   }, [selectedRoles, selectedLocations, logFilters]);
 
 
@@ -389,6 +394,7 @@ export default function NetworkScreen() {
                   setSearchQuery("");
                   setSearchResultCount(null);
                   setHasSearched(false);
+                  setShowResults(false);
                 } else {
                   const lowerQuery = text.trim().toLowerCase();
                   let query: Record<string, string> = { account_status: "eq.approved" };
@@ -428,6 +434,7 @@ export default function NetworkScreen() {
                   setSearchQuery("");
                   setSearchResultCount(null);
                   setHasSearched(false);
+                  setShowResults(false);
                 }}
                 testID="clear-search"
               >
@@ -442,6 +449,7 @@ export default function NetworkScreen() {
               if (trimmed && searchResultCount !== null) {
                 setSearchQuery(trimmed);
                 setHasSearched(true);
+                setShowResults(true);
                 const filtersRecord: Record<string, unknown> = {};
                 if (roleList.length > 0) {
                   filtersRecord.roles = roleList;
@@ -470,6 +478,7 @@ export default function NetworkScreen() {
                 setSearchQuery("");
                 setSearchResultCount(null);
                 setHasSearched(false);
+                setShowResults(false);
               }
             }}
             testID="search-btn"
@@ -505,7 +514,7 @@ export default function NetworkScreen() {
               {availableRoles.map((r) => (
                 <Pressable
                   key={r}
-                  onPress={() => {
+                  onPress={async () => {
                     setSelectedRoles((prev) => {
                       const newSet = new Set(prev);
                       if (newSet.has(r)) {
@@ -513,6 +522,36 @@ export default function NetworkScreen() {
                       } else {
                         newSet.add(r);
                       }
+                      
+                      (async () => {
+                        const rows = await sbSelect<ProfileRow>("profiles", {
+                          select: "user_id,profession,professions,location",
+                          query: { account_status: "eq.approved" },
+                        });
+                        let filtered = rows;
+                        if (newSet.size > 0) {
+                          filtered = filtered.filter((row) => {
+                            if (row.profession && newSet.has(row.profession)) return true;
+                            if (row.professions && Array.isArray(row.professions)) {
+                              return row.professions.some(p => p && newSet.has(p));
+                            }
+                            return false;
+                          });
+                        }
+                        if (selectedLocations.size > 0) {
+                          filtered = filtered.filter((row) => row.location && selectedLocations.has(row.location));
+                        }
+                        if (hasSearched && searchQuery.trim()) {
+                          const lowerQuery = searchQuery.toLowerCase();
+                          filtered = filtered.filter((row) => {
+                            const d = getDisplayForProfile(row);
+                            return d.displayName.toLowerCase().includes(lowerQuery);
+                          });
+                        }
+                        filtered = filtered.filter((row) => !blockedUserIds.has(row.user_id));
+                        setPendingFilterCount(filtered.length);
+                      })();
+                      
                       return newSet;
                     });
                   }}
@@ -542,7 +581,7 @@ export default function NetworkScreen() {
               {availableLocations.map((loc) => (
                 <Pressable
                   key={loc}
-                  onPress={() => {
+                  onPress={async () => {
                     setSelectedLocations((prev) => {
                       const newSet = new Set(prev);
                       if (newSet.has(loc)) {
@@ -550,6 +589,36 @@ export default function NetworkScreen() {
                       } else {
                         newSet.add(loc);
                       }
+                      
+                      (async () => {
+                        const rows = await sbSelect<ProfileRow>("profiles", {
+                          select: "user_id,profession,professions,location",
+                          query: { account_status: "eq.approved" },
+                        });
+                        let filtered = rows;
+                        if (selectedRoles.size > 0) {
+                          filtered = filtered.filter((row) => {
+                            if (row.profession && selectedRoles.has(row.profession)) return true;
+                            if (row.professions && Array.isArray(row.professions)) {
+                              return row.professions.some(p => p && selectedRoles.has(p));
+                            }
+                            return false;
+                          });
+                        }
+                        if (newSet.size > 0) {
+                          filtered = filtered.filter((row) => row.location && newSet.has(row.location));
+                        }
+                        if (hasSearched && searchQuery.trim()) {
+                          const lowerQuery = searchQuery.toLowerCase();
+                          filtered = filtered.filter((row) => {
+                            const d = getDisplayForProfile(row);
+                            return d.displayName.toLowerCase().includes(lowerQuery);
+                          });
+                        }
+                        filtered = filtered.filter((row) => !blockedUserIds.has(row.user_id));
+                        setPendingFilterCount(filtered.length);
+                      })();
+                      
                       return newSet;
                     });
                   }}
@@ -565,33 +634,44 @@ export default function NetworkScreen() {
 
         {(roleMenuOpen || locationMenuOpen) && (
           <View style={styles.aggregateActions}>
-            <Pressable
-              onPress={handleClearAll}
-              style={styles.clearBtn}
-              testID="clear-network-filters"
-            >
-              <Text style={styles.clearBtnText}>Clear All</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleApplyFilters}
-              style={styles.doneBtn}
-              testID="apply-network-filters"
-            >
-              <Text style={styles.doneBtnText}>Done</Text>
-            </Pressable>
+            {pendingFilterCount !== null && (
+              <View style={styles.filterCountPreview}>
+                <Text style={styles.filterCountText}>
+                  {pendingFilterCount} {pendingFilterCount === 1 ? "result" : "results"} found
+                </Text>
+              </View>
+            )}
+            <View style={styles.filterButtonRow}>
+              <Pressable
+                onPress={handleClearAll}
+                style={styles.clearBtn}
+                testID="clear-network-filters"
+              >
+                <Text style={styles.clearBtnText}>Clear All</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleApplyFilters}
+                style={styles.doneBtn}
+                testID="apply-network-filters"
+              >
+                <Text style={styles.doneBtnText}>Done</Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
-        <Text style={styles.h1}>Top Members</Text>
-        {loadingTop && (
-          <View style={styles.loaderRow} testID="top-loading">
-            <ActivityIndicator color="#E5E7EB" />
-          </View>
-        )}
-        {!!topErr && (
-          <Text style={styles.errorText} testID="top-error">Failed to load members</Text>
-        )}
-        {(() => {
+        {showResults && (
+          <>
+            <Text style={styles.h1}>Top Members</Text>
+            {loadingTop && (
+              <View style={styles.loaderRow} testID="top-loading">
+                <ActivityIndicator color="#E5E7EB" />
+              </View>
+            )}
+            {!!topErr && (
+              <Text style={styles.errorText} testID="top-error">Failed to load members</Text>
+            )}
+            {(() => {
           const items = topProfiles ?? [];
           const pagePadding = 12 * 2;
           const gap = 12;
@@ -649,19 +729,19 @@ export default function NetworkScreen() {
                 </View>
               ))}
             </ScrollView>
-          );
-        })()}
+              );
+            })()}
 
-        <Text style={[styles.h1, { marginTop: 8 }]}>New to the Network</Text>
-        {loadingNew && (
-          <View style={styles.loaderRow} testID="new-loading">
-            <ActivityIndicator color="#E5E7EB" />
-          </View>
-        )}
-        {!!newErr && (
-          <Text style={styles.errorText} testID="new-error">Failed to load new members</Text>
-        )}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
+            <Text style={[styles.h1, { marginTop: 8 }]}>New to the Network</Text>
+            {loadingNew && (
+              <View style={styles.loaderRow} testID="new-loading">
+                <ActivityIndicator color="#E5E7EB" />
+              </View>
+            )}
+            {!!newErr && (
+              <Text style={styles.errorText} testID="new-error">Failed to load new members</Text>
+            )}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList} testID="new-list">
           {(newProfiles ?? []).map((m) => (
             <Pressable key={m.id} style={styles.hCard} testID={`new-${m.id}`} onPress={() => {
               trackNetworkInteraction({ target_user_id: m.id, interaction_type: "view_profile" });
@@ -692,7 +772,9 @@ export default function NetworkScreen() {
               </View>
             </Pressable>
           ))}
-        </ScrollView>
+            </ScrollView>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -827,7 +909,7 @@ const styles = StyleSheet.create({
   chipText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   chipTextActive: { color: "#FFFFFF" },
   aggregateActions: {
-    flexDirection: "row",
+    flexDirection: "column",
     gap: 10,
     marginTop: 16,
     marginBottom: 8,
@@ -836,6 +918,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#121218",
     borderWidth: 1,
     borderColor: "#23232B",
+  },
+  filterCountPreview: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#0F0F14",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#2C2C33",
+  },
+  filterCountText: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "600" as const,
+    textAlign: "center" as const,
+  },
+  filterButtonRow: {
+    flexDirection: "row",
+    gap: 10,
   },
   clearBtn: {
     flex: 1,
