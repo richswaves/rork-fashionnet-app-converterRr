@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform, Image, Keyboard, FlatList, Pressable } from "react-native";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform, Image, Keyboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, Link } from "expo-router";
 import { getSupabase, sbInsert } from "@/integrations/supabase/client";
@@ -132,63 +132,6 @@ const roleQuestions: Record<string, ChoiceQuestion[]> = {
 const creativeRoles = ["model", "photographer", "videographer", "content_creator", "stylist", "designer", "creative_director"] as const;
 const businessRoles = ["clothing_brand", "agency", "photography_business", "publisher", "other_business"] as const;
 
-const US_CITIES = [
-  { city: "Manhattan", state: "NY" },
-  { city: "Brooklyn", state: "NY" },
-  { city: "Queens", state: "NY" },
-  { city: "The Bronx", state: "NY" },
-  { city: "Staten Island", state: "NY" },
-  { city: "Albany", state: "NY" },
-  { city: "Rochester", state: "NY" },
-  { city: "Yonkers", state: "NY" },
-  { city: "Syracuse", state: "NY" },
-  { city: "Buffalo", state: "NY" },
-  { city: "Los Angeles", state: "CA" },
-  { city: "Chicago", state: "IL" },
-  { city: "Houston", state: "TX" },
-  { city: "Phoenix", state: "AZ" },
-  { city: "Philadelphia", state: "PA" },
-  { city: "San Antonio", state: "TX" },
-  { city: "San Diego", state: "CA" },
-  { city: "Dallas", state: "TX" },
-  { city: "San Jose", state: "CA" },
-  { city: "Austin", state: "TX" },
-  { city: "Jacksonville", state: "FL" },
-  { city: "Fort Worth", state: "TX" },
-  { city: "Columbus", state: "OH" },
-  { city: "Charlotte", state: "NC" },
-  { city: "San Francisco", state: "CA" },
-  { city: "Indianapolis", state: "IN" },
-  { city: "Seattle", state: "WA" },
-  { city: "Denver", state: "CO" },
-  { city: "Boston", state: "MA" },
-  { city: "Nashville", state: "TN" },
-  { city: "Detroit", state: "MI" },
-  { city: "Portland", state: "OR" },
-  { city: "Las Vegas", state: "NV" },
-  { city: "Memphis", state: "TN" },
-  { city: "Baltimore", state: "MD" },
-  { city: "Milwaukee", state: "WI" },
-  { city: "Albuquerque", state: "NM" },
-  { city: "Tucson", state: "AZ" },
-  { city: "Fresno", state: "CA" },
-  { city: "Mesa", state: "AZ" },
-  { city: "Sacramento", state: "CA" },
-  { city: "Atlanta", state: "GA" },
-  { city: "Kansas City", state: "MO" },
-  { city: "Colorado Springs", state: "CO" },
-  { city: "Raleigh", state: "NC" },
-  { city: "Miami", state: "FL" },
-  { city: "Long Beach", state: "CA" },
-  { city: "Virginia Beach", state: "VA" },
-  { city: "Oakland", state: "CA" },
-  { city: "Minneapolis", state: "MN" },
-  { city: "Tampa", state: "FL" },
-  { city: "Tulsa", state: "OK" },
-  { city: "Arlington", state: "TX" },
-  { city: "New Orleans", state: "LA" },
-];
-
 export default function SignupScreen() {
   const router = useRouter();
   const { updateProfileAsync } = useProfile();
@@ -223,8 +166,6 @@ export default function SignupScreen() {
   const [displayName, setDisplayName] = useState<string>("");
   const [profilePictureUri, setProfilePictureUri] = useState<string>("");
   const [socialLink, setSocialLink] = useState<string>("");
-  const [locationSuggestions, setLocationSuggestions] = useState<{ city: string; state: string; display: string }[]>([]);
-  const [showLocationDropdown, setShowLocationDropdown] = useState<boolean>(false);
 
   const sessionIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
@@ -278,31 +219,6 @@ export default function SignupScreen() {
       return { ...prev, [qid]: [option] };
     });
   }, []);
-
-  useEffect(() => {
-    if (cityLocation.length < 2) {
-      setLocationSuggestions([]);
-      setShowLocationDropdown(false);
-      return;
-    }
-
-    const searchLower = cityLocation.toLowerCase().trim();
-    const matches = US_CITIES.filter((loc) => {
-      const cityMatch = loc.city.toLowerCase().includes(searchLower);
-      const stateMatch = loc.state.toLowerCase().includes(searchLower);
-      const fullMatch = `${loc.city}, ${loc.state}`.toLowerCase().includes(searchLower);
-      return cityMatch || stateMatch || fullMatch;
-    })
-      .slice(0, 10)
-      .map((loc) => ({
-        city: loc.city,
-        state: loc.state,
-        display: `${loc.city}, ${loc.state}`,
-      }));
-
-    setLocationSuggestions(matches);
-    setShowLocationDropdown(matches.length > 0);
-  }, [cityLocation]);
 
   const handleContinueQuestion = useCallback(() => {
     if (currentQuestionIndex < availableQuestions.length - 1) {
@@ -569,41 +485,15 @@ export default function SignupScreen() {
                 maximumDate={new Date()}
               />
             )}
-            <View style={[styles.inputHalf, { position: 'relative' as const, zIndex: showLocationDropdown ? 1000 : 1 }]}>
-              <TextInput
-                testID="signup-location"
-                placeholder="City, State"
-                placeholderTextColor="#9CA3AF"
-                value={cityLocation}
-                onChangeText={setCityLocation}
-                style={styles.input}
-                autoCorrect={false}
-              />
-              {showLocationDropdown && locationSuggestions.length > 0 && (
-                <View style={styles.locationDropdownMenu}>
-                  <FlatList
-                    data={locationSuggestions}
-                    keyExtractor={(item, index) => `${item.display}-${index}`}
-                    renderItem={({ item }) => (
-                      <Pressable
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setCityLocation(item.display);
-                          setShowLocationDropdown(false);
-                          setLocationSuggestions([]);
-                        }}
-                        testID={`location-${item.display}`}
-                      >
-                        <Text style={styles.dropdownItemText} numberOfLines={1}>
-                          {item.display}
-                        </Text>
-                      </Pressable>
-                    )}
-                    style={styles.dropdownScroll}
-                  />
-                </View>
-              )}
-            </View>
+            <TextInput
+              testID="signup-location"
+              placeholder="City, Country"
+              placeholderTextColor="#9CA3AF"
+              value={cityLocation}
+              onChangeText={setCityLocation}
+              style={[styles.input, styles.inputHalf]}
+              autoCorrect={false}
+            />
           </View>
           {showDatePicker && Platform.OS === "ios" && (
             <TouchableOpacity
@@ -924,31 +814,4 @@ const styles = StyleSheet.create({
   legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
   inputError: { borderColor: "#EF4444", borderWidth: 2 },
   errorText: { color: "#EF4444", fontSize: 12, marginTop: -8, marginLeft: 4 },
-  locationDropdownMenu: {
-    position: Platform.OS === "web" ? "relative" as const : "absolute" as const,
-    left: 0,
-    right: 0,
-    top: Platform.OS === "web" ? 0 : 50,
-    backgroundColor: "rgba(20, 20, 20, 0.95)",
-    borderColor: "#404040",
-    borderWidth: 1,
-    borderRadius: 12,
-    maxHeight: 200,
-    marginTop: Platform.OS === "web" ? 4 : 0,
-    zIndex: 9999,
-    elevation: 12,
-  },
-  dropdownScroll: {
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2A2A2A",
-  },
-  dropdownItemText: {
-    color: "#E5E7EB",
-    fontSize: 14,
-  },
 });
