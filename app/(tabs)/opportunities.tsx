@@ -93,6 +93,38 @@ function formatBudget(budget: string): string {
   return budget;
 }
 
+function normalizeLocationKey(value?: string | null): string {
+  if (!value) return "";
+  return value.trim().toLowerCase();
+}
+
+function formatLocationDisplay(value: string): string {
+  const parts = value.split(",");
+  const cityPart = parts[0]?.trim() ?? "";
+  const statePart = parts.slice(1).join(",").trim();
+  const formattedCity = cityPart
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join(" ");
+  if (!statePart) {
+    return formattedCity;
+  }
+  const formattedState = statePart.length <= 3
+    ? statePart.toUpperCase()
+    : statePart
+        .toLowerCase()
+        .split(" ")
+        .filter(Boolean)
+        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+        .join(" ");
+  if (!formattedCity) {
+    return formattedState;
+  }
+  return `${formattedCity}, ${formattedState}`;
+}
+
 function normalizeFilterValue(value?: string | null): string {
   if (!value) return "";
   return value
@@ -545,16 +577,52 @@ export default function OpportunitiesScreen() {
         select: "location",
         limit: 5000,
       });
-      const locationSet = new Set<string>();
+      const locationMap = new Map<string, string>();
       allOpps.forEach((opp) => {
-        if (opp.location && opp.location.trim()) {
-          locationSet.add(opp.location.trim());
+        const raw = opp.location;
+        if (!raw) {
+          return;
+        }
+        const trimmed = raw.trim();
+        if (!trimmed) {
+          return;
+        }
+        const key = normalizeLocationKey(trimmed);
+        if (!key) {
+          return;
+        }
+        if (!locationMap.has(key)) {
+          locationMap.set(key, formatLocationDisplay(trimmed));
         }
       });
-      return Array.from(locationSet).sort();
+      return Array.from(locationMap.values()).sort((a, b) => a.localeCompare(b));
     },
     staleTime: 60000,
   });
+
+  useEffect(() => {
+    if (!uniqueLocations) {
+      return;
+    }
+    setCity((prev) => {
+      if (prev.length === 0) {
+        return prev;
+      }
+      const displayMap = new Map(uniqueLocations.map((loc) => [normalizeLocationKey(loc), loc]));
+      const next: string[] = [];
+      prev.forEach((item) => {
+        const normalized = normalizeLocationKey(item);
+        const mapped = displayMap.get(normalized);
+        if (mapped && !next.includes(mapped)) {
+          next.push(mapped);
+        }
+      });
+      if (next.length === prev.length && next.every((value, index) => value === prev[index])) {
+        return prev;
+      }
+      return next;
+    });
+  }, [uniqueLocations]);
 
   const { data: opportunities, isLoading, error } = useQuery<OpportunityRow[]>({
     queryKey: ["opportunities", view, currentUserId ?? "anon"],
