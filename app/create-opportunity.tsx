@@ -1145,7 +1145,6 @@ export default function CreateOpportunityScreen() {
 
       if (needTypes.length > 0) {
         opportunityData.type = needTypes.join(", ");
-        opportunityData.roles_needed = needTypes;
       }
 
       if (requirements.length > 0) {
