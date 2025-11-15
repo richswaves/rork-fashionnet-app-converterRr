@@ -1315,7 +1315,7 @@ export default function EditProfileScreen() {
                   style={styles.modalInput}
                   testID="edit-location-input"
                 />
-                <Text style={styles.locationHint}>Format: City, State (e.g., New York, NY)</Text>
+                <Text style={styles.locationHint}>Format: City, State (e.g., New York, NY). Please select from the dropdown suggestions or type in this format.</Text>
                 <View style={styles.modalActions}>
                   <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
                     <X color="#E5E7EB" size={18} />
@@ -1325,7 +1325,7 @@ export default function EditProfileScreen() {
                     onPress={() => {
                       const locationRegex = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
                       if (temp.trim() && !locationRegex.test(temp.trim())) {
-                        Alert.alert("Invalid Format", "Please format location as 'City, State' (e.g., 'New York, NY')");
+                        Alert.alert("Invalid Format", "Please select a location from the dropdown or format it as 'City, State' (e.g., 'New York, NY')");
                         return;
                       }
                       applyEdit();
