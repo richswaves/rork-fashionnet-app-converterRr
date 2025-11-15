@@ -22,6 +22,21 @@ interface LocationSuggestion {
   state?: string;
 }
 
+function normalizeLocation(location: string): string {
+  if (!location || !location.trim()) return location;
+  
+  const parts = location.split(',').map(p => p.trim());
+  if (parts.length !== 2) return location;
+  
+  const city = parts[0]
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  const state = parts[1].toUpperCase();
+  
+  return `${city}, ${state}`;
+}
+
 interface LocationAutocompleteProps {
   value: string;
   onChangeText: (text: string) => void;
@@ -173,10 +188,11 @@ export default function LocationAutocomplete({
               .map((place: any) => {
                 const city = place.locality || place.name;
                 const state = place.administrativeArea;
+                const display = state ? `${city}, ${state}` : city;
                 return {
                   city,
                   state,
-                  display: state ? `${city}, ${state}` : city,
+                  display: normalizeLocation(display),
                 };
               });
 

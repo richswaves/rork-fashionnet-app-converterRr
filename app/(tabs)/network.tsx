@@ -8,6 +8,21 @@ import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
+
+function normalizeLocation(location: string): string {
+  if (!location || !location.trim()) return location;
+  
+  const parts = location.split(',').map(p => p.trim());
+  if (parts.length !== 2) return location;
+  
+  const city = parts[0]
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  const state = parts[1].toUpperCase();
+  
+  return `${city}, ${state}`;
+}
 import { trpc } from "@/lib/trpc";
 
 interface ProfileRow {
@@ -168,7 +183,8 @@ export default function NetworkScreen() {
       const uniqueLocations = new Set<string>();
       rows.forEach((r) => {
         if (r.location && r.location.trim()) {
-          uniqueLocations.add(r.location);
+          const normalized = normalizeLocation(r.location);
+          uniqueLocations.add(normalized);
         }
       });
       return Array.from(uniqueLocations).sort();
@@ -199,7 +215,11 @@ export default function NetworkScreen() {
         });
       }
       if (selectedLocations.size > 0) {
-        filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+        filtered = filtered.filter((r) => {
+          if (!r.location) return false;
+          const normalized = normalizeLocation(r.location);
+          return selectedLocations.has(normalized);
+        });
       }
       if (hasSearched && searchQuery.trim()) {
         const lowerQuery = searchQuery.toLowerCase();
@@ -245,7 +265,11 @@ export default function NetworkScreen() {
         });
       }
       if (selectedLocations.size > 0) {
-        filtered = filtered.filter((r) => r.location && selectedLocations.has(r.location));
+        filtered = filtered.filter((r) => {
+          if (!r.location) return false;
+          const normalized = normalizeLocation(r.location);
+          return selectedLocations.has(normalized);
+        });
       }
       if (hasSearched && searchQuery.trim()) {
         const lowerQuery = searchQuery.toLowerCase();

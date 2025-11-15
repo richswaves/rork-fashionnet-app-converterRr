@@ -30,6 +30,21 @@ import { trpc } from "@/lib/trpc";
 import * as FileSystem from "expo-file-system";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
 
+function normalizeLocation(location: string): string {
+  if (!location || !location.trim()) return location;
+  
+  const parts = location.split(',').map(p => p.trim());
+  if (parts.length !== 2) return location;
+  
+  const city = parts[0]
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  const state = parts[1].toUpperCase();
+  
+  return `${city}, ${state}`;
+}
+
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -481,7 +496,7 @@ export default function EditProfileScreen() {
         Alert.alert("Invalid Format", "Please format location as 'City, State' (e.g., 'New York, NY')");
         return;
       }
-      setLocation(val);
+      setLocation(normalizeLocation(val));
     }
     if (editing === "bio") setBio(val);
     if (editing === "avatar") setAvatarUrl(val);
@@ -546,7 +561,7 @@ export default function EditProfileScreen() {
 
       if (fullName !== (profile?.full_name ?? "")) updates.full_name = fullName.trim();
       if (username !== (profile?.username ?? resolvedProfile.username ?? "")) updates.username = username.trim();
-      if (location !== (profile?.location ?? "")) updates.location = location.trim();
+      if (location !== (profile?.location ?? "")) updates.location = normalizeLocation(location.trim());
       if (bio !== (profile?.bio ?? "")) updates.bio = bio.trim();
 
       if (finalAvatarUrl && finalAvatarUrl !== (profile?.profile_picture ?? resolvedProfile.avatarUrl ?? "")) {
