@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, User, ShieldCheck, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -61,8 +61,6 @@ export default function NetworkScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const roleList = useMemo(() => Array.from(selectedRoles).sort(), [selectedRoles]);
   const locationList = useMemo(() => Array.from(selectedLocations).sort(), [selectedLocations]);
-  const filtersKey = useMemo(() => JSON.stringify({ roles: roleList, locations: locationList }), [roleList, locationList]);
-  const initializedRef = useRef(false);
   const lastLoggedKeyRef = useRef<string | null>(null);
 
   const logFilters = useCallback(async (roles: string[], locations: string[]) => {
@@ -111,21 +109,22 @@ export default function NetworkScreen() {
     });
   }, [blockedUserIds, trackFilterApplication]);
 
-  useEffect(() => {
-    if (!initializedRef.current) {
-      initializedRef.current = true;
-      lastLoggedKeyRef.current = filtersKey;
-      return;
+  const handleClearAll = useCallback(() => {
+    setSelectedRoles(new Set());
+    setSelectedLocations(new Set());
+  }, []);
+
+  const handleApplyFilters = useCallback(() => {
+    setRoleMenuOpen(false);
+    setLocationMenuOpen(false);
+    const roles = Array.from(selectedRoles).sort();
+    const locations = Array.from(selectedLocations).sort();
+    const nextKey = JSON.stringify({ roles, locations });
+    if (lastLoggedKeyRef.current !== nextKey) {
+      lastLoggedKeyRef.current = nextKey;
+      void logFilters(roles, locations);
     }
-    if (roleMenuOpen || locationMenuOpen) {
-      return;
-    }
-    if (filtersKey === lastLoggedKeyRef.current) {
-      return;
-    }
-    lastLoggedKeyRef.current = filtersKey;
-    void logFilters(roleList, locationList);
-  }, [filtersKey, roleMenuOpen, locationMenuOpen, logFilters, roleList, locationList]);
+  }, [selectedRoles, selectedLocations, logFilters]);
 
 
   const { data: availableRoles = [] } = useQuery<string[]>({
@@ -524,22 +523,6 @@ export default function NetworkScreen() {
                 </Pressable>
               ))}
             </View>
-            <View style={styles.filterActions}>
-              <Pressable
-                onPress={() => setSelectedRoles(new Set())}
-                style={styles.clearBtn}
-                testID="clear-roles"
-              >
-                <Text style={styles.clearBtnText}>Clear All</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setRoleMenuOpen(false)}
-                style={styles.doneBtn}
-                testID="done-roles"
-              >
-                <Text style={styles.doneBtnText}>Done</Text>
-              </Pressable>
-            </View>
           </View>
         )}
 
@@ -577,22 +560,25 @@ export default function NetworkScreen() {
                 </Pressable>
               ))}
             </View>
-            <View style={styles.filterActions}>
-              <Pressable
-                onPress={() => setSelectedLocations(new Set())}
-                style={styles.clearBtn}
-                testID="clear-locations"
-              >
-                <Text style={styles.clearBtnText}>Clear All</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setLocationMenuOpen(false)}
-                style={styles.doneBtn}
-                testID="done-locations"
-              >
-                <Text style={styles.doneBtnText}>Done</Text>
-              </Pressable>
-            </View>
+          </View>
+        )}
+
+        {(roleMenuOpen || locationMenuOpen) && (
+          <View style={styles.aggregateActions}>
+            <Pressable
+              onPress={handleClearAll}
+              style={styles.clearBtn}
+              testID="clear-network-filters"
+            >
+              <Text style={styles.clearBtnText}>Clear All</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleApplyFilters}
+              style={styles.doneBtn}
+              testID="apply-network-filters"
+            >
+              <Text style={styles.doneBtnText}>Done</Text>
+            </Pressable>
           </View>
         )}
 
@@ -840,13 +826,16 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: "#3B82F6", borderColor: "#3B82F6" },
   chipText: { color: "#E5E7EB", fontSize: 14, fontWeight: "700" },
   chipTextActive: { color: "#FFFFFF" },
-  filterActions: {
+  aggregateActions: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#23232B",
+    marginTop: 16,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: "#121218",
+    borderWidth: 1,
+    borderColor: "#23232B",
   },
   clearBtn: {
     flex: 1,
