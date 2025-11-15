@@ -3,17 +3,19 @@ Welcome to thebrxnd (operated by thebrxnd LLC, 204 Lincoln St, New Britain, CT).
 
 Eligibility: You must be at least 16 years old and legally allowed to use the app in your region. By registering, you confirm that you meet this requirement. Accounts for those under 16 are not permitted. If you are 13–15 in a jurisdiction where the age of consent is 16, you may use the app only with parental consent. thebrxnd is intended for personal, non-commercial use.
 
-Account and Subscription: Some features require a paid subscription. You authorize us to charge a monthly fee of $9.99 (USD) for the subscription. A free 7-day trial is offered for new users. After the trial, the subscription automatically renews each month until you cancel[1][2]. To avoid charges after the free trial, cancel at least 24 hours before the trial ends[3]. You can cancel anytime through your device’s App Store/Google Play subscription settings[1][2]. (Directions: open your device’s Settings → your Apple/Google account → Subscriptions. We do not collect or store your payment information; payments are processed by Apple or Google on our behalf. Subscription fees are non-refundable except as required by law[4]. No discretionary refunds will be given beyond the refund policies of the App Store or Google Play.
+Account and Pricing: thebrxnd is currently free to use. We may introduce optional paid features or memberships later, and if we do, we will provide advance notice of pricing, terms, and how to accept those changes. You will never be charged without clearly opting in through your device’s official app store. Until then, all core features are available at no monetary cost.
 
 Content and Usage License: You retain ownership of the content you create or post on thebrxnd (your photos, messages, designs, etc.). By posting content, you grant thebrxnd LLC a worldwide, royalty-free, non-exclusive license to use, display, and distribute your content within the app and on our platform[5]. This license allows us to operate and promote the service. It ends when you delete the content or your account. You agree that your content complies with our policies (see Community Guidelines below) and does not violate anyone’s rights.
 
 User Conduct: Use thebrxnd respectfully. You agree not to post or share content that is illegal, hateful, harassing, abusive, defamatory, threatening, pornographic, or that promotes violence or discrimination. Do not spam, scam, or advertise others’ services. Do not impersonate others or post personal data about someone without consent. Harassment, hate speech, and cyberbullying are strictly prohibited[6][7]. We encourage creativity and friendly interaction; please follow our [Community Guidelines] for more detail.
 
+Search and Discovery Tracking: To keep discovery features safe and relevant, we log search queries and filter selections you make in the app. This information helps us highlight useful results, detect abuse, and improve the experience. Using the app means you consent to this tracking as described in our Privacy Policy.
+
 Moderation: We reserve the right to monitor, remove, or disable any content that violates these Terms or our Community Guidelines. Violations may result in warnings, content removal, or account suspension/termination. If your content is removed or account suspended, we will notify you. You may appeal any moderation decision (such as a takedown or suspension) by emailing tbrxnd@gmail.com within 14 days of the action. Include your name, username, and details of the issue. We will review and respond to appeals promptly. (See our Moderation & Appeals Policy for details.)
 
-Termination: We may suspend or terminate your access if you breach these Terms, applicable law, or behave in a harmful way. If we terminate your account, your content will be removed and you will lose access to the app. Subscriptions will be canceled in accordance with store policies, but fees already paid are non-refundable (except as required by law)[4]. If you believe your account was terminated unfairly, use the appeal process above.
+Termination: We may suspend or terminate your access if you breach these Terms, applicable law, or behave in a harmful way. If we terminate your account, your content will be removed and you will lose access to the app. Should we introduce paid offerings in the future and you choose to participate, any termination will follow the billing rules you accepted through the applicable app store; fees already paid would be handled under those store policies. If you believe your account was terminated unfairly, use the appeal process above.
 
-Disclaimer: Thebrxnd is provided “as is” for social networking and creative expression. We make no guarantees about the app’s availability or that content is accurate or reliable. We are not liable for any errors, interruptions, or your use of user-generated content. Use the app at your own risk. (You are responsible for backing up any content you want to keep.) To the extent allowed by law, our liability is limited to the cost of your subscription, and we disclaim all other damages.
+Disclaimer: Thebrxnd is provided “as is” for social networking and creative expression. We make no guarantees about the app’s availability or that content is accurate or reliable. We are not liable for any errors, interruptions, or your use of user-generated content. Use the app at your own risk. (You are responsible for backing up any content you want to keep.) To the extent allowed by law, our liability is limited to the greater of USD $0 or the amounts you have paid us in the six months before a claim, and we disclaim all other damages.
 
 Updates: We may update these Terms from time to time. We will notify you of major changes (for example, by email or an in-app notice). Continued use of thebrxnd after changes means you accept the new Terms.
 
@@ -26,16 +28,16 @@ Information We Collect: We collect information you provide and information autom
 •	Registration & Profile Data: When you sign up, we collect your email address and password. You may also provide a username, profile photo, and other profile details (e.g., bio, location).
 •	User Content: Any photos, messages, designs, posts, or other content you create or upload in the app.
 •	Communications: If you contact us or reply to our emails, we store your messages and responses.
-•	Usage Data: We collect data about how you use the app (features you use, time stamps, crashes, etc.) to help improve our service.
+•	Usage Data: We collect data about how you use the app (features you use, time stamps, crashes, search queries, filter selections, etc.) to help improve our service and keep discovery tools relevant.
 •	Device Data: We may collect technical data such as device type, OS version, app version, and IP address for analytics and security.
-•	Payment & Subscription: We do not store your payment details (Apple/Google handle payments). We may receive a record of your subscription status or purchase date from RevenueCat or the app stores.
+•	Payment & Subscription: thebrxnd is free to use right now, and we do not store your payment details. If you later opt in to optional paid features handled through Apple or Google, we may receive a record of your subscription status or purchase date from RevenueCat or the app stores, but never your full payment info.
 •	Third-Party Data: If you use social login (e.g. Apple Sign-In), we may receive your name and email (only if you consent). We do not store data from social networks beyond what you choose to share.
 
-Cookies & Tracking: Thebrxnd is a mobile app and does not use browser cookies. We do not use tracking pixels or advertising networks. We may use analytics tools (currently none, but see our Cookie Policy) to understand crashes or usage. Any future analytics services will be added to our Cookie/Tracking Policy.
+Cookies & Tracking: Thebrxnd is a mobile app and does not use browser cookies. We do not use tracking pixels or advertising networks. We do log in-app analytics such as the searches and filters you run so we can maintain relevant results and defend against misuse. We may also use additional analytics tools in the future (see our Cookie Policy) to understand crashes or usage. Any future analytics services will be added to our Cookie/Tracking Policy.
 
 How We Use Data: We use your information to:
 •	Provide and operate the Service (e.g., creating your account, delivering content and messages).
-•	Manage your account and subscription.
+•	Manage your account and any optional paid offerings you may choose in the future.
 •	Communicate with you (updates, support, service announcements).
 •	Improve and personalize the app (features, recommendations).
 •	Detect and prevent fraud or abuse, and enforce our Terms and Community Guidelines.
@@ -172,11 +174,12 @@ By using thebrxnd, you agree to this DPA along with our Privacy Policy. If you h
 
 export const COOKIE_POLICY = `Cookie / Tracking Policy
 
-thebrxnd is a mobile app and does not use web browser cookies. We do not currently use advertising or analytics tracking that identifies you. Here is how we handle tracking:
+thebrxnd is a mobile app and does not use web browser cookies. We do not use advertising networks or third-party tracking pixels. We do maintain internal analytics— including logs of the searches and filters you run — so discovery features stay relevant and secure. Here is how we handle tracking:
 
 •	No Tracking Cookies: We do not place cookies on your device or browser. The mobile app uses local storage for essential functions only.
-•	Essential Analytics: We may use basic analytics (for example, crash reporting or usage statistics) to improve the app. These analytics are anonymous and not linked to you personally. Currently, we do not use any third-party analytics or advertising networks.
-•	Future Tracking: We may introduce analytics or metrics (for example, Google Analytics or another tool) to better understand app usage and improve features. If that happens, we will update this policy and give you an option to opt in or out where possible.
+•	Essential Analytics: We use internal analytics (for example, crash reporting, usage statistics, and abuse prevention signals) to improve the app. These analytics may be associated with your account when needed to keep the platform safe. We do not use advertising trackers or sell this data.
+•	Search & Filter Logs: When you run a search or apply filters, we store that activity so we can refine results, investigate reports, and improve recommendations. This information is kept internally and follows our Privacy Policy.
+•	Future Tracking: We may introduce additional analytics or metrics (for example, Google Analytics or another tool) to better understand app usage and improve features. If that happens, we will update this policy and give you an option to opt in or out where possible.
 •	Opt-Out: If tracking is implemented in the future, we will provide settings or instructions to disable it. We will never sell or share your data with advertisers.
 •	Device IDs: The app may use a non-personal unique device ID (automatically generated) to remember your preferences and help prevent fraud or abuse. This is not linked to your identity and is only used internally.
 •	Third-Party SDKs: If we integrate any third-party services (e.g. for push notifications or social login), those SDKs may collect data according to their own policies. We will disclose their names and data uses here when applicable.
