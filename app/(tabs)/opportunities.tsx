@@ -9,7 +9,7 @@ import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supaba
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
-import { trpc } from "@/lib/trpc";
+import { trpc, trpcClient } from "@/lib/trpc";
 
 interface ProfileRow {
   user_id: string;
@@ -563,12 +563,28 @@ export default function OpportunitiesScreen() {
     queryFn: async () => {
       switch (view) {
         case "all": {
-          const rows = await sbSelect<OpportunityRow>("opportunities", {
-            select: "*,profiles:user_id(*)",
-            order: { column: "created_at", ascending: false },
-            limit: 50,
-          });
-          return rows;
+          if (!currentUserId) {
+            const rows = await sbSelect<OpportunityRow>("opportunities", {
+              select: "*,profiles:user_id(*)",
+              order: { column: "created_at", ascending: false },
+              limit: 50,
+            });
+            return rows;
+          }
+          try {
+            console.log("[Opportunities] Fetching FYP opportunities for user:", currentUserId);
+            const fypData = await trpcClient.opportunities.getFyp.query({ limit: 50 });
+            console.log("[Opportunities] FYP data received:", fypData.length, "opportunities");
+            return fypData as OpportunityRow[];
+          } catch (error) {
+            console.error("[Opportunities] Failed to fetch FYP, falling back to regular query:", error);
+            const rows = await sbSelect<OpportunityRow>("opportunities", {
+              select: "*,profiles:user_id(*)",
+              order: { column: "created_at", ascending: false },
+              limit: 50,
+            });
+            return rows;
+          }
         }
         case "following": {
           if (!currentUserId) return [];

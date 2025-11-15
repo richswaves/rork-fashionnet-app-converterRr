@@ -12,6 +12,7 @@ import {
   listRecentUserEventsProcedure,
   getPostAnalyticsProcedure,
 } from "./routes/admin/analytics/route";
+import { getFypOpportunitiesProcedure } from "./routes/opportunities/get-fyp/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -35,6 +36,9 @@ export const appRouter = createTRPCRouter({
     block: blockProcedure,
     unblock: unblockProcedure,
     listBlocked: listBlockedProcedure,
+  }),
+  opportunities: createTRPCRouter({
+    getFyp: getFypOpportunitiesProcedure,
   }),
 });
 
