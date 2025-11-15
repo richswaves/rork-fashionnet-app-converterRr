@@ -5,9 +5,9 @@ Eligibility: You must be at least 16 years old and legally allowed to use the ap
 
 Account and Pricing: thebrxnd is currently free to use. We may introduce optional paid features or memberships later, and if we do, we will provide advance notice of pricing, terms, and how to accept those changes. You will never be charged without clearly opting in through your device’s official app store. Until then, all core features are available at no monetary cost.
 
-Content and Usage License: You retain ownership of the content you create or post on thebrxnd (your photos, messages, designs, etc.). By posting content, you grant thebrxnd LLC a worldwide, royalty-free, non-exclusive license to use, display, and distribute your content within the app and on our platform[5]. This license allows us to operate and promote the service. It ends when you delete the content or your account. You agree that your content complies with our policies (see Community Guidelines below) and does not violate anyone’s rights.
+Content and Usage License: You retain ownership of the content you create or post on thebrxnd (your photos, messages, designs, etc.). By posting content, you grant thebrxnd LLC a worldwide, royalty-free, non-exclusive license to use, display, and distribute your content within the app and on our platform. This license allows us to operate and promote the service. It ends when you delete the content or your account. You agree that your content complies with our policies (see Community Guidelines below) and does not violate anyone’s rights.
 
-User Conduct: Use thebrxnd respectfully. You agree not to post or share content that is illegal, hateful, harassing, abusive, defamatory, threatening, pornographic, or that promotes violence or discrimination. Do not spam, scam, or advertise others’ services. Do not impersonate others or post personal data about someone without consent. Harassment, hate speech, and cyberbullying are strictly prohibited[6][7]. We encourage creativity and friendly interaction; please follow our [Community Guidelines] for more detail.
+User Conduct: Use thebrxnd respectfully. You agree not to post or share content that is illegal, hateful, harassing, abusive, defamatory, threatening, pornographic, or that promotes violence or discrimination. Do not spam, scam, or advertise others’ services. Do not impersonate others or post personal data about someone without consent. Harassment, hate speech, and cyberbullying are strictly prohibited. We encourage creativity and friendly interaction; please follow our [Community Guidelines] for more detail.
 
 Search and Discovery Tracking: To keep discovery features safe and relevant, we log search queries and filter selections you make in the app. This information helps us highlight useful results, detect abuse, and improve the experience. Using the app means you consent to this tracking as described in our Privacy Policy.
 
@@ -30,21 +30,21 @@ Information We Collect: We collect information you provide and information autom
 •	Communications: If you contact us or reply to our emails, we store your messages and responses.
 •	Usage Data: We collect data about how you use the app (features you use, time stamps, crashes, search queries, filter selections, etc.) to help improve our service and keep discovery tools relevant.
 •	Device Data: We may collect technical data such as device type, OS version, app version, and IP address for analytics and security.
-•	Payment & Subscription: thebrxnd is free to use right now, and we do not store your payment details. If you later opt in to optional paid features handled through Apple or Google, we may receive a record of your subscription status or purchase date from RevenueCat or the app stores, but never your full payment info.
+•	Pricing: thebrxnd is free to use right now, and there are no in-app purchases or subscriptions. If we ever introduce optional paid features handled through Apple or Google, we will update this policy before they launch, and we still will not store your full payment details.
 •	Third-Party Data: If you use social login (e.g. Apple Sign-In), we may receive your name and email (only if you consent). We do not store data from social networks beyond what you choose to share.
 
 Cookies & Tracking: Thebrxnd is a mobile app and does not use browser cookies. We do not use tracking pixels or advertising networks. We do log in-app analytics such as the searches and filters you run so we can maintain relevant results and defend against misuse. We may also use additional analytics tools in the future (see our Cookie Policy) to understand crashes or usage. Any future analytics services will be added to our Cookie/Tracking Policy.
 
 How We Use Data: We use your information to:
 •	Provide and operate the Service (e.g., creating your account, delivering content and messages).
-•	Manage your account and any optional paid offerings you may choose in the future.
+•	Manage your account and any optional paid offerings we may introduce in the future (with advance notice).
 •	Communicate with you (updates, support, service announcements).
 •	Improve and personalize the app (features, recommendations).
 •	Detect and prevent fraud or abuse, and enforce our Terms and Community Guidelines.
 •	Comply with legal obligations (e.g., respond to court orders, protect rights).
 We will never sell your personal information to third parties.
 
-Data Storage and Third-Party Services: Your data is stored in Supabase, our cloud database service. Supabase stores data on secure servers in the U.S. (and potentially other countries where Supabase operates)[8]. We use industry-standard security measures to protect your data. For payments, we use RevenueCat to manage subscriptions; they process payment receipts and subscription details on our behalf (not thebrxnd). Both Supabase and RevenueCat act as our data processors and adhere to strict security practices. (See our Data Processing Agreement for details.) We will not share personal data with any other third parties without your consent, except for legal requests.
+Data Storage and Third-Party Services: Your data is stored in Supabase, our cloud database service. Supabase stores data on secure servers in the U.S. (and potentially other countries where Supabase operates). We use industry-standard security measures to protect your data. If we add additional processors in the future (for analytics, messaging, or other features), we will disclose them in this policy first. We will not share personal data with any other third parties without your consent, except for legal requests.
 
 Data Retention: We keep your personal data and account information for as long as your account exists or as needed to provide the Service. If you close your account or request deletion, we will remove your data from active use. We will retain backups or residual copies for a limited period if required by law, but otherwise data is deleted after you request it. In all cases, we retain personal data only as long as necessary.
 
@@ -58,32 +58,21 @@ Updates: We may update this Privacy Policy. The “Last Updated” date at the t
 
 If you have privacy questions, contact us at tbrxnd@gmail.com.` as const;
 
-export const SUBSCRIPTION_ADDENDUM = `Subscription Addendum
-This Subscription Addendum provides details on pricing, renewal, cancellation, and refunds for the thebrxnd app, in compliance with App Store (Apple) and Google Play requirements.
+export const SUBSCRIPTION_ADDENDUM = `Pricing Notice
 
-Subscription Pricing: thebrxnd offers a subscription at $9.99 per month (USD) with a 7-day free trial for new subscribers. The price shown includes applicable taxes. All billing is handled by the App Store or Google Play; we never see your credit card or payment info.
+Thebrxnd is free to use right now. There are no subscriptions, in-app purchases, or paid upgrades. If we ever introduce optional paid features, we will announce them in advance, update this document with the exact terms, and make sure you opt in explicitly through your device’s official app store. We do not collect or store your payment information.
 
-Free Trial: A 7-day free trial starts when you subscribe. You won’t be charged until the trial ends. To avoid being charged, cancel your subscription at least 24 hours before the trial expires[3]. If you do not cancel, your subscription will automatically begin and your payment method will be charged.
-
-Auto-Renewal: Subscriptions automatically renew each month after the initial period[1][2]. You will be charged 24 hours before the start of each new month. To prevent renewal, cancel at least 24 hours before your next billing date[1]. We will notify you via your device’s App Store or Google Play when your subscription is about to renew, as required by law.
-
-Cancellation: You can cancel your subscription at any time. To cancel, go to your Apple/Google account’s “Manage Subscriptions” page. (For Apple, open Settings → [your name] → Subscriptions. For Google, open Google Play Store → Menu → Subscriptions.) Follow the on-screen steps. Cancelling stops future payments but does not retroactively refund your last payment or prorate the current month[4]. Your subscription remains active until the end of the paid period. If you cancel during a free trial, you will not be charged, but you will also lose access to subscription content once the trial ends. We have no access to subscription settings; please use only the official app store interfaces.
-
-Refunds: All subscription payments are final except as required by law. We do not offer refunds for unused subscription periods beyond the policies of Apple and Google[4]. If you believe you are entitled to a refund (for example, double-billing or unauthorized purchase), please contact Apple Support or Google Play Support directly. You can also use the “Report a Problem” feature in your App Store/Google account. We cannot issue refunds ourselves for in-app purchases. Any refunds granted will be processed by Apple/Google; we will comply by canceling the subscription upon refund request.
-
-App Store and Google Play: This app and its subscription are distributed through the Apple App Store and/or Google Play. By purchasing through these platforms, you agree to their terms. You must use the tools provided by Apple or Google to manage or cancel subscriptions[9]. We recommend bookmarking or saving the link to the thebrxnd app.
-
-For any billing issues, contact Apple or Google support first. For other help, email us at tbrxnd@gmail.com.` as const;
+If you have questions about pricing or billing, reach out to tbrxnd@gmail.com.` as const;
 
 export const COMMUNITY_GUIDELINES = `Community Guidelines
 We want thebrxnd to be a creative, positive space for fashion and culture. Please follow these guidelines to keep the community safe and respectful:
 
 •	Be Respectful: Treat others kindly. Bullying, harassment, or personal attacks are not allowed.
-•	No Hate Speech: Do not post content that attacks or discriminates against others based on race, ethnicity, religion, gender, sexual orientation, disability, or any protected status[6]. Hate symbols, slurs, and extremist content are banned.
+•	No Hate Speech: Do not post content that attacks or discriminates against others based on race, ethnicity, religion, gender, sexual orientation, disability, or any protected status. Hate symbols, slurs, and extremist content are banned.
 •	No Graphic or Adult Content: Do not share excessive violence, gore, or sexual content. If you post fashion content that is edgy, make sure it’s still appropriate for a broad audience. Content intended for adults (nudity, explicit scenes) is not allowed.
-•	No Illegal or Dangerous Content: Do not promote illegal activities (drug use, theft, etc.) or instructions for wrongdoing[7]. Criminal behavior or self-harm encouragement is strictly prohibited.
-•	No Spam or Scams: Do not spam, flood chat, or promote your products/services without permission. Links to malicious sites, phishing attempts, or fraudulent schemes are forbidden[10].
-•	Protect Privacy: Do not post others’ personal information (like addresses, private photos, contact info) without permission[7]. Respect everyone’s privacy.
+•	No Illegal or Dangerous Content: Do not promote illegal activities (drug use, theft, etc.) or instructions for wrongdoing. Criminal behavior or self-harm encouragement is strictly prohibited.
+•	No Spam or Scams: Do not spam, flood chat, or promote your products/services without permission. Links to malicious sites, phishing attempts, or fraudulent schemes are forbidden.
+•	Protect Privacy: Do not post others’ personal information (like addresses, private photos, contact info) without permission. Respect everyone’s privacy.
 •	Original Content: Share only content you have the rights to. Do not post copyrighted images, music, or videos that you don’t own (see our [DMCA Policy] for details).
 •	Stay on Topic: Keep discussions relevant to fashion, creativity, and culture. Irrelevant or repetitive content can be removed to keep the app enjoyable for everyone.
 
@@ -92,14 +81,14 @@ Consequences for violating these rules include content removal, warnings, tempor
 If you see something that breaks these rules, report it through the app’s flag/report feature or contact tbrxnd@gmail.com.` as const;
 
 export const CONTENT_LICENSING = `Content Licensing Agreement
-All content you create or post on thebrxnd (photos, designs, text, etc.) is owned by you. By submitting content to thebrxnd service, you grant thebrxnd LLC a worldwide, royalty-free, perpetual, non-exclusive license to use, reproduce, modify, and display your content in connection with the operation of the app[5]. This means we can show your posts, share them in our app, and use them for marketing (like featured posts), but you still own the copyright.
+All content you create or post on thebrxnd (photos, designs, text, etc.) is owned by you. By submitting content to thebrxnd service, you grant thebrxnd LLC a worldwide, royalty-free, perpetual, non-exclusive license to use, reproduce, modify, and display your content in connection with the operation of the app. This means we can show your posts, share them in our app, and use them for marketing (like featured posts), but you still own the copyright.
 
 This license is only so long as your content is published in the app. If you delete the content or your account is closed, the license ends (except to the extent we already used the content). We will not sell your content to third parties.
 
 You represent and warrant that you have all rights to the content you post. Do not post content that infringes others’ rights. If someone claims your content violates their rights, we may remove it.` as const;
 
 export const MODERATION_APPEALS_POLICY = `Moderation & Appeals Policy
-Content Moderation: thebrxnd moderates user content to keep the community safe. Our moderators (human and automated tools) review content and enforce rules. Content that violates the Community Guidelines (see above) may be deleted or hidden. This includes hate speech, harassment, explicit material, spam, illegal content, and other prohibited content[6][7]. If content is removed, we will notify you (in-app or by email). We may also suspend or ban accounts of repeat or severe offenders.
+Content Moderation: thebrxnd moderates user content to keep the community safe. Our moderators (human and automated tools) review content and enforce rules. Content that violates the Community Guidelines (see above) may be deleted or hidden. This includes hate speech, harassment, explicit material, spam, illegal content, and other prohibited content. If content is removed, we will notify you (in-app or by email). We may also suspend or ban accounts of repeat or severe offenders.
 
 Suspension and Takedowns: Depending on the violation, we may take action such as:
 - Warning: Minor or first-time infractions may get a warning.
@@ -139,7 +128,7 @@ Designated Copyright Agent
  204 Lincoln St, New Britain, CT, USA
  Email: richreporter70@gmail.com
 
-What Happens Next: Upon receipt of a proper notice, thebrxnd will act expeditiously. We may remove or disable access to the allegedly infringing material[11]. We will also notify the user who posted the content about the removal and provide your contact information to them so they can respond. Repeat copyright infringers will have their accounts terminated.
+What Happens Next: Upon receipt of a proper notice, thebrxnd will act expeditiously. We may remove or disable access to the allegedly infringing material. We will also notify the user who posted the content about the removal and provide your contact information to them so they can respond. Repeat copyright infringers will have their accounts terminated.
 
 Counter-Notification: If you believe your content was removed in error, you may file a DMCA counter-notice. Email richreporter70@gmail.com with:
 - A statement under penalty of perjury that you have a good-faith belief the material was removed by mistake.
@@ -152,21 +141,19 @@ We will forward your counter-notice to the original claimant. Unless they notify
 No Guarantee: We do not investigate ownership claims. If you file a false notice or counter-notice, you may be liable for damages. Our only obligation is to follow the DMCA procedure promptly.` as const;
 
 export const DATA_PROCESSING_AGREEMENT = `Data Processing Agreement (DPA)
-This DPA explains how thebrxnd LLC (“we”) and our third-party vendors handle your data in compliance with data protection laws (such as GDPR, CCPA, etc.). Thebrxnd LLC (204 Lincoln St, New Britain, CT) is the data controller: we determine what personal data is collected and how it is used. Our service providers, such as Supabase (database hosting) and RevenueCat (subscription management), are data processors: they process personal data only on our behalf.
+This DPA explains how thebrxnd LLC (“we”) and our third-party vendors handle your data in compliance with data protection laws (such as GDPR, CCPA, etc.). Thebrxnd LLC (204 Lincoln St, New Britain, CT) is the data controller: we determine what personal data is collected and how it is used. Our service providers, such as Supabase (database hosting) and other vetted infrastructure or communications partners, act as data processors who process personal data only on our behalf.
 
-Under data protection law, the controller “determines the purposes for which and the means by which personal data is processed,” while a processor “processes personal data only on behalf of the controller”[12][13]. For example, RevenueCat’s agreement explicitly states that “Customer is the data controller and RevenueCat is its data processor”[14].
+Under data protection law, the controller “determines the purposes for which and the means by which personal data is processed,” while a processor “processes personal data only on behalf of the controller”.
 
-Supabase: We use Supabase to store user data (accounts, posts, messages). Supabase stores data on secure servers (primarily in the U.S.)[8]. They implement security measures and comply with relevant privacy laws. We have a contract (Data Processing Agreement) with Supabase ensuring they only process data as we instruct and keep it confidential. When required, we will enter into a separate agreement or DPA with Supabase.
+Supabase: We use Supabase to store user data (accounts, posts, messages, search and filter logs). Supabase stores data on secure servers (primarily in the U.S.). They implement security measures and comply with relevant privacy laws. We have agreements with Supabase ensuring they only process data as we instruct and keep it confidential.
 
-RevenueCat: We use RevenueCat to handle subscription receipts and billing metadata. RevenueCat processes users’ purchase information (like transaction IDs) but not sensitive payment details. They also follow strict security and privacy standards. As noted, RevenueCat’s terms identify us as the controller and them as the processor[14]. We require RevenueCat to store and process any personal data (e.g. email address, subscription status) only for delivering their services and to protect it from unauthorized use.
+Additional Processors: We may use third-party services (for example, email providers or analytics tools) to deliver support, send communications, or help us understand how users search and apply filters so we can improve discovery. Each processor is bound by contract to use your data only for providing that service to us and to maintain security. If we add major new processors, we will update this DPA.
 
-Other Processors: We may use other third-party services (e.g. email providers) to send you communications or push notifications. Each processor is bound by contract to use your data only for providing that service to us, and to maintain security. If we add major new processors, we will update this DPA.
-
-Data Transfers: We may transfer data internationally (e.g. if a processor’s servers are abroad), but only to countries with adequate protections or using standard contractual clauses, as required by law. For instance, Supabase’s policy notes data may be stored in the U.S. or other countries where they operate[8].
+Data Transfers: We may transfer data internationally (e.g. if a processor’s servers are abroad), but only to countries with adequate protections or using standard contractual clauses, as required by law. For instance, Supabase’s policy notes data may be stored in the U.S. or other countries where they operate.
 
 Security: We and our processors use encryption and other safeguards to protect data. In case of a breach, we will notify you as required by law.
 
-Sub-Processors: If any processor subcontracts work (e.g. if Supabase hires another cloud service), they are obligated to the same privacy standards. For example, RevenueCat’s DPA requires them to ensure any sub-processor is similarly bound[14].
+Sub-Processors: If any processor subcontracts work (e.g. if Supabase hires another cloud service), they are obligated to the same privacy standards.
 
 Your Rights: You have rights over your data. You can request access, correction, or deletion (see Privacy Policy). We will comply with legal obligations. If you are in the EU or UK, you can also request data portability or object to certain processing. Processors will assist us in fulfilling your requests, as allowed by law.
 
@@ -186,19 +173,4 @@ thebrxnd is a mobile app and does not use web browser cookies. We do not use adv
 
 For now, your privacy is protected: thebrxnd does not track your activity outside the app. We recommend you keep the app updated; any future analytics tools will be described in this policy.
 
-If you have questions about our tracking practices, contact [SUPPORT_EMAIL].
-________________________________________
-[1] [3] [5] Legal - Apple Media Services - Apple
-https://www.apple.com/legal/internet-services/itunes/
-[2] [4] [9] Pandora - Subscription Terms
-https://www.pandora.com/legal/subscription
-[6] [7] [10] 6 essential community guidelines for moderating content in-app | Sendbird
-https://sendbird.com/blog/6-essential-community-guidelines-for-content-moderation
-[8] Privacy Policy | Supabase
-https://supabase.com/privacy
-[11] Example DMCA Policy Text
-https://www.thelonesgroup.com/customer/vault.asp?op=item&vid=3558
-[12] [13] What is a data controller or a data processor? - European Commission
-https://commission.europa.eu/law/law-topic/data-protection/rules-business-and-organisations/obligations/controllerprocessor/what-data-controller-or-data-processor_en
-[14] Data Processing Addendum (DPA) – RevenueCat
-https://www.revenuecat.com/dpa/` as const;
+If you have questions about our tracking practices, contact tbrxnd@gmail.com.` as const;
