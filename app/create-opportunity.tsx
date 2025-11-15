@@ -1114,6 +1114,7 @@ export default function CreateOpportunityScreen() {
   const [locationSuggestions, setLocationSuggestions] = useState<{ city: string; state: string; display: string }[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [enableNotifications, setEnableNotifications] = useState(true);
+  const [locationError, setLocationError] = useState("");
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -1228,6 +1229,12 @@ export default function CreateOpportunityScreen() {
     }
   };
 
+  const validateLocationFormat = (loc: string): boolean => {
+    if (!loc.trim()) return true;
+    const regex = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
+    return regex.test(loc.trim());
+  };
+
   const handleCreate = () => {
     if (!title.trim()) {
       alert("Please enter a title");
@@ -1235,6 +1242,11 @@ export default function CreateOpportunityScreen() {
     }
     if (needTypes.length === 0) {
       alert("Please select at least one role type");
+      return;
+    }
+    if (location.trim() && !validateLocationFormat(location)) {
+      alert("Please format location as 'City, State' (e.g., 'New York, NY')");
+      setLocationError("Format: City, State (e.g., New York, NY)");
       return;
     }
     if (paymentType === "paid" && priceMin.trim() === "" && priceMax.trim() === "") {
@@ -1340,13 +1352,19 @@ export default function CreateOpportunityScreen() {
           <View style={[styles.halfField, showLocationDropdown && styles.activeDropdownContainer]}>
             <Text style={styles.label}>Location</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, locationError && styles.inputError]}
               placeholder="e.g. New York, NY"
               placeholderTextColor="#6B7280"
               value={location}
-              onChangeText={setLocation}
+              onChangeText={(text) => {
+                setLocation(text);
+                if (locationError) setLocationError("");
+              }}
               testID="input-location"
             />
+            {locationError ? (
+              <Text style={styles.errorText}>{locationError}</Text>
+            ) : null}
             {showLocationDropdown && locationSuggestions.length > 0 && (
               <View style={styles.locationDropdownMenu}>
                 <FlatList
@@ -1359,6 +1377,7 @@ export default function CreateOpportunityScreen() {
                         setLocation(item.display);
                         setShowLocationDropdown(false);
                         setLocationSuggestions([]);
+                        setLocationError("");
                       }}
                       testID={`location-${item.display}`}
                     >
@@ -2195,5 +2214,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     marginRight: 16,
+  },
+  inputError: {
+    borderColor: "#EF4444",
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 4,
   },
 });
