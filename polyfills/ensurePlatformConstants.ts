@@ -25,13 +25,17 @@ const ensurePlatformConstants = () => {
 
   nativeModules.PlatformConstants = fallbackConstants;
 
-  const turboRegistry = TurboModuleRegistry as unknown as {
-    get?: (name: string) => unknown;
-    getEnforcing?: (name: string) => unknown;
-  };
+  const hasTurboModuleRegistry = typeof TurboModuleRegistry !== "undefined" && TurboModuleRegistry !== null;
 
-  const originalGet = turboRegistry.get?.bind(TurboModuleRegistry);
-  const originalGetEnforcing = turboRegistry.getEnforcing?.bind(TurboModuleRegistry);
+  const turboRegistry = hasTurboModuleRegistry
+    ? (TurboModuleRegistry as unknown as {
+        get?: (name: string) => unknown;
+        getEnforcing?: (name: string) => unknown;
+      })
+    : undefined;
+
+  const originalGet = turboRegistry?.get?.bind(TurboModuleRegistry);
+  const originalGetEnforcing = turboRegistry?.getEnforcing?.bind(TurboModuleRegistry);
 
   if (turboRegistry && originalGet) {
     turboRegistry.get = (name: string) => {
