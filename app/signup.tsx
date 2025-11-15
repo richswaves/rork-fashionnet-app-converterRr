@@ -889,5 +889,5 @@ const styles = StyleSheet.create({
   legalText: { color: "#9CA3AF", fontSize: 12 },
   legalLink: { color: "#93C5FD", fontSize: 12, textDecorationLine: "underline" as const },
   inputError: { borderColor: "#EF4444", borderWidth: 2 },
-  errorText: { color: "#EF4444", fontSize: 12, marginTop: -8, marginLeft: 4 },
+  errorText: { color: "#EF4444", fontSize: 12, marginTop: 4, marginLeft: 4 },
 });
