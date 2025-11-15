@@ -28,6 +28,7 @@ const ROLE_OPTIONS = [
 ];
 import { trpc } from "@/lib/trpc";
 import * as FileSystem from "expo-file-system";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -474,7 +475,14 @@ export default function EditProfileScreen() {
     if (!editing) return;
     const val = temp.trim();
     if (editing === "name") setFullName(val);
-    if (editing === "location") setLocation(val);
+    if (editing === "location") {
+      const locationRegex = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
+      if (val && !locationRegex.test(val)) {
+        Alert.alert("Invalid Format", "Please format location as 'City, State' (e.g., 'New York, NY')");
+        return;
+      }
+      setLocation(val);
+    }
     if (editing === "bio") setBio(val);
     if (editing === "avatar") setAvatarUrl(val);
     if (editing === "banner") setBannerUrl(val);
@@ -1296,11 +1304,43 @@ export default function EditProfileScreen() {
                   </Pressable>
                 </View>
               </>
+            ) : editing === "location" ? (
+              <>
+                <Text style={styles.modalTitle}>Edit location</Text>
+                <LocationAutocomplete
+                  value={temp}
+                  onChangeText={setTemp}
+                  onSelectLocation={(loc) => setTemp(loc)}
+                  placeholder="e.g. New York, NY"
+                  style={styles.modalInput}
+                  testID="edit-location-input"
+                />
+                <Text style={styles.locationHint}>Format: City, State (e.g., New York, NY)</Text>
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setEditing(null)} style={styles.cancelBtn}>
+                    <X color="#E5E7EB" size={18} />
+                    <Text style={styles.cancelText}>Close</Text>
+                  </Pressable>
+                  <Pressable 
+                    onPress={() => {
+                      const locationRegex = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
+                      if (temp.trim() && !locationRegex.test(temp.trim())) {
+                        Alert.alert("Invalid Format", "Please format location as 'City, State' (e.g., 'New York, NY')");
+                        return;
+                      }
+                      applyEdit();
+                    }} 
+                    style={styles.saveBtn}
+                  >
+                    <Check color="#0B0B0F" size={16} />
+                    <Text style={styles.saveText}>Apply</Text>
+                  </Pressable>
+                </View>
+              </>
             ) : (
               <>
                 <Text style={styles.modalTitle}>
                   {editing === "name" && "Edit name"}
-                  {editing === "location" && "Edit location"}
                   {editing === "bio" && "Edit bio"}
                   {editing === "avatar" && "Edit avatar URL"}
                   {editing === "banner" && "Edit cover image URL"}
@@ -1956,6 +1996,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginBottom: 8,
+  },
+  locationHint: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    marginTop: 6,
+    lineHeight: 16,
   },
 
 });
