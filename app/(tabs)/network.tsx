@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Bell, ChevronDown, MapPin, Search, User, ShieldCheck, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -48,7 +48,7 @@ export default function NetworkScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const containerStyle = useMemo(() => [styles.container, { paddingTop: insets.top }], [insets.top]);
-  const { trackNetworkInteraction } = useActivityTracking();
+  const { trackNetworkInteraction, trackFilterApplication, trackSearch } = useActivityTracking();
 
   const { data: blockedList } = trpc.block.listBlocked.useQuery(undefined, {
     enabled: !!currentUserId,
@@ -59,6 +59,74 @@ export default function NetworkScreen() {
   }, [blockedList]);
 
   const { width: windowWidth } = useWindowDimensions();
+  const roleList = useMemo(() => Array.from(selectedRoles).sort(), [selectedRoles]);
+  const locationList = useMemo(() => Array.from(selectedLocations).sort(), [selectedLocations]);
+  const filtersKey = useMemo(() => JSON.stringify({ roles: roleList, locations: locationList }), [roleList, locationList]);
+  const initializedRef = useRef(false);
+  const lastLoggedKeyRef = useRef<string | null>(null);
+
+  const logFilters = useCallback(async (roles: string[], locations: string[]) => {
+    const filtersRecord: Record<string, unknown> = {};
+    if (roles.length > 0) {
+      filtersRecord.roles = roles;
+    }
+    if (locations.length > 0) {
+      filtersRecord.locations = locations;
+    }
+    let resultsCount: number | null = null;
+    try {
+      const rows = await sbSelect<ProfileRow>("profiles", {
+        select: "user_id,profession,professions,location",
+        query: { account_status: "eq.approved" },
+      });
+      let filtered = rows;
+      if (roles.length > 0) {
+        const roleSet = new Set(roles);
+        filtered = filtered.filter((r) => {
+          if (r.profession && roleSet.has(r.profession)) {
+            return true;
+          }
+          if (r.professions && Array.isArray(r.professions)) {
+            return r.professions.some((p) => p && roleSet.has(p));
+          }
+          return false;
+        });
+      }
+      if (locations.length > 0) {
+        const locationSet = new Set(locations);
+        filtered = filtered.filter((r) => r.location && locationSet.has(r.location));
+      }
+      filtered = filtered.filter((r) => !blockedUserIds.has(r.user_id));
+      resultsCount = filtered.length;
+    } catch (error) {
+      console.error("[Network] Failed to compute filter results:", error);
+    }
+    if (typeof resultsCount === "number") {
+      filtersRecord.results_count = resultsCount;
+    }
+    trackFilterApplication({
+      page: "network",
+      filters: filtersRecord,
+      location: locations.length === 1 ? locations[0] : null,
+    });
+  }, [blockedUserIds, trackFilterApplication]);
+
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      lastLoggedKeyRef.current = filtersKey;
+      return;
+    }
+    if (roleMenuOpen || locationMenuOpen) {
+      return;
+    }
+    if (filtersKey === lastLoggedKeyRef.current) {
+      return;
+    }
+    lastLoggedKeyRef.current = filtersKey;
+    void logFilters(roleList, locationList);
+  }, [filtersKey, roleMenuOpen, locationMenuOpen, logFilters, roleList, locationList]);
+
 
   const { data: availableRoles = [] } = useQuery<string[]>({
     queryKey: ["profiles", "roles"],
@@ -375,13 +443,29 @@ export default function NetworkScreen() {
               if (trimmed && searchResultCount !== null) {
                 setSearchQuery(trimmed);
                 setHasSearched(true);
+                const filtersRecord: Record<string, unknown> = {};
+                if (roleList.length > 0) {
+                  filtersRecord.roles = roleList;
+                }
+                if (locationList.length > 0) {
+                  filtersRecord.locations = locationList;
+                }
                 trackNetworkInteraction({
                   target_user_id: null,
                   interaction_type: "search",
                   metadata: {
                     query: trimmed,
                     results_count: searchResultCount,
+                    roles: roleList,
+                    locations: locationList,
                   },
+                });
+                trackSearch({
+                  page: "network",
+                  query: trimmed,
+                  filters: filtersRecord,
+                  location: locationList.length === 1 ? locationList[0] : null,
+                  resultsCount: searchResultCount,
                 });
               } else {
                 setSearchQuery("");
