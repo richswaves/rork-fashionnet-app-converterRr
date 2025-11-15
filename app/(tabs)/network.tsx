@@ -8,6 +8,8 @@ import { sbSelect, sbInsert, sbDelete } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
+import { trpc } from "@/lib/trpc";
+import { formatRoleDisplay } from "@/lib/formatRoleDisplay";
 
 function normalizeLocation(location: string): string {
   if (!location || !location.trim()) return location;
@@ -23,7 +25,6 @@ function normalizeLocation(location: string): string {
   
   return `${city}, ${state}`;
 }
-import { trpc } from "@/lib/trpc";
 
 interface ProfileRow {
   user_id: string;
@@ -236,7 +237,7 @@ export default function NetworkScreen() {
           name: d.displayName,
           image: d.avatarUrl,
           location: r.location ?? undefined,
-          profession: r.profession ?? undefined,
+          profession: formatRoleDisplay(r.profession, r.professions ?? undefined),
         };
       });
     },
@@ -286,7 +287,7 @@ export default function NetworkScreen() {
           name: d.displayName,
           image: d.avatarUrl,
           location: r.location ?? undefined,
-          profession: r.profession ?? undefined,
+          profession: formatRoleDisplay(r.profession, r.professions ?? undefined),
         };
       });
     },
@@ -731,7 +732,7 @@ export default function NetworkScreen() {
                         <View style={styles.cardBody}>
                           <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>
                           {!!m.profession && (
-                            <Text numberOfLines={1} style={styles.cardProfession}>{m.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                            <Text numberOfLines={1} style={styles.cardProfession}>{m.profession}</Text>
                           )}
                           {!!m.location && (
                             <View style={styles.locationRow}>
@@ -778,7 +779,7 @@ export default function NetworkScreen() {
               <View style={styles.cardBody}>
                 <Text numberOfLines={1} style={styles.cardTitle}>{m.name}</Text>
                 {!!m.profession && (
-                  <Text numberOfLines={1} style={styles.cardProfession}>{m.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                  <Text numberOfLines={1} style={styles.cardProfession}>{m.profession}</Text>
                 )}
                 {!!m.location && (
                   <View style={styles.locationRow}>

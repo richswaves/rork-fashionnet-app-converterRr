@@ -9,6 +9,7 @@ import { getSupabase, sbSelect, sbInsert, sbDelete } from "@/integrations/supaba
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
+import { formatRoleDisplay } from "@/lib/formatRoleDisplay";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 interface ProfileRow {
@@ -1068,6 +1069,8 @@ export default function OpportunitiesScreen() {
         renderItem={({ item }) => {
           const title = item.title ?? "";
           const display = getDisplayForProfile(item.profiles);
+          const profile = item.profiles as ProfileRow | undefined;
+          const roleDisplay = formatRoleDisplay(profile?.profession, profile?.professions ?? undefined);
           const imageUri = item.cover_image ?? (item as any).image_url;
           return (
             <View style={styles.card} testID={`opp-${item.id}`}>
@@ -1075,8 +1078,8 @@ export default function OpportunitiesScreen() {
                 <Image key={item.profiles?.user_id ?? item.user_id} source={{ uri: display.avatarUrl }} style={styles.postAvatar} />
                 <View style={styles.postHeaderInfo}>
                   <Text numberOfLines={1} style={styles.postUsername}>{display.displayName}</Text>
-                  {item.profiles?.profession && (
-                    <Text numberOfLines={1} style={styles.postProfession}>{item.profiles.profession.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                  {!!roleDisplay && (
+                    <Text numberOfLines={1} style={styles.postProfession}>{roleDisplay}</Text>
                   )}
                   <Text numberOfLines={1} style={styles.postTime}>{formatRelativeTime(item.created_at)}</Text>
                 </View>
@@ -1090,7 +1093,6 @@ export default function OpportunitiesScreen() {
                   </Pressable>
                 )}
                 {(() => {
-                  const profile = item.profiles as ProfileRow | undefined;
                   console.log(`[OpportunityCard] Checking social links for ${profile?.username}:`, profile?.social_links);
                   
                   const hasInstagram = profile?.social_links?.instagram && profile.social_links.instagram.trim();
