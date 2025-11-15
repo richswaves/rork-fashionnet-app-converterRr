@@ -443,11 +443,13 @@ export default function OpportunitiesScreen() {
     onSuccess: async (opportunityId) => {
       console.log("[Apply] Success, updating cache for opportunity:", opportunityId);
       
-      queryClient.setQueryData<Set<string>>([
+      queryClient.setQueryData<Record<string, { applied: boolean; status?: string }>>([
         "applied-ids",
         currentUserId,
       ], (old) => {
-        return new Set([...(old ?? []), opportunityId]);
+        const updated = { ...(old ?? {}) };
+        updated[opportunityId] = { applied: true };
+        return updated;
       });
       
       await queryClient.refetchQueries({ queryKey: ["applied-ids", currentUserId] });
