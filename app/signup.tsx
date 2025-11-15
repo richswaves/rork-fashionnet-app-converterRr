@@ -145,6 +145,7 @@ export default function SignupScreen() {
   const [dobDate, setDobDate] = useState<Date>(new Date(2000, 0, 1));
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [cityLocation, setCityLocation] = useState<string>("");
+  const [locationError, setLocationError] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
   const [userType, setUserType] = useState<"creative" | "business" | undefined>(undefined);
@@ -237,11 +238,18 @@ export default function SignupScreen() {
     return displayName.trim().length > 0 && profilePictureUri.trim().length > 0 && socialLink.trim().length > 0;
   }, [displayName, profilePictureUri, socialLink]);
 
+  const validateLocationFormat = (loc: string): boolean => {
+    if (!loc.trim()) return true;
+    const regex = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
+    return regex.test(loc.trim());
+  };
+
   const canSubmit = useMemo(() => {
     const baseValid = email.trim().length > 3 && password.trim().length >= 6 && password === confirmPassword && phoneNumber.trim().length >= 10;
     const onboardingValid = !!userType && !!role && availableQuestions.every((q) => (answers[q.id] ?? []).length > 0);
-    return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete && agreed;
-  }, [email, password, confirmPassword, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete, agreed]);
+    const locationValid = !cityLocation.trim() || validateLocationFormat(cityLocation);
+    return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete && agreed && locationValid;
+  }, [email, password, confirmPassword, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete, agreed, cityLocation]);
 
   async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
     const supabase = getSupabase();
@@ -285,6 +293,11 @@ export default function SignupScreen() {
       return;
     }
     if (!canSubmit) {
+      if (cityLocation.trim() && !validateLocationFormat(cityLocation)) {
+        setLocationError("Format: City, State (e.g., New York, NY)");
+        Alert.alert("Invalid Location", "Please select a location from the dropdown or format it as 'City, State' (e.g., 'New York, NY')");
+        return;
+      }
       Alert.alert("Incomplete", "Please fill out all fields and onboarding questions.");
       return;
     }
@@ -491,10 +504,19 @@ export default function SignupScreen() {
                 testID="signup-location"
                 placeholder="City, State"
                 value={cityLocation}
-                onChangeText={setCityLocation}
-                onSelectLocation={(location) => setCityLocation(location)}
+                onChangeText={(text) => {
+                  setCityLocation(text);
+                  if (locationError) setLocationError("");
+                }}
+                onSelectLocation={(location) => {
+                  setCityLocation(location);
+                  if (locationError) setLocationError("");
+                }}
                 style={[styles.input, { marginTop: 0, marginBottom: 0 }]}
               />
+              {locationError ? (
+                <Text style={styles.errorText}>{locationError}</Text>
+              ) : null}
             </View>
           </View>
           {showDatePicker && Platform.OS === "ios" && (
