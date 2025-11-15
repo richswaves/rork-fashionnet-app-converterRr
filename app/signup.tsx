@@ -251,6 +251,22 @@ export default function SignupScreen() {
     return baseValid && onboardingValid && allQuestionsAnswered && profileInfoComplete && agreed && locationValid;
   }, [email, password, confirmPassword, phoneNumber, userType, role, availableQuestions, answers, allQuestionsAnswered, profileInfoComplete, agreed, cityLocation]);
 
+  const handleDateInputChange = useCallback((raw: string) => {
+    const cleaned = raw.replace(/[^0-9-]/g, "");
+    const truncated = cleaned.slice(0, 10);
+    setDateOfBirth(truncated);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(truncated)) {
+      const [yearStr, monthStr, dayStr] = truncated.split("-");
+      const year = Number(yearStr);
+      const month = Number(monthStr);
+      const day = Number(dayStr);
+      const candidate = new Date(year, month - 1, day);
+      if (!Number.isNaN(candidate.getTime()) && candidate.getFullYear() === year && candidate.getMonth() === month - 1 && candidate.getDate() === day) {
+        setDobDate(candidate);
+      }
+    }
+  }, []);
+
   async function uploadToSupabase(asset: ImagePicker.ImagePickerAsset): Promise<string> {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase is not configured");
@@ -469,16 +485,31 @@ export default function SignupScreen() {
             <Text style={styles.errorText}>Passwords do not match</Text>
           )}
           <View style={styles.row}>
-            <TouchableOpacity
-              testID="signup-dob"
-              style={[styles.input, styles.inputHalf, { justifyContent: "center" }]}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={{ color: dateOfBirth ? "#FFFFFF" : "#9CA3AF" }}>
-                {dateOfBirth || "Date of birth"}
-              </Text>
-            </TouchableOpacity>
-            {showDatePicker && (
+            {Platform.OS === "web" ? (
+              <TextInput
+                testID="signup-dob-input"
+                placeholder="Date of birth (YYYY-MM-DD)"
+                placeholderTextColor="#9CA3AF"
+                value={dateOfBirth}
+                onChangeText={handleDateInputChange}
+                style={[styles.input, styles.inputHalf]}
+                autoCapitalize="none"
+                autoCorrect={false}
+                inputMode="numeric"
+                maxLength={10}
+              />
+            ) : (
+              <TouchableOpacity
+                testID="signup-dob"
+                style={[styles.input, styles.inputHalf, { justifyContent: "center" }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={{ color: dateOfBirth ? "#FFFFFF" : "#9CA3AF" }}>
+                  {dateOfBirth || "Date of birth"}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {showDatePicker && Platform.OS !== "web" && (
               <DateTimePicker
                 testID="dateTimePicker"
                 value={dobDate}
@@ -526,6 +557,9 @@ export default function SignupScreen() {
             >
               <Text style={styles.secondaryBtnText}>Done</Text>
             </TouchableOpacity>
+          )}
+          {Platform.OS === "web" && dateOfBirth.length > 0 && !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) && (
+            <Text style={[styles.errorText, { marginTop: 4 }]}>Use format YYYY-MM-DD</Text>
           )}
           <TextInput
             testID="signup-phone"
