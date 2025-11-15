@@ -42,8 +42,8 @@ export default function NetworkScreen() {
   const [searchResultCount, setSearchResultCount] = useState<number | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const [showResults, setShowResults] = useState<boolean>(false);
   const [pendingFilterCount, setPendingFilterCount] = useState<number | null>(null);
+  const [hasActiveFilters, setHasActiveFilters] = useState<boolean>(false);
 
   const { resolvedProfile, getDisplayForProfile, currentUserId } = useProfile();
   const { notificationCount, adminNotificationCount, isAdmin } = useNotifications();
@@ -115,12 +115,13 @@ export default function NetworkScreen() {
     setSelectedRoles(new Set());
     setSelectedLocations(new Set());
     setPendingFilterCount(null);
+    setHasActiveFilters(false);
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
     setRoleMenuOpen(false);
     setLocationMenuOpen(false);
-    setShowResults(true);
+    setHasActiveFilters(selectedRoles.size > 0 || selectedLocations.size > 0 || hasSearched);
     const roles = Array.from(selectedRoles).sort();
     const locations = Array.from(selectedLocations).sort();
     const nextKey = JSON.stringify({ roles, locations });
@@ -129,7 +130,7 @@ export default function NetworkScreen() {
       void logFilters(roles, locations);
     }
     setPendingFilterCount(null);
-  }, [selectedRoles, selectedLocations, logFilters]);
+  }, [selectedRoles, selectedLocations, hasSearched, logFilters]);
 
 
   const { data: availableRoles = [] } = useQuery<string[]>({
@@ -176,8 +177,9 @@ export default function NetworkScreen() {
   });
 
   const { data: topProfiles, isLoading: loadingTop, error: topErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery, hasSearched],
+    queryKey: ["profiles", "top", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery, hasSearched, hasActiveFilters],
     staleTime: 30000,
+    enabled: !roleMenuOpen && !locationMenuOpen,
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -221,8 +223,9 @@ export default function NetworkScreen() {
   });
 
   const { data: newProfiles, isLoading: loadingNew, error: newErr } = useQuery<MemberCard[]>({
-    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery, hasSearched],
+    queryKey: ["profiles", "new", Array.from(selectedRoles), Array.from(selectedLocations), searchQuery, hasSearched, hasActiveFilters],
     staleTime: 30000,
+    enabled: !roleMenuOpen && !locationMenuOpen,
     queryFn: async () => {
       let query: Record<string, string> = { account_status: "eq.approved" };
       const rows = await sbSelect<ProfileRow>("profiles", {
@@ -394,7 +397,7 @@ export default function NetworkScreen() {
                   setSearchQuery("");
                   setSearchResultCount(null);
                   setHasSearched(false);
-                  setShowResults(false);
+                  setHasActiveFilters(false);
                 } else {
                   const lowerQuery = text.trim().toLowerCase();
                   let query: Record<string, string> = { account_status: "eq.approved" };
@@ -434,7 +437,7 @@ export default function NetworkScreen() {
                   setSearchQuery("");
                   setSearchResultCount(null);
                   setHasSearched(false);
-                  setShowResults(false);
+                  setHasActiveFilters(false);
                 }}
                 testID="clear-search"
               >
@@ -449,7 +452,7 @@ export default function NetworkScreen() {
               if (trimmed && searchResultCount !== null) {
                 setSearchQuery(trimmed);
                 setHasSearched(true);
-                setShowResults(true);
+                setHasActiveFilters(true);
                 const filtersRecord: Record<string, unknown> = {};
                 if (roleList.length > 0) {
                   filtersRecord.roles = roleList;
@@ -478,7 +481,7 @@ export default function NetworkScreen() {
                 setSearchQuery("");
                 setSearchResultCount(null);
                 setHasSearched(false);
-                setShowResults(false);
+                setHasActiveFilters(false);
               }
             }}
             testID="search-btn"
@@ -660,7 +663,7 @@ export default function NetworkScreen() {
           </View>
         )}
 
-        {showResults && (
+        {!roleMenuOpen && !locationMenuOpen && (
           <>
             <Text style={styles.h1}>Top Members</Text>
             {loadingTop && (
