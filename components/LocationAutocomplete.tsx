@@ -47,13 +47,6 @@ export default function LocationAutocomplete({
   const searchRef = useRef<any>(null);
   const initAttemptedRef = useRef(false);
 
-  useEffect(() => {
-    if (Platform.OS === "web" && !initAttemptedRef.current) {
-      initAttemptedRef.current = true;
-      initMapKit();
-    }
-  }, [initMapKit]);
-
   const initMapKit = useCallback(async () => {
     if (typeof window === "undefined") return;
 
@@ -121,6 +114,13 @@ export default function LocationAutocomplete({
       console.error("[MapKit] Init error:", error);
     }
   }, []);
+
+  useEffect(() => {
+    if (Platform.OS === "web" && !initAttemptedRef.current) {
+      initAttemptedRef.current = true;
+      initMapKit();
+    }
+  }, [initMapKit]);
 
   const searchLocations = useCallback(
     async (query: string) => {
@@ -284,7 +284,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#14141C",
     borderColor: "#23232B",
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: "#E5E7EB",
