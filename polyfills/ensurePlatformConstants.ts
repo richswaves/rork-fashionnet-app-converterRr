@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules, Platform, TurboModuleRegistry } from "react-native";
 import ReactNativeVersion from "react-native/Libraries/Core/ReactNativeVersion";
 
 const ensurePlatformConstants = () => {
@@ -24,6 +24,35 @@ const ensurePlatformConstants = () => {
   };
 
   nativeModules.PlatformConstants = fallbackConstants;
+
+  const turboRegistry = TurboModuleRegistry as unknown as {
+    get?: (name: string) => unknown;
+    getEnforcing?: (name: string) => unknown;
+  };
+
+  const originalGet = turboRegistry.get?.bind(TurboModuleRegistry);
+  const originalGetEnforcing = turboRegistry.getEnforcing?.bind(TurboModuleRegistry);
+
+  if (turboRegistry && originalGet) {
+    turboRegistry.get = (name: string) => {
+      if (name === "PlatformConstants") {
+        console.log("Using fallback PlatformConstants TurboModule");
+        return nativeModules.PlatformConstants;
+      }
+      return originalGet(name);
+    };
+  }
+
+  if (turboRegistry && originalGetEnforcing) {
+    turboRegistry.getEnforcing = (name: string) => {
+      if (name === "PlatformConstants") {
+        console.log("Using enforcing fallback PlatformConstants TurboModule");
+        return nativeModules.PlatformConstants;
+      }
+      return originalGetEnforcing(name);
+    };
+  }
+
   return fallbackConstants;
 };
 
