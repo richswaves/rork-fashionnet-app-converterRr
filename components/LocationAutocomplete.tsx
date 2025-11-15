@@ -8,6 +8,7 @@ import {
   Text,
   Platform,
   ActivityIndicator,
+  type TextInputProps,
 } from "react-native";
 
 declare global {
@@ -44,6 +45,7 @@ interface LocationAutocompleteProps {
   placeholder?: string;
   style?: any;
   testID?: string;
+  onBlur?: TextInputProps["onBlur"];
 }
 
 export default function LocationAutocomplete({
@@ -53,6 +55,7 @@ export default function LocationAutocomplete({
   placeholder = "e.g. New York, NY",
   style,
   testID,
+  onBlur,
 }: LocationAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -255,6 +258,7 @@ export default function LocationAutocomplete({
           testID={testID}
           autoCorrect={false}
           autoCapitalize="words"
+          onBlur={onBlur}
         />
         {loading && (
           <View style={styles.loadingIndicator}>

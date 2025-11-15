@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform, Image, Keyboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, Link } from "expo-router";
@@ -146,6 +146,7 @@ export default function SignupScreen() {
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [cityLocation, setCityLocation] = useState<string>("");
   const [locationError, setLocationError] = useState<string>("");
+  const [locationTouched, setLocationTouched] = useState<boolean>(false);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
   const [userType, setUserType] = useState<"creative" | "business" | undefined>(undefined);
@@ -243,6 +244,21 @@ export default function SignupScreen() {
     const regex = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
     return regex.test(loc.trim());
   };
+
+  useEffect(() => {
+    if (!locationTouched) {
+      return;
+    }
+    if (!cityLocation.trim()) {
+      setLocationError("");
+      return;
+    }
+    if (!validateLocationFormat(cityLocation)) {
+      setLocationError("Format: City, State (e.g., New York, NY)");
+    } else {
+      setLocationError("");
+    }
+  }, [cityLocation, locationTouched]);
 
   const canSubmit = useMemo(() => {
     const baseValid = email.trim().length > 3 && password.trim().length >= 6 && password === confirmPassword && phoneNumber.trim().length >= 10;
@@ -541,8 +557,10 @@ export default function SignupScreen() {
                 }}
                 onSelectLocation={(location) => {
                   setCityLocation(location);
+                  setLocationTouched(true);
                   if (locationError) setLocationError("");
                 }}
+                onBlur={() => setLocationTouched(true)}
                 style={[styles.input, { marginTop: 0, marginBottom: 0 }]}
               />
               {locationError ? (
